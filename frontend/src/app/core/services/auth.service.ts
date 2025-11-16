@@ -1,5 +1,5 @@
 import { Injectable, inject } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { Router } from '@angular/router';
 import { BehaviorSubject, Observable, tap, catchError, throwError } from 'rxjs';
 import { environment } from '../../../environments/environment';
@@ -30,7 +30,7 @@ export class AuthService {
   login(credentials: LoginRequest): Observable<LoginResponse> {
     return this.http.post<LoginResponse>(`${environment.apiUrl}/api/auth/login`, credentials)
       .pipe(
-        tap(response => {
+        tap((response: LoginResponse) => {
           this.tokenService.saveTokens(
             response.accessToken,
             response.refreshToken,
@@ -39,9 +39,22 @@ export class AuthService {
           this.isAuthenticatedSubject.next(true);
           this.loadCurrentUser();
         }),
-        catchError(error => {
+        catchError((error: HttpErrorResponse) => {
           console.error('Login error:', error);
-          return throwError(() => error);
+          // Provide more specific error messages
+          let errorMessage = 'An unknown error occurred';
+          if (error instanceof HttpErrorResponse) {
+            if (error.status === 401) {
+              errorMessage = 'Invalid username or password. Please check your credentials.';
+            } else if (error.status === 0) {
+              errorMessage = 'Unable to connect to the server. Please check your connection and try again.';
+            } else if (error.error && error.error.message) {
+              errorMessage = error.error.message;
+            } else {
+              errorMessage = `Server error (${error.status}): ${error.statusText}`;
+            }
+          }
+          return throwError(() => new Error(errorMessage));
         })
       );
   }
@@ -62,14 +75,14 @@ export class AuthService {
 
     return this.http.post<LoginResponse>(`${environment.apiUrl}/api/auth/refresh`, { refreshToken })
       .pipe(
-        tap(response => {
+        tap((response: LoginResponse) => {
           this.tokenService.saveTokens(
             response.accessToken,
             response.refreshToken,
             response.expiresIn
           );
         }),
-        catchError(error => {
+        catchError((error: HttpErrorResponse) => {
           this.logout();
           return throwError(() => error);
         })
@@ -79,8 +92,8 @@ export class AuthService {
   getCurrentUser(): Observable<User> {
     return this.http.get<User>(`${environment.apiUrl}/api/auth/me`)
       .pipe(
-        tap(user => this.currentUserSubject.next(user)),
-        catchError(error => {
+        tap((user: User) => this.currentUserSubject.next(user)),
+        catchError((error: HttpErrorResponse) => {
           console.error('Get current user error:', error);
           return throwError(() => error);
         })

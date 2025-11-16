@@ -5,15 +5,20 @@ import com.example.CBS.Dashboard.dto.auth.LoginResponse;
 import com.example.CBS.Dashboard.exception.InvalidRefreshTokenException;
 import com.example.CBS.Dashboard.security.JwtTokenProvider;
 import com.example.CBS.Dashboard.service.user.UserService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 @Service
 public class AuthService {
+    
+    private static final Logger logger = LoggerFactory.getLogger(AuthService.class);
     
     @Autowired
     private AuthenticationManager authenticationManager;
@@ -25,24 +30,33 @@ public class AuthService {
     private UserService userService;
     
     public LoginResponse login(LoginRequest loginRequest) {
-        Authentication authentication = authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(
-                        loginRequest.getUsername(),
-                        loginRequest.getPassword()
-                )
-        );
+        logger.info("Attempting login for username: {}", loginRequest.getUsername());
         
-        SecurityContextHolder.getContext().setAuthentication(authentication);
-        
-        String accessToken = tokenProvider.generateAccessToken(authentication);
-        String refreshToken = tokenProvider.generateRefreshToken(authentication.getName());
-        
-        return LoginResponse.builder()
-                .accessToken(accessToken)
-                .refreshToken(refreshToken)
-                .expiresIn(tokenProvider.getExpirationTime())
-                .tokenType("Bearer")
-                .build();
+        try {
+            Authentication authentication = authenticationManager.authenticate(
+                    new UsernamePasswordAuthenticationToken(
+                            loginRequest.getUsername(),
+                            loginRequest.getPassword()
+                    )
+            );
+            
+            SecurityContextHolder.getContext().setAuthentication(authentication);
+            
+            String accessToken = tokenProvider.generateAccessToken(authentication);
+            String refreshToken = tokenProvider.generateRefreshToken(authentication.getName());
+            
+            logger.info("Login successful for username: {}", loginRequest.getUsername());
+            
+            return LoginResponse.builder()
+                    .accessToken(accessToken)
+                    .refreshToken(refreshToken)
+                    .expiresIn(tokenProvider.getExpirationTime())
+                    .tokenType("Bearer")
+                    .build();
+        } catch (AuthenticationException e) {
+            logger.error("Authentication failed for username: {}. Reason: {}", loginRequest.getUsername(), e.getMessage());
+            throw e;
+        }
     }
     
     public LoginResponse refreshToken(String refreshToken) {
