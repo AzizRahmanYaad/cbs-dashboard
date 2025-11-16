@@ -1,0 +1,210 @@
+Here is the exact step-by-step plan for implementing Login → Main Dashboard (SSO) using:
+
+✅ Spring Boot Security
+✅ JWT (no Keycloak)
+✅ Controller → Service → DTO → Entity clean architecture
+✅ Fully API-based
+✅ Best practice structure
+
+This plan tells you what to create first, in correct order.
+(No code here — only architecture + plan, as you requested.)
+
+✅ SPRING BOOT SIDE — Step-by-Step Plan
+1️⃣ Create Project Structure (Clean Architecture)
+src/main/java/com.yourcompany.project/
+    config/
+    controller/auth/
+    service/auth/
+    service/user/
+    dto/auth/
+    dto/user/
+    entity/
+    repository/
+    security/
+    util/
+
+Mandatory packages for login:
+
+controller/auth → AuthController
+
+service/auth → AuthService
+
+service/user → UserService
+
+dto/auth → Login DTOs
+
+entity → User + Role Entities
+
+repository → UserRepository
+
+security → JWT Filter, SecurityConfig, TokenProvider
+
+2️⃣ Define Entities
+Create:
+
+UserEntity
+
+RoleEntity
+
+User fields:
+
+id
+
+username
+
+email
+
+password
+
+enabled
+
+roles
+
+createdAt
+
+Role fields:
+
+id
+
+name (ROLE_ADMIN, ROLE_USER)
+
+3️⃣ Define Repositories
+
+Example:
+
+UserRepository
+
+RoleRepository
+
+Use:
+
+findByUsername()
+
+existsByUsername()
+
+4️⃣ Create DTOs (Mandatory)
+Auth Request DTO
+LoginRequest {
+   username: String
+   password: String
+}
+
+Login Response DTO
+LoginResponse {
+    accessToken
+    refreshToken
+    expiresIn
+    tokenType
+}
+
+User Profile DTO (For /me endpoint)
+UserDto {
+    id
+    username
+    email
+    roles
+}
+
+5️⃣ Create Service Layer
+AuthService
+
+Responsibilities:
+
+Validate username/password
+
+Generate JWT access token
+
+Generate refresh token
+
+Return LoginResponse DTO
+
+Provide me() method for user profile
+
+UserService
+
+Responsibilities:
+
+Load user details for security
+
+Handle user profile fetching
+
+6️⃣ Create Security Configuration
+
+Files to create:
+
+1. SecurityConfig
+
+Disable sessions → stateless
+
+Allow /api/auth/**
+
+Protect /api/**
+
+Add JWT filter
+
+Configure authentication manager
+
+2. JwtAuthenticationFilter
+
+Reads token from Authorization: Bearer
+
+Validates
+
+Loads user details
+
+Sets security context
+
+3. JwtTokenProvider
+
+Create access token
+
+Create refresh token
+
+Validate tokens
+
+Extract username/roles
+
+4. PasswordEncoderConfig
+
+Use BCryptPasswordEncoder
+
+7️⃣ AuthController Endpoints
+
+Expose these endpoints:
+
+1. POST /api/auth/login
+
+Input: LoginRequest
+Output: LoginResponse
+
+2. POST /api/auth/refresh
+
+Input: { refreshToken }
+Output: new access token
+
+3. GET /api/auth/me
+
+Header: Bearer token
+Output: UserDto
+
+8️⃣ Seed an Admin User
+
+Create a DataLoader class to save:
+
+admin username
+
+password (BCrypt encoded)
+
+role = ADMIN
+
+9️⃣ Test Backend
+
+Use Postman:
+
+Login
+
+Call /me
+
+Verify JWT works
+
+Verify expired token gives 401
