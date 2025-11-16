@@ -3,6 +3,7 @@ package com.example.CBS.Dashboard.service.user;
 import com.example.CBS.Dashboard.dto.user.UserDto;
 import com.example.CBS.Dashboard.entity.User;
 import com.example.CBS.Dashboard.repository.UserRepository;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
@@ -10,6 +11,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.stream.Collectors;
 
+@Slf4j
 @Service
 public class UserService {
     
@@ -18,8 +20,12 @@ public class UserService {
     
     @Transactional(readOnly = true)
     public UserDto getUserProfile(String username) {
+        log.debug("Fetching user profile for username: {}", username);
         User user = userRepository.findByUsername(username)
-                .orElseThrow(() -> new UsernameNotFoundException("User not found with username: " + username));
+                .orElseThrow(() -> {
+                    log.warn("User not found with username: {}", username);
+                    return new UsernameNotFoundException("User not found with username: " + username);
+                });
         
         return convertToDto(user);
     }
