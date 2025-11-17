@@ -1,23 +1,82 @@
-.header {
-  height: 70px;
-  background: white;
-  border-bottom: 1px solid #e5e7eb;
-  padding: 0 2rem;
+@use 'sass:color';
+
+.gov-header {
+  background: #ffffff;
+  border-bottom: 1px solid #e7ecf2;
+  padding: 1.5rem 2.5rem;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  gap: 1.5rem;
+  position: sticky;
+  top: 0;
+  z-index: 900;
 }
 
-.header-left {
-  flex: 1;
+.identity-band {
+  display: flex;
+  align-items: center;
+  gap: 1.75rem;
 }
 
-.page-title {
-  font-size: 1.5rem;
+.crest {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.crest-logo {
+  width: 64px;
+  height: 64px;
+  border-radius: 16px;
+  border: 1px solid #e4e7ed;
+  padding: 6px;
+  background: radial-gradient(circle at 30% 20%, #ffffff, #f4f6fa);
+}
+
+.crest-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.institution {
+  font-size: 1.1rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: #0f172a;
+  letter-spacing: 0.05em;
+}
+
+.office {
+  font-size: 0.95rem;
   font-weight: 600;
-  color: #1f2937;
-  margin: 0;
+  color: #1d3a6d;
+}
+
+.location {
+  font-size: 0.8rem;
+  color: #6b7280;
+}
+
+.office-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.75rem;
+  border-radius: 999px;
+  border: 1px solid #e4e7ed;
+  padding: 0.5rem 1.25rem;
+  background: #f9fafc;
+  font-size: 0.85rem;
+  color: #1d3a6d;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.pill-divider {
+  width: 1px;
+  height: 20px;
+  background: #d1d5db;
 }
 
 .header-right {
@@ -26,12 +85,35 @@
   gap: 1rem;
 }
 
+.status-card {
+  padding: 0.75rem 1.25rem;
+  border-radius: 16px;
+  border: 1px solid #edf0f4;
+  background: linear-gradient(135deg, #fbfdff, #f3f6fb);
+  min-width: 160px;
+}
+
+.status-label {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  color: #64748b;
+  letter-spacing: 0.05em;
+  margin-bottom: 0.2rem;
+}
+
+.status-value {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #0f172a;
+  margin: 0;
+}
+
 .icon-button {
   position: relative;
   width: 40px;
   height: 40px;
   border: none;
-  background: #f3f4f6;
+  background: #f4f7fb;
   border-radius: 10px;
   display: flex;
   align-items: center;
@@ -40,28 +122,14 @@
   transition: all 0.2s;
 
   &:hover {
-    background: #e5e7eb;
+    background: #e6edf7;
   }
 
   svg {
     width: 20px;
     height: 20px;
-    color: #6b7280;
+    color: #1d3a6d;
   }
-}
-
-.notification-badge {
-  position: absolute;
-  top: -4px;
-  right: -4px;
-  background: #ef4444;
-  color: white;
-  font-size: 0.7rem;
-  font-weight: 600;
-  padding: 2px 6px;
-  border-radius: 10px;
-  min-width: 18px;
-  text-align: center;
 }
 
 .user-menu-container {
@@ -73,32 +141,30 @@
   align-items: center;
   gap: 0.75rem;
   padding: 0.5rem 1rem;
-  background: white;
-  border: 1px solid #e5e7eb;
-  border-radius: 12px;
+  background: #ffffff;
+  border: 1px solid #e5e9f2;
+  border-radius: 999px;
   cursor: pointer;
   transition: all 0.2s;
 
   &:hover {
-    background: #f9fafb;
-    border-color: #d1d5db;
+    border-color: #d4dae6;
+    box-shadow: 0 5px 15px rgba(15, 23, 42, 0.08);
   }
 }
 
 .user-avatar {
-  width: 40px;
-  height: 40px;
-  background: linear-gradient(135deg, #2196f3, #1976d2);
+  width: 44px;
+  height: 44px;
   border-radius: 50%;
+  border: 1px solid #dde3ef;
+  background: radial-gradient(circle at 30% 20%, #fefefe, #e6ecf7);
   display: flex;
   align-items: center;
   justify-content: center;
-
-  svg {
-    width: 22px;
-    height: 22px;
-    color: white;
-  }
+  font-weight: 600;
+  color: #1d3a6d;
+  text-transform: uppercase;
 }
 
 .user-info {
@@ -111,13 +177,13 @@
 .user-name {
   font-size: 0.9rem;
   font-weight: 600;
-  color: #1f2937;
+  color: #111827;
   line-height: 1.2;
 }
 
 .user-role {
   font-size: 0.75rem;
-  color: #6b7280;
+  color: #667085;
   line-height: 1.2;
 }
 
@@ -133,9 +199,9 @@
   top: calc(100% + 0.5rem);
   right: 0;
   background: white;
-  border: 1px solid #e5e7eb;
-  border-radius: 12px;
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+  border: 1px solid #e5e9f2;
+  border-radius: 16px;
+  box-shadow: 0 20px 45px rgba(15, 23, 42, 0.12);
   min-width: 240px;
   padding: 0.5rem 0;
   z-index: 1000;
@@ -200,26 +266,29 @@
   }
 
   &:hover {
-    background: #f9fafb;
-    color: #2196f3;
+    background: #f4f7fb;
+    color: #0f4c81;
   }
 
   &.logout {
     color: #ef4444;
 
     &:hover {
-      background: #fef2f2;
+      background: #fff4f4;
     }
   }
 }
 
 @media (max-width: 768px) {
-  .header {
-    padding: 0 1rem;
+  .gov-header {
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 1rem 1.25rem;
   }
 
-  .page-title {
-    font-size: 1.25rem;
+  .identity-band {
+    flex-direction: column;
+    align-items: flex-start;
   }
 
   .user-info {

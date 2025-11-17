@@ -12,9 +12,13 @@ import { User } from '../../../core/models';
 })
 export class HeaderComponent implements OnInit {
   private authService = inject(AuthService);
-  
+
   currentUser: User | null = null;
   showUserMenu = false;
+  readonly logoPath = 'assets/Da_Afghanistan_Bank_Logo.svg';
+  readonly institutionName = 'Da Afghanistan Bank';
+  readonly officeName = 'Chief Finance Office';
+  readonly officeLocation = 'Islamic Republic of Afghanistan';
 
   ngOnInit(): void {
     this.authService.currentUser$.subscribe(user => {

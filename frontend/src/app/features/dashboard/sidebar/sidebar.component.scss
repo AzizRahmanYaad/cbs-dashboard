@@ -1,88 +1,90 @@
 .sidebar {
-  width: 280px;
+  width: 320px;
   height: 100vh;
-  background: linear-gradient(180deg, #1976d2 0%, #1565c0 100%);
-  color: white;
+  background: #ffffff;
+  border-right: 1px solid #e5e9f2;
   display: flex;
   flex-direction: column;
   position: fixed;
   left: 0;
   top: 0;
   transition: width 0.3s ease;
-  box-shadow: 4px 0 10px rgba(0, 0, 0, 0.1);
   z-index: 1000;
 
   &.collapsed {
-    width: 80px;
+    width: 100px;
 
-    .logo-text,
+    .brand-copy,
     .nav-label,
-    .user-details {
+    .motto,
+    .section-label,
+    .user-card {
       display: none;
     }
 
     .nav-item {
       justify-content: center;
-      padding: 1rem;
-    }
-
-    .user-info {
-      justify-content: center;
     }
   }
 }
 
-.sidebar-header {
-  padding: 1.5rem 1.25rem;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+.brand-panel {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  padding: 1.75rem 1.5rem 1rem;
 }
 
-.logo-container {
+.brand-identity {
   display: flex;
   align-items: center;
   gap: 1rem;
 }
 
-.logo-icon {
-  width: 40px;
-  height: 40px;
-  background: rgba(255, 255, 255, 0.2);
-  border-radius: 10px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-
-  svg {
-    width: 24px;
-    height: 24px;
-  }
+.brand-logo {
+  width: 52px;
+  height: 52px;
+  border-radius: 14px;
+  border: 1px solid #dfe6f2;
+  padding: 6px;
+  background: #f8fafc;
 }
 
-.logo-text {
-  font-size: 1.25rem;
-  font-weight: 700;
+.brand-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.brand-office {
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+  color: #94a3b8;
+}
+
+.brand-name {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #0f172a;
   white-space: nowrap;
 }
 
 .toggle-button {
-  background: rgba(255, 255, 255, 0.1);
-  border: none;
-  color: white;
-  width: 36px;
-  height: 36px;
-  border-radius: 8px;
+  background: transparent;
+  border: 1px solid #e2e8f0;
+  color: #0f172a;
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  transition: background 0.2s;
+  transition: all 0.2s;
 
   &:hover {
-    background: rgba(255, 255, 255, 0.2);
+    background: #f8fafc;
   }
 
   svg {
@@ -91,23 +93,35 @@
   }
 }
 
+.motto {
+  margin: 0 1.5rem 1rem;
+  font-size: 0.78rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: #94a3b8;
+}
+
 .sidebar-nav {
   flex: 1;
-  padding: 1.5rem 0;
+  padding: 0 0 1.5rem;
   overflow-y: auto;
 
   &::-webkit-scrollbar {
     width: 4px;
   }
 
-  &::-webkit-scrollbar-track {
-    background: transparent;
-  }
-
   &::-webkit-scrollbar-thumb {
-    background: rgba(255, 255, 255, 0.2);
+    background: #cbd5f5;
     border-radius: 4px;
   }
+}
+
+.section-label {
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.2em;
+  color: #a0aec0;
+  margin: 0 1.5rem 0.5rem;
 }
 
 .nav-list {
@@ -119,42 +133,40 @@
 .nav-item {
   display: flex;
   align-items: center;
-  padding: 0.875rem 1.25rem;
-  color: rgba(255, 255, 255, 0.8);
+  padding: 0.85rem 1.5rem;
+  color: #475569;
   text-decoration: none;
   transition: all 0.2s ease;
-  margin: 0.25rem 0.75rem;
-  border-radius: 10px;
   gap: 1rem;
   position: relative;
 
   &:hover {
-    background: rgba(255, 255, 255, 0.1);
-    color: white;
+    background: #f6f9fd;
+    color: #0f4c81;
   }
 
   &.active {
-    background: rgba(255, 255, 255, 0.15);
-    color: white;
+    background: #edf2ff;
+    color: #0f4c81;
     font-weight: 600;
 
     &::before {
       content: '';
       position: absolute;
-      left: -0.75rem;
+      left: 0;
       top: 50%;
       transform: translateY(-50%);
-      width: 4px;
-      height: 24px;
-      background: white;
+      width: 3px;
+      height: 50%;
+      background: #0f4c81;
       border-radius: 0 4px 4px 0;
     }
   }
 }
 
 .nav-icon {
-  width: 24px;
-  height: 24px;
+  width: 22px;
+  height: 22px;
   flex-shrink: 0;
 
   svg {
@@ -169,67 +181,42 @@
 }
 
 .sidebar-footer {
-  padding: 1.25rem;
-  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 1.5rem;
+  border-top: 1px solid #e5e9f2;
+  background: #f8fafc;
 }
 
-.user-info {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  padding: 0.75rem;
-  background: rgba(255, 255, 255, 0.1);
-  border-radius: 12px;
-  transition: background 0.2s;
-  cursor: pointer;
-
-  &:hover {
-    background: rgba(255, 255, 255, 0.15);
-  }
-}
-
-.user-avatar {
-  width: 42px;
-  height: 42px;
-  background: rgba(255, 255, 255, 0.2);
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-
-  svg {
-    width: 24px;
-    height: 24px;
-  }
-}
-
-.user-details {
-  min-width: 0;
+.user-card {
+  background: white;
+  border-radius: 14px;
+  border: 1px solid #e2e8f0;
+  padding: 1rem 1.25rem;
+  box-shadow: 0 10px 30px rgba(15, 23, 42, 0.08);
 }
 
 .user-name {
-  font-size: 0.9rem;
-  font-weight: 600;
   margin: 0;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  font-size: 1rem;
+  font-weight: 600;
+  color: #0f172a;
 }
 
 .user-role {
+  margin: 0.1rem 0 0.25rem;
+  font-size: 0.85rem;
+  color: #1d3a6d;
+}
+
+.user-status {
   font-size: 0.75rem;
-  margin: 0;
-  opacity: 0.8;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: #94a3b8;
 }
 
 @media (max-width: 768px) {
   .sidebar {
     transform: translateX(-100%);
-
     &.collapsed {
       transform: translateX(0);
     }

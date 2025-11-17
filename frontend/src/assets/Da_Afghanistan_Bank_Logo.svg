@@ -1,0 +1,14 @@
+<svg width="120" height="120" viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Da Afghanistan Bank logo placeholder">
+  <defs>
+    <linearGradient id="dabGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0F4C81"/>
+      <stop offset="100%" stop-color="#0A2E57"/>
+    </linearGradient>
+  </defs>
+  <circle cx="60" cy="60" r="56" fill="url(#dabGradient)" stroke="#E7B45A" stroke-width="4"/>
+  <circle cx="60" cy="60" r="40" fill="none" stroke="#F5D9A6" stroke-width="3" stroke-dasharray="6 8"/>
+  <path d="M60 30 L80 60 L60 90 L40 60 Z" fill="none" stroke="#F5D9A6" stroke-width="4"/>
+  <path d="M60 42 L72 60 L60 78 L48 60 Z" fill="#F5D9A6" opacity="0.9"/>
+  <text x="50%" y="58%" text-anchor="middle" fill="#ffffff" font-family="Georgia, 'Times New Roman', serif" font-size="16" letter-spacing="2">DAB</text>
+</svg>
+

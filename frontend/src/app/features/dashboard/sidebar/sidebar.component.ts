@@ -24,6 +24,10 @@ export class SidebarComponent {
   isCollapsed = false;
   private authService = inject(AuthService);
   currentUser$ = this.authService.currentUser$;
+  readonly logoPath = 'assets/Da_Afghanistan_Bank_Logo.svg';
+  readonly institutionName = 'Da Afghanistan Bank';
+  readonly officeShort = 'CFO';
+  readonly motto = 'Integrity • Stability • Transparency';
   
   menuItems: MenuItem[] = [
     {
