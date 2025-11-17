@@ -240,6 +240,15 @@
   }
 }
 
+.no-access {
+  padding: 2rem;
+  border-radius: 16px;
+  background: #fff7ed;
+  color: #9a3412;
+  text-align: center;
+  font-weight: 600;
+}
+
 @keyframes fadeIn {
   from {
     opacity: 0;

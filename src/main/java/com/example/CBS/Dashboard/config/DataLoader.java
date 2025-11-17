@@ -10,6 +10,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 @Component
@@ -26,34 +27,33 @@ public class DataLoader implements CommandLineRunner {
     
     @Override
     public void run(String... args) throws Exception {
-        if (roleRepository.count() == 0) {
-            Role adminRole = new Role("ROLE_ADMIN");
-            Role userRole = new Role("ROLE_USER");
-            
-            roleRepository.save(adminRole);
-            roleRepository.save(userRole);
-        }
+        List<String> defaultRoles = List.of(
+                "ROLE_ADMIN",
+                "ROLE_USER",
+                "ROLE_TRAINING",
+                "ROLE_DRILL_TESTING",
+                "ROLE_DAILY_REPORT"
+        );
+        defaultRoles.forEach(roleName -> roleRepository.findByName(roleName)
+                .orElseGet(() -> roleRepository.save(new Role(roleName))));
         
         if (userRepository.count() == 0) {
-            Role adminRole = roleRepository.findByName("ROLE_ADMIN")
-                    .orElseThrow(() -> new RuntimeException("ROLE_ADMIN not found"));
+            Set<Role> roles = new HashSet<>(roleRepository.findAll());
             
             User admin = new User();
             admin.setUsername("admin");
             admin.setEmail("admin@cbsdashboard.com");
             admin.setPassword(passwordEncoder.encode("admin123"));
             admin.setEnabled(true);
-            
-            Set<Role> roles = new HashSet<>();
-            roles.add(adminRole);
             admin.setRoles(roles);
             
             userRepository.save(admin);
             
             System.out.println("================================");
-            System.out.println("Admin user created successfully!");
+            System.out.println("Admin user created with default credentials.");
             System.out.println("Username: admin");
             System.out.println("Password: admin123");
+            System.out.println("Please change this password immediately.");
             System.out.println("================================");
         }
     }

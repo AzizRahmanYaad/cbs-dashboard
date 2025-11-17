@@ -1,12 +1,14 @@
-import { Component, Output, EventEmitter } from '@angular/core';
+import { Component, Output, EventEmitter, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
+import { AuthService } from '../../../core/services/auth.service';
 
 interface MenuItem {
   label: string;
   icon: string;
   route: string;
   children?: MenuItem[];
+  requiredRoles?: string[];
 }
 
 @Component({
@@ -20,6 +22,8 @@ export class SidebarComponent {
   @Output() sidebarToggle = new EventEmitter<boolean>();
 
   isCollapsed = false;
+  private authService = inject(AuthService);
+  currentUser$ = this.authService.currentUser$;
   
   menuItems: MenuItem[] = [
     {
@@ -30,22 +34,35 @@ export class SidebarComponent {
     {
       label: 'Training Module',
       icon: 'academic-cap',
-      route: '/dashboard/training'
+      route: '/dashboard/training',
+      requiredRoles: ['ROLE_TRAINING']
     },
     {
       label: 'Drill Testing',
       icon: 'clipboard-document-check',
-      route: '/dashboard/drill-testing'
+      route: '/dashboard/drill-testing',
+      requiredRoles: ['ROLE_DRILL_TESTING']
     },
     {
       label: 'Daily Report',
       icon: 'document-text',
-      route: '/dashboard/daily-report'
+      route: '/dashboard/daily-report',
+      requiredRoles: ['ROLE_DAILY_REPORT']
+    },
+    {
+      label: 'User Management',
+      icon: 'shield-check',
+      route: '/dashboard/admin/users',
+      requiredRoles: ['ROLE_ADMIN']
     }
   ];
 
   toggleSidebar(): void {
     this.isCollapsed = !this.isCollapsed;
     this.sidebarToggle.emit(this.isCollapsed);
+  }
+
+  hasAccess(item: MenuItem): boolean {
+    return this.authService.hasAnyRole(item.requiredRoles ?? []);
   }
 }

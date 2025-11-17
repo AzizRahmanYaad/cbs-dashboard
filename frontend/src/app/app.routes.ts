@@ -6,6 +6,8 @@ import { HomeComponent } from './features/dashboard/home/home.component';
 import { TrainingComponent } from './features/training/training.component';
 import { DrillTestingComponent } from './features/drill-testing/drill-testing.component';
 import { DailyReportComponent } from './features/daily-report/daily-report.component';
+import { UnauthorizedComponent } from './features/auth/unauthorized/unauthorized.component';
+import { UserManagementComponent } from './features/admin/user-management/user-management.component';
 
 export const routes: Routes = [
   {
@@ -18,9 +20,14 @@ export const routes: Routes = [
     component: LoginComponent
   },
   {
+    path: 'unauthorized',
+    component: UnauthorizedComponent
+  },
+  {
     path: 'dashboard',
     component: DashboardShellComponent,
     canActivate: [authGuard],
+    canActivateChild: [authGuard],
     children: [
       {
         path: '',
@@ -33,15 +40,23 @@ export const routes: Routes = [
       },
       {
         path: 'training',
-        component: TrainingComponent
+        component: TrainingComponent,
+        data: { roles: ['ROLE_TRAINING'] }
       },
       {
         path: 'drill-testing',
-        component: DrillTestingComponent
+        component: DrillTestingComponent,
+        data: { roles: ['ROLE_DRILL_TESTING'] }
       },
       {
         path: 'daily-report',
-        component: DailyReportComponent
+        component: DailyReportComponent,
+        data: { roles: ['ROLE_DAILY_REPORT'] }
+      },
+      {
+        path: 'admin/users',
+        component: UserManagementComponent,
+        data: { roles: ['ROLE_ADMIN'] }
       }
     ]
   },

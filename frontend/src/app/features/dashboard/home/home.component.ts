@@ -1,6 +1,7 @@
-import { Component } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
+import { AuthService } from '../../../core/services/auth.service';
 
 interface ModuleCard {
   title: string;
@@ -9,6 +10,7 @@ interface ModuleCard {
   route: string;
   color: string;
   stats?: { label: string; value: string };
+  requiredRoles?: string[];
 }
 
 @Component({
@@ -18,7 +20,9 @@ interface ModuleCard {
   templateUrl: './home.component.html',
   styleUrls: ['./home.component.scss']
 })
-export class HomeComponent {
+export class HomeComponent implements OnInit {
+  private authService = inject(AuthService);
+
   modules: ModuleCard[] = [
     {
       title: 'Training Module',
@@ -26,7 +30,8 @@ export class HomeComponent {
       icon: 'academic-cap',
       route: '/dashboard/training',
       color: 'blue',
-      stats: { label: 'Active Programs', value: '12' }
+      stats: { label: 'Active Programs', value: '12' },
+      requiredRoles: ['ROLE_TRAINING']
     },
     {
       title: 'Drill Testing',
@@ -34,7 +39,8 @@ export class HomeComponent {
       icon: 'clipboard-check',
       route: '/dashboard/drill-testing',
       color: 'green',
-      stats: { label: 'Scheduled Tests', value: '8' }
+      stats: { label: 'Scheduled Tests', value: '8' },
+      requiredRoles: ['ROLE_DRILL_TESTING']
     },
     {
       title: 'Daily Report',
@@ -42,7 +48,22 @@ export class HomeComponent {
       icon: 'document',
       route: '/dashboard/daily-report',
       color: 'purple',
-      stats: { label: 'Reports Today', value: '24' }
+      stats: { label: 'Reports Today', value: '24' },
+      requiredRoles: ['ROLE_DAILY_REPORT']
     }
   ];
+
+  visibleModules: ModuleCard[] = [];
+
+  ngOnInit(): void {
+    this.authService.currentUser$.subscribe(user => {
+      if (!user) {
+        this.visibleModules = [];
+        return;
+      }
+      this.visibleModules = this.modules.filter(module =>
+        !module.requiredRoles || this.authService.hasAnyRole(module.requiredRoles)
+      );
+    });
+  }
 }

@@ -2,13 +2,12 @@ package com.example.CBS.Dashboard.service.user;
 
 import com.example.CBS.Dashboard.dto.user.UserDto;
 import com.example.CBS.Dashboard.entity.User;
+import com.example.CBS.Dashboard.mapper.UserMapper;
 import com.example.CBS.Dashboard.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.util.stream.Collectors;
 
 @Service
 public class UserService {
@@ -16,12 +15,15 @@ public class UserService {
     @Autowired
     private UserRepository userRepository;
     
+    @Autowired
+    private UserMapper userMapper;
+
     @Transactional(readOnly = true)
     public UserDto getUserProfile(String username) {
         User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new UsernameNotFoundException("User not found with username: " + username));
         
-        return convertToDto(user);
+        return userMapper.toDto(user);
     }
     
     @Transactional(readOnly = true)
@@ -30,16 +32,4 @@ public class UserService {
                 .orElseThrow(() -> new UsernameNotFoundException("User not found with username: " + username));
     }
     
-    private UserDto convertToDto(User user) {
-        return UserDto.builder()
-                .id(user.getId())
-                .username(user.getUsername())
-                .email(user.getEmail())
-                .roles(user.getRoles().stream()
-                        .map(role -> role.getName())
-                        .collect(Collectors.toSet()))
-                .enabled(user.getEnabled())
-                .createdAt(user.getCreatedAt())
-                .build();
-    }
 }

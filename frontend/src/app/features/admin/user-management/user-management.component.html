@@ -1,0 +1,99 @@
+<div class="user-management">
+  <div class="header">
+    <div>
+      <h1>User Management</h1>
+      <p>Assign module access to individual users</p>
+    </div>
+    <button type="button" class="secondary" (click)="startCreate()">Create new user</button>
+  </div>
+
+  <div class="grid">
+    <section class="form-card">
+      <h2>{{ isEditing ? 'Edit User' : 'Create User' }}</h2>
+      <form [formGroup]="userForm" (ngSubmit)="submitForm()">
+        <div class="form-row">
+          <label>Username</label>
+          <input type="text" formControlName="username" [class.invalid]="userForm.get('username')?.invalid && userForm.get('username')?.touched" [readonly]="isEditing" />
+        </div>
+
+        <div class="form-row">
+          <label>Email</label>
+          <input type="email" formControlName="email" [class.invalid]="userForm.get('email')?.invalid && userForm.get('email')?.touched" />
+        </div>
+
+        <div class="form-row">
+          <label>{{ isEditing ? 'New Password (optional)' : 'Password' }}</label>
+          <input type="password" formControlName="password" [class.invalid]="userForm.get('password')?.invalid && userForm.get('password')?.touched" />
+          <small *ngIf="!isEditing">Minimum 8 characters</small>
+        </div>
+
+        <div class="form-row roles">
+          <label>Roles</label>
+          <div class="role-list">
+            <label *ngFor="let role of roles">
+              <input type="checkbox" [checked]="rolesControl.value?.includes(role.name)" (change)="onRoleToggle(role.name, $event.target.checked)" />
+              <span>
+                <strong>{{ role.name }}</strong>
+                <small>{{ role.description }}</small>
+              </span>
+            </label>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <label>Status</label>
+          <label class="switch">
+            <input type="checkbox" formControlName="enabled" />
+            <span class="slider"></span>
+          </label>
+        </div>
+
+        <button type="submit" class="primary" [disabled]="isSubmitting">
+          {{ isSubmitting ? 'Saving...' : (isEditing ? 'Update User' : 'Create User') }}
+        </button>
+      </form>
+    </section>
+
+    <section class="list-card">
+      <h2>Existing Users</h2>
+      <div class="table-wrapper">
+        <table>
+          <thead>
+            <tr>
+              <th>User</th>
+              <th>Roles</th>
+              <th>Status</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngIf="isLoading">
+              <td colspan="4">Loading users...</td>
+            </tr>
+            <tr *ngFor="let user of users; trackBy: trackByUserId">
+              <td>
+                <div class="user-info">
+                  <strong>{{ user.username }}</strong>
+                  <small>{{ user.email }}</small>
+                </div>
+              </td>
+              <td>
+                <span class="badge" *ngFor="let role of user.roles">{{ role }}</span>
+              </td>
+              <td>
+                <span class="status" [class.active]="user.enabled">{{ user.enabled ? 'Active' : 'Disabled' }}</span>
+              </td>
+              <td class="actions">
+                <button type="button" (click)="editUser(user)">Edit</button>
+              </td>
+            </tr>
+            <tr *ngIf="!isLoading && !users.length">
+              <td colspan="4">No users found.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </div>
+</div>
+

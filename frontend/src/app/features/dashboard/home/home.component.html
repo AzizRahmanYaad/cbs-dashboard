@@ -56,9 +56,9 @@
 
   <div class="modules-section">
     <h2 class="section-title">Access Your Modules</h2>
-    <div class="modules-grid">
+    <div class="modules-grid" *ngIf="visibleModules.length; else noAccess">
       <a
-        *ngFor="let module of modules"
+        *ngFor="let module of visibleModules"
         [routerLink]="module.route"
         class="module-card"
         [attr.data-color]="module.color"
@@ -91,5 +91,10 @@
         </div>
       </a>
     </div>
+    <ng-template #noAccess>
+      <div class="no-access">
+        <p>No modules available. Contact an administrator for access.</p>
+      </div>
+    </ng-template>
   </div>
 </div>
