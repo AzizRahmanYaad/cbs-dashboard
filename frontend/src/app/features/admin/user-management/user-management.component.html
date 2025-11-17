@@ -34,7 +34,7 @@
               <input
                 #roleCheckbox
                 type="checkbox"
-                [checked]="rolesControl.value?.includes(role.name)"
+                [checked]="(rolesControl.value ?? []).includes(role.name)"
                 (change)="onRoleToggle(role.name, roleCheckbox.checked)"
               />
               <span>
