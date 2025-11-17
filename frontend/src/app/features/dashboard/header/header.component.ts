@@ -15,7 +15,7 @@ export class HeaderComponent implements OnInit {
 
   currentUser: User | null = null;
   showUserMenu = false;
-  readonly logoPath = 'assets/Da_Afghanistan_Bank_Logo.svg';
+  readonly logoPath = 'assets/Da_Afghanistan_Bank_Logo.png';
   readonly institutionName = 'Da Afghanistan Bank';
   readonly officeName = 'Chief Finance Office';
   readonly officeLocation = 'Islamic Republic of Afghanistan';
