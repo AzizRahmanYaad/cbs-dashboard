@@ -1,7 +1,7 @@
 #!/bin/bash
 
-# Start backend on port 8080 with dev profile
-echo "Starting Spring Boot backend on port 8080..."
+# Start backend on port 8090 with dev profile
+echo "Starting Spring Boot backend on port 8090..."
 ./gradlew bootRun --args='--spring.profiles.active=dev' &
 BACKEND_PID=$!
 
