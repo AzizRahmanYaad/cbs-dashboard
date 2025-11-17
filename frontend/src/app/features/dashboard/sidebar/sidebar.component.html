@@ -60,7 +60,7 @@
       </div>
       <div class="user-details" *ngIf="!isCollapsed">
         <p class="user-name">{{ currentUser.username }}</p>
-        <p class="user-role">{{ currentUser.roles?.join(', ') || 'User' }}</p>
+        <p class="user-role">{{ currentUser.roles.join(', ') || 'User' }}</p>
       </div>
     </div>
   </div>

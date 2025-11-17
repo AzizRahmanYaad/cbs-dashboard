@@ -31,7 +31,12 @@
           <label>Roles</label>
           <div class="role-list">
             <label *ngFor="let role of roles">
-              <input type="checkbox" [checked]="rolesControl.value?.includes(role.name)" (change)="onRoleToggle(role.name, $event.target.checked)" />
+              <input
+                #roleCheckbox
+                type="checkbox"
+                [checked]="rolesControl.value?.includes(role.name)"
+                (change)="onRoleToggle(role.name, roleCheckbox.checked)"
+              />
               <span>
                 <strong>{{ role.name }}</strong>
                 <small>{{ role.description }}</small>
