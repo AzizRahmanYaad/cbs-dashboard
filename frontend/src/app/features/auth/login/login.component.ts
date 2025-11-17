@@ -44,7 +44,7 @@ export class LoginComponent {
           this.toastr.success('Login successful!', 'Welcome');
           this.router.navigate(['/dashboard']);
         },
-        error: (error) => {
+        error: (error: any) => {
           this.isLoading = false;
           const errorMessage = error.error?.message || 'Invalid username or password';
           this.toastr.error(errorMessage, 'Login Failed');
