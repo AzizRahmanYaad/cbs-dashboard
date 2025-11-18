@@ -75,11 +75,12 @@
   height: 56px;
   border-radius: var(--radius-xl);
   border: 1px solid var(--color-gray-200);
-  padding: 8px;
+  padding: 6px;
   background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
   box-shadow: var(--shadow-sm);
   flex-shrink: 0;
   transition: transform var(--transition-base);
+  object-fit: contain;
 
   &:hover {
     transform: scale(1.05);
