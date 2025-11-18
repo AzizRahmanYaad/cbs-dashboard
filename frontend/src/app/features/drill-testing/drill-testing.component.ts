@@ -86,9 +86,9 @@ export class DrillTestingComponent implements OnInit {
     });
     
     this.testCaseForm = this.fb.group({
-      title: ['', Validators.required],
+      title: ['', [Validators.required, Validators.minLength(3)]],
       preconditions: [''],
-      steps: [''],
+      steps: ['', [Validators.required, DrillTestingComponent.stepsValidator]],
       expectedResult: [''],
       priority: [Priority.MEDIUM, Validators.required],
       moduleId: [null],
@@ -228,24 +228,58 @@ export class DrillTestingComponent implements OnInit {
   }
 
   createTestCase(): void {
-    if (this.testCaseForm.valid) {
-      const stepsValue = this.testCaseForm.value.steps;
-      const stepsArray = typeof stepsValue === 'string' 
-        ? stepsValue.split('\n').filter(s => s.trim())
-        : (stepsValue || []);
-      
-      const request: CreateTestCaseRequest = {
-        ...this.testCaseForm.value,
-        steps: stepsArray
-      };
-      this.testService.createTestCase(request).subscribe({
-        next: () => {
-          this.loadTestCases();
-          this.showTestCaseModal = false;
-        },
-        error: (err) => console.error('Error creating test case:', err)
+    // Mark all fields as touched to show validation errors
+    Object.keys(this.testCaseForm.controls).forEach(key => {
+      this.testCaseForm.get(key)?.markAsTouched();
+    });
+
+    if (!this.testCaseForm.valid) {
+      console.error('Form is invalid:', this.testCaseForm.errors);
+      console.error('Form controls:', this.testCaseForm.controls);
+      // Log each control's errors
+      Object.keys(this.testCaseForm.controls).forEach(key => {
+        const control = this.testCaseForm.get(key);
+        if (control && control.invalid) {
+          console.error(`Control ${key} is invalid:`, control.errors);
+        }
       });
+      return;
     }
+
+    const stepsValue = this.testCaseForm.value.steps;
+    const stepsArray = typeof stepsValue === 'string' 
+      ? stepsValue.split('\n').filter(s => s.trim())
+      : (stepsValue || []);
+    
+    // Ensure steps is an array (required by backend)
+    if (!Array.isArray(stepsArray) || stepsArray.length === 0) {
+      alert('Please enter at least one test step.');
+      return;
+    }
+    
+    const request: CreateTestCaseRequest = {
+      title: this.testCaseForm.value.title,
+      preconditions: this.testCaseForm.value.preconditions || undefined,
+      steps: stepsArray,
+      expectedResult: this.testCaseForm.value.expectedResult || undefined,
+      priority: this.testCaseForm.value.priority,
+      moduleId: this.testCaseForm.value.moduleId || undefined,
+      assignedToId: this.testCaseForm.value.assignedToId || undefined
+    };
+
+    this.loading = true;
+    this.testService.createTestCase(request).subscribe({
+      next: () => {
+        this.loadTestCases();
+        this.showTestCaseModal = false;
+        this.loading = false;
+      },
+      error: (err) => {
+        console.error('Error creating test case:', err);
+        alert('Error creating test case: ' + (err.error?.message || err.message || 'Unknown error'));
+        this.loading = false;
+      }
+    });
   }
 
   // Execution operations
@@ -368,5 +402,20 @@ export class DrillTestingComponent implements OnInit {
       'CRITICAL': 'bg-red-100 text-red-800'
     };
     return colors[priority] || 'bg-gray-100 text-gray-800';
+  }
+
+  // Custom validator for steps
+  static stepsValidator(control: any): { [key: string]: any } | null {
+    if (!control.value || !control.value.trim()) {
+      return { required: true };
+    }
+    const steps = typeof control.value === 'string' 
+      ? control.value.split('\n').filter((s: string) => s.trim())
+      : (control.value || []);
+    
+    if (!Array.isArray(steps) || steps.length === 0) {
+      return { required: true };
+    }
+    return null;
   }
 }

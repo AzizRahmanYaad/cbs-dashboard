@@ -281,15 +281,22 @@
       <form [formGroup]="testCaseForm" (ngSubmit)="createTestCase()">
         <div class="form-group">
           <label>Title *</label>
-          <input type="text" formControlName="title" class="form-input">
+          <input type="text" formControlName="title" class="form-input" [class.error]="testCaseForm.get('title')?.invalid && testCaseForm.get('title')?.touched">
+          <div class="error-message" *ngIf="testCaseForm.get('title')?.invalid && testCaseForm.get('title')?.touched">
+            <span *ngIf="testCaseForm.get('title')?.errors?.['required']">Title is required</span>
+            <span *ngIf="testCaseForm.get('title')?.errors?.['minlength']">Title must be at least 3 characters</span>
+          </div>
         </div>
         <div class="form-group">
           <label>Preconditions</label>
           <textarea formControlName="preconditions" class="form-input" rows="3"></textarea>
         </div>
         <div class="form-group">
-          <label>Steps (one per line)</label>
-          <textarea formControlName="steps" class="form-input" rows="5" placeholder="Enter steps separated by new lines"></textarea>
+          <label>Steps (one per line) *</label>
+          <textarea formControlName="steps" class="form-input" rows="5" placeholder="Enter steps separated by new lines" [class.error]="testCaseForm.get('steps')?.invalid && testCaseForm.get('steps')?.touched"></textarea>
+          <div class="error-message" *ngIf="testCaseForm.get('steps')?.invalid && testCaseForm.get('steps')?.touched">
+            <span *ngIf="testCaseForm.get('steps')?.errors?.['required']">At least one step is required (enter steps separated by new lines)</span>
+          </div>
         </div>
         <div class="form-group">
           <label>Expected Result</label>
@@ -321,8 +328,14 @@
           </div>
         </div>
         <div class="modal-actions">
-          <button type="button" class="btn-secondary" (click)="showTestCaseModal = false">Cancel</button>
-          <button type="submit" class="btn-primary">{{ selectedTestCase ? 'Update' : 'Create' }}</button>
+          <button type="button" class="btn-secondary" (click)="showTestCaseModal = false" [disabled]="loading">Cancel</button>
+          <button type="submit" class="btn-primary" [disabled]="loading || testCaseForm.invalid">
+            <span *ngIf="loading">Creating...</span>
+            <span *ngIf="!loading">{{ selectedTestCase ? 'Update' : 'Create' }}</span>
+          </button>
+        </div>
+        <div class="form-debug" *ngIf="testCaseForm.invalid && testCaseForm.touched" style="margin-top: 1rem; padding: 0.75rem; background: #fef2f2; border: 1px solid #fecaca; border-radius: 0.5rem; color: #991b1b; font-size: 0.875rem;">
+          Please fix the form errors above before submitting.
         </div>
       </form>
     </div>
