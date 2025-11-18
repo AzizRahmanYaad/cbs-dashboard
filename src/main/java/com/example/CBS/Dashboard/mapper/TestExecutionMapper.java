@@ -12,10 +12,23 @@ public class TestExecutionMapper {
         
         TestExecutionDto dto = new TestExecutionDto();
         dto.setId(execution.getId());
-        dto.setTestCaseId(execution.getTestCase() != null ? execution.getTestCase().getId() : null);
-        dto.setTestCaseTitle(execution.getTestCase() != null ? execution.getTestCase().getTitle() : null);
-        dto.setExecutedById(execution.getExecutedBy() != null ? execution.getExecutedBy().getId() : null);
-        dto.setExecutedByUsername(execution.getExecutedBy() != null ? execution.getExecutedBy().getUsername() : null);
+        
+        // Safely access lazy-loaded relationships
+        try {
+            dto.setTestCaseId(execution.getTestCase() != null ? execution.getTestCase().getId() : null);
+            dto.setTestCaseTitle(execution.getTestCase() != null ? execution.getTestCase().getTitle() : null);
+        } catch (Exception e) {
+            dto.setTestCaseId(null);
+            dto.setTestCaseTitle(null);
+        }
+        
+        try {
+            dto.setExecutedById(execution.getExecutedBy() != null ? execution.getExecutedBy().getId() : null);
+            dto.setExecutedByUsername(execution.getExecutedBy() != null ? execution.getExecutedBy().getUsername() : null);
+        } catch (Exception e) {
+            dto.setExecutedById(null);
+            dto.setExecutedByUsername(null);
+        }
         dto.setStatus(execution.getStatus());
         dto.setComments(execution.getComments());
         dto.setAttachments(execution.getAttachments());

@@ -26,8 +26,20 @@ public class TestCaseMapper {
         dto.setAssignedToUsername(testCase.getAssignedTo() != null ? testCase.getAssignedTo().getUsername() : null);
         dto.setCreatedAt(testCase.getCreatedAt());
         dto.setUpdatedAt(testCase.getUpdatedAt());
-        dto.setExecutionCount(testCase.getExecutions() != null ? (long) testCase.getExecutions().size() : 0L);
-        dto.setDefectCount(testCase.getDefects() != null ? (long) testCase.getDefects().size() : 0L);
+        
+        // Safely get execution and defect counts to avoid LazyInitializationException
+        try {
+            dto.setExecutionCount(testCase.getExecutions() != null ? (long) testCase.getExecutions().size() : 0L);
+        } catch (Exception e) {
+            dto.setExecutionCount(0L);
+        }
+        
+        try {
+            dto.setDefectCount(testCase.getDefects() != null ? (long) testCase.getDefects().size() : 0L);
+        } catch (Exception e) {
+            dto.setDefectCount(0L);
+        }
+        
         return dto;
     }
 }

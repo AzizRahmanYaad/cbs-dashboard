@@ -19,8 +19,12 @@ public interface DefectRepository extends JpaRepository<Defect, Long> {
     List<Defect> findByAssignedToId(Long assignedToId);
     List<Defect> findByReportedById(Long reportedById);
     
-    @Query("SELECT d FROM Defect d WHERE " +
-           "(:status IS NULL OR d.status = :status) AND " +
+    @Query("SELECT DISTINCT d FROM Defect d " +
+           "LEFT JOIN FETCH d.testCase " +
+           "LEFT JOIN FETCH d.testExecution " +
+           "LEFT JOIN FETCH d.reportedBy " +
+           "LEFT JOIN FETCH d.assignedTo " +
+           "WHERE (:status IS NULL OR d.status = :status) AND " +
            "(:severity IS NULL OR d.severity = :severity) AND " +
            "(:assignedToId IS NULL OR d.assignedTo.id = :assignedToId)")
     List<Defect> findByFilters(
@@ -28,5 +32,13 @@ public interface DefectRepository extends JpaRepository<Defect, Long> {
         @Param("severity") DefectSeverity severity,
         @Param("assignedToId") Long assignedToId
     );
+    
+    @Query("SELECT DISTINCT d FROM Defect d " +
+           "LEFT JOIN FETCH d.testCase " +
+           "LEFT JOIN FETCH d.testExecution " +
+           "LEFT JOIN FETCH d.reportedBy " +
+           "LEFT JOIN FETCH d.assignedTo")
+    @Override
+    List<Defect> findAll();
 }
 

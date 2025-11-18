@@ -19,8 +19,11 @@ public interface TestCaseRepository extends JpaRepository<TestCase, Long> {
     List<TestCase> findByPriority(Priority priority);
     List<TestCase> findByCreatedById(Long createdById);
     
-    @Query("SELECT tc FROM TestCase tc WHERE " +
-           "(:moduleId IS NULL OR tc.module.id = :moduleId) AND " +
+    @Query("SELECT DISTINCT tc FROM TestCase tc " +
+           "LEFT JOIN FETCH tc.module " +
+           "LEFT JOIN FETCH tc.createdBy " +
+           "LEFT JOIN FETCH tc.assignedTo " +
+           "WHERE (:moduleId IS NULL OR tc.module.id = :moduleId) AND " +
            "(:status IS NULL OR tc.status = :status) AND " +
            "(:assignedToId IS NULL OR tc.assignedTo.id = :assignedToId) AND " +
            "(:priority IS NULL OR tc.priority = :priority)")
@@ -31,9 +34,19 @@ public interface TestCaseRepository extends JpaRepository<TestCase, Long> {
         @Param("priority") Priority priority
     );
     
-    @Query("SELECT tc FROM TestCase tc WHERE " +
-           "LOWER(tc.title) LIKE LOWER(CONCAT('%', :searchTerm, '%')) OR " +
+    @Query("SELECT DISTINCT tc FROM TestCase tc " +
+           "LEFT JOIN FETCH tc.module " +
+           "LEFT JOIN FETCH tc.createdBy " +
+           "LEFT JOIN FETCH tc.assignedTo " +
+           "WHERE LOWER(tc.title) LIKE LOWER(CONCAT('%', :searchTerm, '%')) OR " +
            "LOWER(tc.preconditions) LIKE LOWER(CONCAT('%', :searchTerm, '%'))")
     List<TestCase> searchByTitleOrPreconditions(@Param("searchTerm") String searchTerm);
+    
+    @Query("SELECT DISTINCT tc FROM TestCase tc " +
+           "LEFT JOIN FETCH tc.module " +
+           "LEFT JOIN FETCH tc.createdBy " +
+           "LEFT JOIN FETCH tc.assignedTo")
+    @Override
+    List<TestCase> findAll();
 }
 
