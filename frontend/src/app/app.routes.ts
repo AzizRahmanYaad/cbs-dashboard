@@ -46,7 +46,7 @@ export const routes: Routes = [
       {
         path: 'drill-testing',
         component: DrillTestingComponent,
-        data: { roles: ['ROLE_DRILL_TESTING'] }
+        data: { roles: ['ROLE_DRILL_TESTING', 'ROLE_QA_LEAD', 'ROLE_TESTER', 'ROLE_MANAGER'] }
       },
       {
         path: 'daily-report',

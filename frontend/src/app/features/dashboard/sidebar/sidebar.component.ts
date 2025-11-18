@@ -44,10 +44,10 @@ export class SidebarComponent {
       requiredRoles: ['ROLE_TRAINING']
     },
     {
-      label: 'Drill Testing',
+      label: 'Test Management',
       icon: 'clipboard-document-check',
       route: '/dashboard/drill-testing',
-      requiredRoles: ['ROLE_DRILL_TESTING']
+      requiredRoles: ['ROLE_DRILL_TESTING', 'ROLE_QA_LEAD', 'ROLE_TESTER', 'ROLE_MANAGER']
     },
     {
       label: 'Daily Report',

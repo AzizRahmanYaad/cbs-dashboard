@@ -8,7 +8,10 @@ VALUES
     ('ROLE_USER'),
     ('ROLE_TRAINING'),
     ('ROLE_DRILL_TESTING'),
-    ('ROLE_DAILY_REPORT')
+    ('ROLE_DAILY_REPORT'),
+    ('ROLE_QA_LEAD'),
+    ('ROLE_TESTER'),
+    ('ROLE_MANAGER')
 ON CONFLICT (name) DO NOTHING;
 
 -- Create default administrator

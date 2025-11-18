@@ -1,0 +1,423 @@
+<div class="test-management-container">
+  <div class="header-section">
+    <div class="title-section">
+      <h1 class="page-title">Test Management</h1>
+      <p class="page-subtitle">Plan, execute, and track software tests</p>
+    </div>
+    <div class="header-actions">
+      <button class="btn-primary" (click)="openTestCaseModal()">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="icon">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+        </svg>
+        New Test Case
+      </button>
+    </div>
+  </div>
+
+  <!-- Tabs -->
+  <div class="tabs-container">
+    <button 
+      class="tab" 
+      [class.active]="activeTab === 'modules'"
+      (click)="activeTab = 'modules'">
+      Modules
+    </button>
+    <button 
+      class="tab" 
+      [class.active]="activeTab === 'test-cases'"
+      (click)="activeTab = 'test-cases'">
+      Test Cases
+    </button>
+    <button 
+      class="tab" 
+      [class.active]="activeTab === 'executions'"
+      (click)="activeTab = 'executions'">
+      Executions
+    </button>
+    <button 
+      class="tab" 
+      [class.active]="activeTab === 'defects'"
+      (click)="activeTab = 'defects'">
+      Defects
+    </button>
+    <button 
+      class="tab" 
+      [class.active]="activeTab === 'reports'"
+      (click)="activeTab = 'reports'">
+      Reports
+    </button>
+  </div>
+
+  <!-- Modules Tab -->
+  <div class="tab-content" *ngIf="activeTab === 'modules'">
+    <div class="section-header">
+      <h2>Test Modules</h2>
+      <button class="btn-secondary" (click)="openModuleModal()">+ New Module</button>
+    </div>
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      <div class="card" *ngFor="let module of modules">
+        <h3 class="card-title">{{ module.name }}</h3>
+        <p class="card-description">{{ module.description || 'No description' }}</p>
+        <div class="card-footer">
+          <span class="text-sm text-gray-500">Created by {{ module.createdByUsername }}</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Test Cases Tab -->
+  <div class="tab-content" *ngIf="activeTab === 'test-cases'">
+    <div class="section-header">
+      <div class="search-box">
+        <input 
+          type="text" 
+          placeholder="Search test cases..." 
+          [(ngModel)]="searchTerm"
+          (keyup.enter)="searchTestCases()"
+          class="search-input">
+        <button class="btn-secondary" (click)="searchTestCases()">Search</button>
+      </div>
+      <button class="btn-secondary" (click)="openTestCaseModal()">+ New Test Case</button>
+    </div>
+    
+    <div class="table-container">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Title</th>
+            <th>Module</th>
+            <th>Priority</th>
+            <th>Status</th>
+            <th>Assigned To</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let testCase of testCases">
+            <td>{{ testCase.id }}</td>
+            <td>
+              <a (click)="openTestCaseModal(testCase)" class="link">{{ testCase.title }}</a>
+            </td>
+            <td>{{ testCase.moduleName || 'N/A' }}</td>
+            <td>
+              <span [class]="'badge ' + getPriorityColor(testCase.priority)">
+                {{ testCase.priority }}
+              </span>
+            </td>
+            <td>
+              <span [class]="'badge ' + getStatusColor(testCase.status)">
+                {{ testCase.status }}
+              </span>
+            </td>
+            <td>{{ testCase.assignedToUsername || 'Unassigned' }}</td>
+            <td>
+              <button class="btn-icon" (click)="openExecutionModal(testCase.id)" title="Execute">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M5.25 5.653c0-.856.917-1.398 1.667-.986l11.54 6.348a1.125 1.125 0 010 1.971l-11.54 6.347a1.125 1.125 0 01-1.667-.986V5.653z" />
+                </svg>
+              </button>
+              <button class="btn-icon" (click)="openCommentModal('test-case', testCase.id)" title="Comments">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M8.625 12a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H8.25m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H12m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0h-.375M21 12c0 4.556-4.03 8.25-9 8.25a9.764 9.764 0 01-2.555-.337A5.972 5.972 0 015.41 20.97a5.969 5.969 0 01-.474-.065 4.48 4.48 0 00.978-2.025c.09-.457-.133-.901-.467-1.226C3.93 16.178 3 14.189 3 12c0-4.556 4.03-8.25 9-8.25s9 3.694 9 8.25z" />
+                </svg>
+              </button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Executions Tab -->
+  <div class="tab-content" *ngIf="activeTab === 'executions'">
+    <div class="section-header">
+      <h2>Test Executions</h2>
+      <button class="btn-secondary" (click)="openExecutionModal()">+ New Execution</button>
+    </div>
+    
+    <div class="table-container">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Test Case</th>
+            <th>Status</th>
+            <th>Executed By</th>
+            <th>Date</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let execution of executions">
+            <td>{{ execution.id }}</td>
+            <td>{{ execution.testCaseTitle }}</td>
+            <td>
+              <span [class]="'badge ' + getStatusColor(execution.status)">
+                {{ execution.status }}
+              </span>
+            </td>
+            <td>{{ execution.executedByUsername }}</td>
+            <td>{{ execution.executedAt | date:'short' }}</td>
+            <td>
+              <button 
+                *ngIf="execution.status === ExecutionStatus.FAILED"
+                class="btn-sm btn-danger" 
+                (click)="openDefectModal(execution.testCaseId, execution.id)">
+                Log Defect
+              </button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Defects Tab -->
+  <div class="tab-content" *ngIf="activeTab === 'defects'">
+    <div class="section-header">
+      <h2>Defects</h2>
+      <button class="btn-secondary" (click)="openDefectModal()">+ New Defect</button>
+    </div>
+    
+    <div class="table-container">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Title</th>
+            <th>Severity</th>
+            <th>Status</th>
+            <th>Assigned To</th>
+            <th>Reported By</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let defect of defects">
+            <td>{{ defect.id }}</td>
+            <td>{{ defect.title }}</td>
+            <td>
+              <span [class]="'badge ' + getPriorityColor(defect.severity)">
+                {{ defect.severity }}
+              </span>
+            </td>
+            <td>
+              <span [class]="'badge ' + getStatusColor(defect.status)">
+                {{ defect.status }}
+              </span>
+            </td>
+            <td>{{ defect.assignedToUsername || 'Unassigned' }}</td>
+            <td>{{ defect.reportedByUsername }}</td>
+            <td>
+              <button class="btn-icon" (click)="openCommentModal('defect', defect.id)" title="Comments">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M8.625 12a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H8.25m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H12m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0h-.375M21 12c0 4.556-4.03 8.25-9 8.25a9.764 9.764 0 01-2.555-.337A5.972 5.972 0 015.41 20.97a5.969 5.969 0 01-.474-.065 4.48 4.48 0 00.978-2.025c.09-.457-.133-.901-.467-1.226C3.93 16.178 3 14.189 3 12c0-4.556 4.03-8.25 9-8.25s9 3.694 9 8.25z" />
+                </svg>
+              </button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Reports Tab -->
+  <div class="tab-content" *ngIf="activeTab === 'reports' && report">
+    <div class="report-grid">
+      <div class="stat-card">
+        <h3>Total Test Cases</h3>
+        <p class="stat-value">{{ report.totalTestCases }}</p>
+      </div>
+      <div class="stat-card">
+        <h3>Total Executions</h3>
+        <p class="stat-value">{{ report.totalExecutions }}</p>
+      </div>
+      <div class="stat-card">
+        <h3>Passed</h3>
+        <p class="stat-value text-green-600">{{ report.passedCount }}</p>
+      </div>
+      <div class="stat-card">
+        <h3>Failed</h3>
+        <p class="stat-value text-red-600">{{ report.failedCount }}</p>
+      </div>
+      <div class="stat-card">
+        <h3>Blocked</h3>
+        <p class="stat-value text-yellow-600">{{ report.blockedCount }}</p>
+      </div>
+      <div class="stat-card">
+        <h3>Total Defects</h3>
+        <p class="stat-value">{{ report.totalDefects }}</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modals -->
+  <!-- Module Modal -->
+  <div class="modal-overlay" *ngIf="showModuleModal" (click)="showModuleModal = false">
+    <div class="modal" (click)="$event.stopPropagation()">
+      <h2>Create Test Module</h2>
+      <form [formGroup]="moduleForm" (ngSubmit)="createModule()">
+        <div class="form-group">
+          <label>Name *</label>
+          <input type="text" formControlName="name" class="form-input">
+        </div>
+        <div class="form-group">
+          <label>Description</label>
+          <textarea formControlName="description" class="form-input" rows="3"></textarea>
+        </div>
+        <div class="modal-actions">
+          <button type="button" class="btn-secondary" (click)="showModuleModal = false">Cancel</button>
+          <button type="submit" class="btn-primary">Create</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Test Case Modal -->
+  <div class="modal-overlay" *ngIf="showTestCaseModal" (click)="showTestCaseModal = false">
+    <div class="modal modal-large" (click)="$event.stopPropagation()">
+      <h2>{{ selectedTestCase ? 'Edit' : 'Create' }} Test Case</h2>
+      <form [formGroup]="testCaseForm" (ngSubmit)="createTestCase()">
+        <div class="form-group">
+          <label>Title *</label>
+          <input type="text" formControlName="title" class="form-input">
+        </div>
+        <div class="form-group">
+          <label>Preconditions</label>
+          <textarea formControlName="preconditions" class="form-input" rows="3"></textarea>
+        </div>
+        <div class="form-group">
+          <label>Steps (one per line)</label>
+          <textarea formControlName="steps" class="form-input" rows="5" placeholder="Enter steps separated by new lines"></textarea>
+        </div>
+        <div class="form-group">
+          <label>Expected Result</label>
+          <textarea formControlName="expectedResult" class="form-input" rows="3"></textarea>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Priority *</label>
+            <select formControlName="priority" class="form-input">
+              <option [value]="Priority.LOW">Low</option>
+              <option [value]="Priority.MEDIUM">Medium</option>
+              <option [value]="Priority.HIGH">High</option>
+              <option [value]="Priority.CRITICAL">Critical</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Module</label>
+            <select formControlName="moduleId" class="form-input">
+              <option [value]="null">None</option>
+              <option *ngFor="let module of modules" [value]="module.id">{{ module.name }}</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Assign To</label>
+            <select formControlName="assignedToId" class="form-input">
+              <option [value]="null">Unassigned</option>
+              <option *ngFor="let user of users" [value]="user.id">{{ user.username }}</option>
+            </select>
+          </div>
+        </div>
+        <div class="modal-actions">
+          <button type="button" class="btn-secondary" (click)="showTestCaseModal = false">Cancel</button>
+          <button type="submit" class="btn-primary">{{ selectedTestCase ? 'Update' : 'Create' }}</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Execution Modal -->
+  <div class="modal-overlay" *ngIf="showExecutionModal" (click)="showExecutionModal = false">
+    <div class="modal" (click)="$event.stopPropagation()">
+      <h2>Execute Test Case</h2>
+      <form [formGroup]="executionForm" (ngSubmit)="createExecution()">
+        <div class="form-group">
+          <label>Test Case *</label>
+          <select formControlName="testCaseId" class="form-input">
+            <option [value]="null">Select Test Case</option>
+            <option *ngFor="let tc of testCases" [value]="tc.id">{{ tc.title }}</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Status *</label>
+          <select formControlName="status" class="form-input">
+            <option [value]="ExecutionStatus.PASSED">Passed</option>
+            <option [value]="ExecutionStatus.FAILED">Failed</option>
+            <option [value]="ExecutionStatus.BLOCKED">Blocked</option>
+            <option [value]="ExecutionStatus.RETEST">Retest</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Comments</label>
+          <textarea formControlName="comments" class="form-input" rows="4"></textarea>
+        </div>
+        <div class="modal-actions">
+          <button type="button" class="btn-secondary" (click)="showExecutionModal = false">Cancel</button>
+          <button type="submit" class="btn-primary">Submit</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Defect Modal -->
+  <div class="modal-overlay" *ngIf="showDefectModal" (click)="showDefectModal = false">
+    <div class="modal" (click)="$event.stopPropagation()">
+      <h2>Log Defect</h2>
+      <form [formGroup]="defectForm" (ngSubmit)="createDefect()">
+        <div class="form-group">
+          <label>Title *</label>
+          <input type="text" formControlName="title" class="form-input">
+        </div>
+        <div class="form-group">
+          <label>Description</label>
+          <textarea formControlName="description" class="form-input" rows="4"></textarea>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Severity *</label>
+            <select formControlName="severity" class="form-input">
+              <option [value]="DefectSeverity.LOW">Low</option>
+              <option [value]="DefectSeverity.MEDIUM">Medium</option>
+              <option [value]="DefectSeverity.HIGH">High</option>
+              <option [value]="DefectSeverity.CRITICAL">Critical</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Assign To</label>
+            <select formControlName="assignedToId" class="form-input">
+              <option [value]="null">Unassigned</option>
+              <option *ngFor="let user of users" [value]="user.id">{{ user.username }}</option>
+            </select>
+          </div>
+        </div>
+        <div class="modal-actions">
+          <button type="button" class="btn-secondary" (click)="showDefectModal = false">Cancel</button>
+          <button type="submit" class="btn-primary">Create</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Comment Modal -->
+  <div class="modal-overlay" *ngIf="showCommentModal" (click)="showCommentModal = false">
+    <div class="modal" (click)="$event.stopPropagation()">
+      <h2>Comments</h2>
+      <div class="comments-list">
+        <div class="comment-item" *ngFor="let comment of comments">
+          <div class="comment-header">
+            <strong>{{ comment.createdByUsername }}</strong>
+            <span class="text-sm text-gray-500">{{ comment.createdAt | date:'short' }}</span>
+          </div>
+          <div class="comment-content">{{ comment.content }}</div>
+        </div>
+      </div>
+      <form [formGroup]="commentForm" (ngSubmit)="createComment()" class="comment-form">
+        <textarea formControlName="content" class="form-input" rows="3" placeholder="Add a comment..."></textarea>
+        <button type="submit" class="btn-primary">Post Comment</button>
+      </form>
+    </div>
+  </div>
+</div>
+

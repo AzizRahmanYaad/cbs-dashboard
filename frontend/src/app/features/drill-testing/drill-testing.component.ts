@@ -1,54 +1,372 @@
-import { Component } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, FormArray, Validators } from '@angular/forms';
+import { TestManagementService } from '../../core/services/test-management.service';
+import { AdminUserService } from '../../core/services/admin-user.service';
+import {
+  TestModule,
+  TestCase,
+  TestExecution,
+  Defect,
+  Comment,
+  TestReport,
+  Priority,
+  TestCaseStatus,
+  ExecutionStatus,
+  DefectStatus,
+  DefectSeverity,
+  CreateTestCaseRequest,
+  CreateTestExecutionRequest,
+  CreateDefectRequest,
+  CreateCommentRequest,
+  CreateTestModuleRequest
+} from '../../core/models/test';
+import { User } from '../../core/models';
 
 @Component({
   selector: 'app-drill-testing',
   standalone: true,
-  imports: [CommonModule],
-  template: `
-    <div class="module-placeholder">
-      <div class="placeholder-icon">
-        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M11.35 3.836c-.065.21-.1.433-.1.664 0 .414.336.75.75.75h4.5a.75.75 0 00.75-.75 2.25 2.25 0 00-.1-.664m-5.8 0A2.251 2.251 0 0113.5 2.25H15c1.012 0 1.867.668 2.15 1.586m-5.8 0c-.376.023-.75.05-1.124.08C9.095 4.01 8.25 4.973 8.25 6.108V8.25m8.9-4.414c.376.023.75.05 1.124.08 1.131.094 1.976 1.057 1.976 2.192V16.5A2.25 2.25 0 0118 18.75h-2.25m-7.5-10.5H4.875c-.621 0-1.125.504-1.125 1.125v11.25c0 .621.504 1.125 1.125 1.125h9.75c.621 0 1.125-.504 1.125-1.125V18.75m-7.5-10.5h6.375c.621 0 1.125.504 1.125 1.125v9.25m-12 0A2.25 2.25 0 005.25 18.75h13.5A2.25 2.25 0 0021 16.5v-13.5" />
-        </svg>
-      </div>
-      <h1>Drill Testing Module</h1>
-      <p>This module is coming soon! Conduct and manage safety drills and emergency preparedness tests.</p>
-    </div>
-  `,
-  styles: [`
-    .module-placeholder {
-      text-align: center;
-      padding: 4rem 2rem;
-      background: white;
-      border-radius: 20px;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-    }
-    .placeholder-icon {
-      width: 120px;
-      height: 120px;
-      margin: 0 auto 2rem;
-      background: linear-gradient(135deg, #4caf50, #388e3c);
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      svg {
-        width: 60px;
-        height: 60px;
-        color: white;
-      }
-    }
-    h1 {
-      font-size: 2rem;
-      color: #1f2937;
-      margin: 0 0 1rem 0;
-    }
-    p {
-      font-size: 1.1rem;
-      color: #6b7280;
-      margin: 0;
-    }
-  `]
+  imports: [CommonModule, FormsModule, ReactiveFormsModule],
+  templateUrl: './drill-testing.component.html',
+  styleUrls: ['./drill-testing.component.scss']
 })
-export class DrillTestingComponent {}
+export class DrillTestingComponent implements OnInit {
+  private testService = inject(TestManagementService);
+  private userService = inject(AdminUserService);
+  private fb = inject(FormBuilder);
+
+  activeTab: 'modules' | 'test-cases' | 'executions' | 'defects' | 'reports' = 'test-cases';
+  
+  // Data
+  modules: TestModule[] = [];
+  testCases: TestCase[] = [];
+  executions: TestExecution[] = [];
+  defects: Defect[] = [];
+  users: User[] = [];
+  report: TestReport | null = null;
+  
+  // Selected items
+  selectedModule: TestModule | null = null;
+  selectedTestCase: TestCase | null = null;
+  selectedExecution: TestExecution | null = null;
+  selectedDefect: Defect | null = null;
+  
+  // Forms
+  moduleForm: FormGroup;
+  testCaseForm: FormGroup;
+  executionForm: FormGroup;
+  defectForm: FormGroup;
+  commentForm: FormGroup;
+  
+  // UI States
+  showModuleModal = false;
+  showTestCaseModal = false;
+  showExecutionModal = false;
+  showDefectModal = false;
+  showCommentModal = false;
+  loading = false;
+  searchTerm = '';
+  
+  // Comments
+  comments: Comment[] = [];
+  commentContext: 'test-case' | 'defect' | null = null;
+  commentContextId: number | null = null;
+  
+  // Enums for templates
+  Priority = Priority;
+  TestCaseStatus = TestCaseStatus;
+  ExecutionStatus = ExecutionStatus;
+  DefectStatus = DefectStatus;
+  DefectSeverity = DefectSeverity;
+
+  constructor() {
+    this.moduleForm = this.fb.group({
+      name: ['', Validators.required],
+      description: ['']
+    });
+    
+    this.testCaseForm = this.fb.group({
+      title: ['', Validators.required],
+      preconditions: [''],
+      steps: [''],
+      expectedResult: [''],
+      priority: [Priority.MEDIUM, Validators.required],
+      moduleId: [null],
+      assignedToId: [null]
+    });
+    
+    this.executionForm = this.fb.group({
+      testCaseId: [null, Validators.required],
+      status: [ExecutionStatus.PASSED, Validators.required],
+      comments: [''],
+      attachments: [[]]
+    });
+    
+    this.defectForm = this.fb.group({
+      title: ['', Validators.required],
+      description: [''],
+      severity: [DefectSeverity.MEDIUM, Validators.required],
+      testCaseId: [null],
+      testExecutionId: [null],
+      assignedToId: [null]
+    });
+    
+    this.commentForm = this.fb.group({
+      content: ['', Validators.required]
+    });
+  }
+
+  ngOnInit(): void {
+    this.loadData();
+    this.loadUsers();
+  }
+
+  loadData(): void {
+    this.loading = true;
+    this.testService.getAllModules().subscribe({
+      next: (modules) => {
+        this.modules = modules;
+        this.loading = false;
+      },
+      error: (err) => {
+        console.error('Error loading modules:', err);
+        this.loading = false;
+      }
+    });
+    
+    this.loadTestCases();
+    this.loadExecutions();
+    this.loadDefects();
+    this.loadReport();
+  }
+
+  loadTestCases(): void {
+    this.testService.getAllTestCases().subscribe({
+      next: (testCases) => {
+        this.testCases = testCases;
+      },
+      error: (err) => console.error('Error loading test cases:', err)
+    });
+  }
+
+  loadExecutions(): void {
+    this.testService.getAllExecutions().subscribe({
+      next: (executions) => {
+        this.executions = executions;
+      },
+      error: (err) => console.error('Error loading executions:', err)
+    });
+  }
+
+  loadDefects(): void {
+    this.testService.getAllDefects().subscribe({
+      next: (defects) => {
+        this.defects = defects;
+      },
+      error: (err) => console.error('Error loading defects:', err)
+    });
+  }
+
+  loadUsers(): void {
+    this.userService.getUsers().subscribe({
+      next: (users) => {
+        this.users = users;
+      },
+      error: (err) => console.error('Error loading users:', err)
+    });
+  }
+
+  loadReport(): void {
+    this.testService.generateReport().subscribe({
+      next: (report) => {
+        this.report = report;
+      },
+      error: (err) => console.error('Error loading report:', err)
+    });
+  }
+
+  // Module operations
+  openModuleModal(): void {
+    this.moduleForm.reset();
+    this.showModuleModal = true;
+  }
+
+  createModule(): void {
+    if (this.moduleForm.valid) {
+      const request: CreateTestModuleRequest = this.moduleForm.value;
+      this.testService.createModule(request).subscribe({
+        next: () => {
+          this.loadData();
+          this.showModuleModal = false;
+        },
+        error: (err) => console.error('Error creating module:', err)
+      });
+    }
+  }
+
+  // Test Case operations
+  openTestCaseModal(testCase?: TestCase): void {
+    if (testCase) {
+      this.selectedTestCase = testCase;
+      this.testCaseForm.patchValue({
+        title: testCase.title,
+        preconditions: testCase.preconditions,
+        steps: testCase.steps?.join('\n') || '',
+        expectedResult: testCase.expectedResult,
+        priority: testCase.priority,
+        moduleId: testCase.moduleId,
+        assignedToId: testCase.assignedToId
+      });
+    } else {
+      this.selectedTestCase = null;
+      this.testCaseForm.reset({
+        priority: Priority.MEDIUM,
+        steps: ''
+      });
+    }
+    this.showTestCaseModal = true;
+  }
+
+  createTestCase(): void {
+    if (this.testCaseForm.valid) {
+      const stepsValue = this.testCaseForm.value.steps;
+      const stepsArray = typeof stepsValue === 'string' 
+        ? stepsValue.split('\n').filter(s => s.trim())
+        : (stepsValue || []);
+      
+      const request: CreateTestCaseRequest = {
+        ...this.testCaseForm.value,
+        steps: stepsArray
+      };
+      this.testService.createTestCase(request).subscribe({
+        next: () => {
+          this.loadTestCases();
+          this.showTestCaseModal = false;
+        },
+        error: (err) => console.error('Error creating test case:', err)
+      });
+    }
+  }
+
+  // Execution operations
+  openExecutionModal(testCaseId?: number): void {
+    this.executionForm.reset({
+      testCaseId: testCaseId || null,
+      status: ExecutionStatus.PASSED
+    });
+    this.showExecutionModal = true;
+  }
+
+  createExecution(): void {
+    if (this.executionForm.valid) {
+      const request: CreateTestExecutionRequest = this.executionForm.value;
+      this.testService.createExecution(request).subscribe({
+        next: () => {
+          this.loadExecutions();
+          this.showExecutionModal = false;
+        },
+        error: (err) => console.error('Error creating execution:', err)
+      });
+    }
+  }
+
+  // Defect operations
+  openDefectModal(testCaseId?: number, executionId?: number): void {
+    this.defectForm.reset({
+      testCaseId: testCaseId || null,
+      testExecutionId: executionId || null,
+      severity: DefectSeverity.MEDIUM
+    });
+    this.showDefectModal = true;
+  }
+
+  createDefect(): void {
+    if (this.defectForm.valid) {
+      const request: CreateDefectRequest = this.defectForm.value;
+      this.testService.createDefect(request).subscribe({
+        next: () => {
+          this.loadDefects();
+          this.showDefectModal = false;
+        },
+        error: (err) => console.error('Error creating defect:', err)
+      });
+    }
+  }
+
+  // Comment operations
+  openCommentModal(context: 'test-case' | 'defect', id: number): void {
+    this.commentContext = context;
+    this.commentContextId = id;
+    this.commentForm.reset();
+    this.loadComments(context, id);
+    this.showCommentModal = true;
+  }
+
+  loadComments(context: 'test-case' | 'defect', id: number): void {
+    if (context === 'test-case') {
+      this.testService.getCommentsByTestCase(id).subscribe({
+        next: (comments) => this.comments = comments,
+        error: (err) => console.error('Error loading comments:', err)
+      });
+    } else {
+      this.testService.getCommentsByDefect(id).subscribe({
+        next: (comments) => this.comments = comments,
+        error: (err) => console.error('Error loading comments:', err)
+      });
+    }
+  }
+
+  createComment(): void {
+    if (this.commentForm.valid && this.commentContext && this.commentContextId) {
+      const request: CreateCommentRequest = {
+        content: this.commentForm.value.content,
+        [this.commentContext === 'test-case' ? 'testCaseId' : 'defectId']: this.commentContextId
+      };
+      this.testService.createComment(request).subscribe({
+        next: () => {
+          this.loadComments(this.commentContext!, this.commentContextId!);
+          this.commentForm.reset();
+        },
+        error: (err) => console.error('Error creating comment:', err)
+      });
+    }
+  }
+
+  searchTestCases(): void {
+    if (this.searchTerm.trim()) {
+      this.testService.searchTestCases(this.searchTerm).subscribe({
+        next: (testCases) => this.testCases = testCases,
+        error: (err) => console.error('Error searching:', err)
+      });
+    } else {
+      this.loadTestCases();
+    }
+  }
+
+  getStatusColor(status: string): string {
+    const colors: { [key: string]: string } = {
+      'PASSED': 'bg-green-100 text-green-800',
+      'FAILED': 'bg-red-100 text-red-800',
+      'BLOCKED': 'bg-yellow-100 text-yellow-800',
+      'RETEST': 'bg-blue-100 text-blue-800',
+      'NEW': 'bg-gray-100 text-gray-800',
+      'IN_PROGRESS': 'bg-blue-100 text-blue-800',
+      'RESOLVED': 'bg-green-100 text-green-800',
+      'CLOSED': 'bg-gray-100 text-gray-800',
+      'DRAFT': 'bg-gray-100 text-gray-800',
+      'APPROVED': 'bg-green-100 text-green-800',
+      'ARCHIVED': 'bg-gray-100 text-gray-800'
+    };
+    return colors[status] || 'bg-gray-100 text-gray-800';
+  }
+
+  getPriorityColor(priority: string): string {
+    const colors: { [key: string]: string } = {
+      'LOW': 'bg-blue-100 text-blue-800',
+      'MEDIUM': 'bg-yellow-100 text-yellow-800',
+      'HIGH': 'bg-orange-100 text-orange-800',
+      'CRITICAL': 'bg-red-100 text-red-800'
+    };
+    return colors[priority] || 'bg-gray-100 text-gray-800';
+  }
+}
