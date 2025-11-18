@@ -23,7 +23,11 @@ public class TestModuleController {
     public ResponseEntity<TestModuleDto> createModule(
             @Valid @RequestBody CreateTestModuleRequest request,
             Authentication authentication) {
-        TestModuleDto module = testModuleService.createModule(request, authentication.getName());
+        if (authentication == null || authentication.getName() == null) {
+            throw new RuntimeException("Authentication required");
+        }
+        String username = authentication.getName();
+        TestModuleDto module = testModuleService.createModule(request, username);
         return ResponseEntity.status(HttpStatus.CREATED).body(module);
     }
     

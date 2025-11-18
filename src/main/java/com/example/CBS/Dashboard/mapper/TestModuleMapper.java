@@ -14,8 +14,22 @@ public class TestModuleMapper {
         dto.setId(module.getId());
         dto.setName(module.getName());
         dto.setDescription(module.getDescription());
-        dto.setCreatedById(module.getCreatedBy() != null ? module.getCreatedBy().getId() : null);
-        dto.setCreatedByUsername(module.getCreatedBy() != null ? module.getCreatedBy().getUsername() : null);
+        
+        // Safely access lazy-loaded createdBy relationship
+        try {
+            if (module.getCreatedBy() != null) {
+                dto.setCreatedById(module.getCreatedBy().getId());
+                dto.setCreatedByUsername(module.getCreatedBy().getUsername());
+            } else {
+                dto.setCreatedById(null);
+                dto.setCreatedByUsername(null);
+            }
+        } catch (Exception e) {
+            // Handle LazyInitializationException
+            dto.setCreatedById(null);
+            dto.setCreatedByUsername(null);
+        }
+        
         dto.setCreatedAt(module.getCreatedAt());
         dto.setUpdatedAt(module.getUpdatedAt());
         return dto;

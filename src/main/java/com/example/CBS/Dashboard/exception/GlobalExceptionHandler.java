@@ -87,9 +87,23 @@ public class GlobalExceptionHandler {
     
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorResponse> handleGlobalException(Exception ex) {
+        // Log the full exception for debugging
+        ex.printStackTrace();
+        System.err.println("Exception: " + ex.getClass().getName());
+        System.err.println("Message: " + ex.getMessage());
+        if (ex.getCause() != null) {
+            System.err.println("Cause: " + ex.getCause().getMessage());
+        }
+        
+        // Return detailed error message (in production, you might want to hide this)
+        String errorMessage = ex.getMessage() != null ? ex.getMessage() : "An unexpected error occurred";
+        if (ex.getCause() != null && ex.getCause().getMessage() != null) {
+            errorMessage += " - Cause: " + ex.getCause().getMessage();
+        }
+        
         ErrorResponse error = new ErrorResponse(
                 HttpStatus.INTERNAL_SERVER_ERROR.value(),
-                "An unexpected error occurred",
+                errorMessage,
                 LocalDateTime.now()
         );
         return new ResponseEntity<>(error, HttpStatus.INTERNAL_SERVER_ERROR);

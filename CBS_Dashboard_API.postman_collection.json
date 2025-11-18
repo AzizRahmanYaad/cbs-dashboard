@@ -1,0 +1,369 @@
+{
+	"info": {
+		"name": "CBS Dashboard API",
+		"description": "API endpoints for CBS Dashboard Test Management",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"variable": [
+		{
+			"key": "baseUrl",
+			"value": "http://72.61.116.191:8090",
+			"type": "string"
+		},
+		{
+			"key": "accessToken",
+			"value": "",
+			"type": "string"
+		}
+	],
+	"item": [
+		{
+			"name": "Authentication",
+			"item": [
+				{
+					"name": "Login",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 200) {",
+									"    var jsonData = pm.response.json();",
+									"    pm.collectionVariables.set(\"accessToken\", jsonData.accessToken);",
+									"    console.log(\"Token saved:\", jsonData.accessToken);",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"username\": \"admin\",\n  \"password\": \"admin123\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/auth/login",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "auth", "login"]
+						}
+					}
+				},
+				{
+					"name": "Get Current User",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{accessToken}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/auth/me",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "auth", "me"]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "Test Modules",
+			"item": [
+				{
+					"name": "Get All Modules",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{accessToken}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/test/modules",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "test", "modules"]
+						}
+					}
+				},
+				{
+					"name": "Create Module",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{accessToken}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"name\": \"Module 1\",\n  \"description\": \"Test module description\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/test/modules",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "test", "modules"]
+						}
+					}
+				},
+				{
+					"name": "Get Module by ID",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{accessToken}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/test/modules/1",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "test", "modules", "1"]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "Test Cases",
+			"item": [
+				{
+					"name": "Get All Test Cases",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{accessToken}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/test/test-cases",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "test", "test-cases"]
+						}
+					}
+				},
+				{
+					"name": "Create Test Case",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{accessToken}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"title\": \"Test Case 1\",\n  \"preconditions\": \"Preconditions here\",\n  \"steps\": [\"Step 1\", \"Step 2\", \"Step 3\"],\n  \"expectedResult\": \"Expected result\",\n  \"priority\": \"HIGH\",\n  \"moduleId\": 1,\n  \"assignedToId\": 1\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/test/test-cases",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "test", "test-cases"]
+						}
+					}
+				},
+				{
+					"name": "Search Test Cases",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{accessToken}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/test/test-cases/search?searchTerm=test",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "test", "test-cases", "search"],
+							"query": [
+								{
+									"key": "searchTerm",
+									"value": "test"
+								}
+							]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "Test Executions",
+			"item": [
+				{
+					"name": "Get All Executions",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{accessToken}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/test/executions",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "test", "executions"]
+						}
+					}
+				},
+				{
+					"name": "Create Execution",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{accessToken}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"testCaseId\": 1,\n  \"status\": \"PASSED\",\n  \"comments\": \"Execution comments\",\n  \"attachments\": []\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/test/executions",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "test", "executions"]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "Defects",
+			"item": [
+				{
+					"name": "Get All Defects",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{accessToken}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/test/defects",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "test", "defects"]
+						}
+					}
+				},
+				{
+					"name": "Create Defect",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{accessToken}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"title\": \"Defect Title\",\n  \"description\": \"Defect description\",\n  \"severity\": \"HIGH\",\n  \"testCaseId\": 1\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/test/defects",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "test", "defects"]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "Reports",
+			"item": [
+				{
+					"name": "Generate Report",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{accessToken}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/test/reports",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "test", "reports"]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "Admin Users",
+			"item": [
+				{
+					"name": "Get All Users",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{accessToken}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/admin/users",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "admin", "users"]
+						}
+					}
+				},
+				{
+					"name": "Get All Roles",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{accessToken}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/admin/roles",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "admin", "roles"]
+						}
+					}
+				}
+			]
+		}
+	]
+}
+

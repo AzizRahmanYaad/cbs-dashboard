@@ -34,12 +34,34 @@ public class TestModuleService {
         module.setCreatedBy(user);
         
         TestModule saved = testModuleRepository.save(module);
+        
+        // Force initialization of lazy-loaded relationships within transaction
+        if (saved.getCreatedBy() != null) {
+            // Access the relationship to force initialization
+            saved.getCreatedBy().getId();
+            saved.getCreatedBy().getUsername();
+        }
+        
         return mapper.toDto(saved);
     }
     
     @Transactional(readOnly = true)
     public List<TestModuleDto> getAllModules() {
-        return testModuleRepository.findAll().stream()
+        List<TestModule> modules = testModuleRepository.findAll();
+        
+        // Force initialization of lazy-loaded relationships within transaction
+        modules.forEach(module -> {
+            if (module.getCreatedBy() != null) {
+                try {
+                    module.getCreatedBy().getId();
+                    module.getCreatedBy().getUsername();
+                } catch (Exception e) {
+                    // Ignore if already initialized or not available
+                }
+            }
+        });
+        
+        return modules.stream()
             .map(mapper::toDto)
             .collect(Collectors.toList());
     }
