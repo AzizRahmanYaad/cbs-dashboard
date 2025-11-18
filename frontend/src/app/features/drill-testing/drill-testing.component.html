@@ -1,8 +1,8 @@
 <div class="test-management-container">
   <div class="header-section">
     <div class="title-section">
-      <h1 class="page-title">Test Management</h1>
-      <p class="page-subtitle">Plan, execute, and track software tests</p>
+      <h1 class="page-title">Drill Test</h1>
+      <p class="page-subtitle">Plan, execute, and track drill tests and issues</p>
     </div>
     <div class="header-actions">
       <button class="btn-primary" (click)="openTestCaseModal()">
@@ -19,31 +19,31 @@
     <button 
       class="tab" 
       [class.active]="activeTab === 'modules'"
-      (click)="activeTab = 'modules'">
+      (click)="activeTab = 'modules'; onTabChange()">
       Modules
     </button>
     <button 
       class="tab" 
       [class.active]="activeTab === 'test-cases'"
-      (click)="activeTab = 'test-cases'">
+      (click)="activeTab = 'test-cases'; onTabChange()">
       Test Cases
     </button>
     <button 
       class="tab" 
       [class.active]="activeTab === 'executions'"
-      (click)="activeTab = 'executions'">
+      (click)="activeTab = 'executions'; onTabChange()">
       Executions
     </button>
     <button 
       class="tab" 
       [class.active]="activeTab === 'defects'"
-      (click)="activeTab = 'defects'">
+      (click)="activeTab = 'defects'; onTabChange()">
       Defects
     </button>
     <button 
       class="tab" 
       [class.active]="activeTab === 'reports'"
-      (click)="activeTab = 'reports'">
+      (click)="activeTab = 'reports'; onTabChange()">
       Reports
     </button>
   </div>
@@ -73,14 +73,70 @@
           type="text" 
           placeholder="Search test cases..." 
           [(ngModel)]="searchTerm"
-          (keyup.enter)="searchTestCases()"
+          (input)="applyFilters()"
           class="search-input">
-        <button class="btn-secondary" (click)="searchTestCases()">Search</button>
+        <button class="btn-filter" (click)="showFilters = !showFilters" [class.active]="showFilters">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" style="width: 1rem; height: 1rem;">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 3c2.755 0 5.455.232 8.083.678.533.09.917.556.917 1.096v1.044a2.25 2.25 0 01-.659 1.591l-5.432 5.432a2.25 2.25 0 00-.659 1.591v2.927a2.25 2.25 0 01-1.244 2.013L9.75 21v-6.568a2.25 2.25 0 00-.659-1.591L3.659 7.409A2.25 2.25 0 013 5.818V4.774c0-.54.384-1.006.917-1.096A48.32 48.32 0 0112 3z" />
+          </svg>
+          Filters
+        </button>
       </div>
       <button class="btn-secondary" (click)="openTestCaseModal()">+ New Test Case</button>
     </div>
     
+    <!-- Advanced Filters -->
+    <div class="filters-panel" *ngIf="showFilters" [formGroup]="filterForm">
+      <div class="filters-grid">
+        <div class="form-group">
+          <label>Status</label>
+          <select formControlName="status" (change)="applyFilters()" class="form-input">
+            <option [value]="null">All Statuses</option>
+            <option [value]="TestCaseStatus.DRAFT">Draft</option>
+            <option [value]="TestCaseStatus.APPROVED">Approved</option>
+            <option [value]="TestCaseStatus.ARCHIVED">Archived</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Priority</label>
+          <select formControlName="priority" (change)="applyFilters()" class="form-input">
+            <option [value]="null">All Priorities</option>
+            <option [value]="Priority.LOW">Low</option>
+            <option [value]="Priority.MEDIUM">Medium</option>
+            <option [value]="Priority.HIGH">High</option>
+            <option [value]="Priority.CRITICAL">Critical</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Module</label>
+          <select formControlName="moduleId" (change)="applyFilters()" class="form-input">
+            <option [value]="null">All Modules</option>
+            <option *ngFor="let module of modules" [value]="module.id">{{ module.name }}</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Assigned To</label>
+          <select formControlName="assignedToId" (change)="applyFilters()" class="form-input">
+            <option [value]="null">All Users</option>
+            <option *ngFor="let user of users" [value]="user.id">{{ user.username }}</option>
+          </select>
+        </div>
+      </div>
+      <div class="filters-actions">
+        <button class="btn-secondary" (click)="clearFilters()">Clear All</button>
+      </div>
+    </div>
+    
     <div class="table-container">
+      <div class="table-header-info">
+        <span>Showing {{ getPaginatedItems(filteredTestCases, 'testCases').length }} of {{ filteredTestCases.length }} test cases</span>
+        <select (change)="changePageSize(+$any($event.target).value)" class="page-size-select">
+          <option [value]="10">10 per page</option>
+          <option [value]="25">25 per page</option>
+          <option [value]="50">50 per page</option>
+          <option [value]="100">100 per page</option>
+        </select>
+      </div>
       <table class="data-table">
         <thead>
           <tr>
@@ -94,7 +150,7 @@
           </tr>
         </thead>
         <tbody>
-          <tr *ngFor="let testCase of testCases">
+          <tr *ngFor="let testCase of getPaginatedItems(filteredTestCases, 'testCases')">
             <td>{{ testCase.id }}</td>
             <td>
               <a (click)="openTestCaseModal(testCase)" class="link">{{ testCase.title }}</a>
@@ -124,19 +180,81 @@
               </button>
             </td>
           </tr>
+          <tr *ngIf="getPaginatedItems(filteredTestCases, 'testCases').length === 0">
+            <td colspan="7" class="text-center">No test cases found</td>
+          </tr>
         </tbody>
       </table>
+      <!-- Pagination -->
+      <div class="pagination" *ngIf="totalPages.testCases > 1">
+        <button class="pagination-btn" (click)="goToPage(currentPage.testCases - 1, 'testCases')" [disabled]="currentPage.testCases === 1">
+          Previous
+        </button>
+        <span class="pagination-info">Page {{ currentPage.testCases }} of {{ totalPages.testCases }}</span>
+        <button class="pagination-btn" (click)="goToPage(currentPage.testCases + 1, 'testCases')" [disabled]="currentPage.testCases === totalPages.testCases">
+          Next
+        </button>
+      </div>
     </div>
   </div>
 
   <!-- Executions Tab -->
   <div class="tab-content" *ngIf="activeTab === 'executions'">
     <div class="section-header">
-      <h2>Test Executions</h2>
+      <div class="search-box">
+        <input 
+          type="text" 
+          placeholder="Search executions..." 
+          [(ngModel)]="searchTerm"
+          (input)="applyFilters()"
+          class="search-input">
+        <button class="btn-filter" (click)="showFilters = !showFilters" [class.active]="showFilters">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" style="width: 1rem; height: 1rem;">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 3c2.755 0 5.455.232 8.083.678.533.09.917.556.917 1.096v1.044a2.25 2.25 0 01-.659 1.591l-5.432 5.432a2.25 2.25 0 00-.659 1.591v2.927a2.25 2.25 0 01-1.244 2.013L9.75 21v-6.568a2.25 2.25 0 00-.659-1.591L3.659 7.409A2.25 2.25 0 013 5.818V4.774c0-.54.384-1.006.917-1.096A48.32 48.32 0 0112 3z" />
+          </svg>
+          Filters
+        </button>
+      </div>
       <button class="btn-secondary" (click)="openExecutionModal()">+ New Execution</button>
     </div>
     
+    <!-- Advanced Filters for Executions -->
+    <div class="filters-panel" *ngIf="showFilters && activeTab === 'executions'" [formGroup]="filterForm">
+      <div class="filters-grid">
+        <div class="form-group">
+          <label>Status</label>
+          <select formControlName="status" (change)="applyFilters()" class="form-input">
+            <option [value]="null">All Statuses</option>
+            <option [value]="ExecutionStatus.PASSED">Passed</option>
+            <option [value]="ExecutionStatus.FAILED">Failed</option>
+            <option [value]="ExecutionStatus.BLOCKED">Blocked</option>
+            <option [value]="ExecutionStatus.RETEST">Retest</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Date From</label>
+          <input type="date" formControlName="dateFrom" (change)="applyFilters()" class="form-input">
+        </div>
+        <div class="form-group">
+          <label>Date To</label>
+          <input type="date" formControlName="dateTo" (change)="applyFilters()" class="form-input">
+        </div>
+      </div>
+      <div class="filters-actions">
+        <button class="btn-secondary" (click)="clearFilters()">Clear All</button>
+      </div>
+    </div>
+    
     <div class="table-container">
+      <div class="table-header-info">
+        <span>Showing {{ getPaginatedItems(filteredExecutions, 'executions').length }} of {{ filteredExecutions.length }} executions</span>
+        <select (change)="changePageSize(+$any($event.target).value)" class="page-size-select">
+          <option [value]="10">10 per page</option>
+          <option [value]="25">25 per page</option>
+          <option [value]="50">50 per page</option>
+          <option [value]="100">100 per page</option>
+        </select>
+      </div>
       <table class="data-table">
         <thead>
           <tr>
@@ -149,7 +267,7 @@
           </tr>
         </thead>
         <tbody>
-          <tr *ngFor="let execution of executions">
+          <tr *ngFor="let execution of getPaginatedItems(filteredExecutions, 'executions')">
             <td>{{ execution.id }}</td>
             <td>{{ execution.testCaseTitle }}</td>
             <td>
@@ -168,19 +286,90 @@
               </button>
             </td>
           </tr>
+          <tr *ngIf="getPaginatedItems(filteredExecutions, 'executions').length === 0">
+            <td colspan="6" class="text-center">No executions found</td>
+          </tr>
         </tbody>
       </table>
+      <!-- Pagination -->
+      <div class="pagination" *ngIf="totalPages.executions > 1">
+        <button class="pagination-btn" (click)="goToPage(currentPage.executions - 1, 'executions')" [disabled]="currentPage.executions === 1">
+          Previous
+        </button>
+        <span class="pagination-info">Page {{ currentPage.executions }} of {{ totalPages.executions }}</span>
+        <button class="pagination-btn" (click)="goToPage(currentPage.executions + 1, 'executions')" [disabled]="currentPage.executions === totalPages.executions">
+          Next
+        </button>
+      </div>
     </div>
   </div>
 
   <!-- Defects Tab -->
   <div class="tab-content" *ngIf="activeTab === 'defects'">
     <div class="section-header">
-      <h2>Defects</h2>
+      <div class="search-box">
+        <input 
+          type="text" 
+          placeholder="Search defects..." 
+          [(ngModel)]="searchTerm"
+          (input)="applyFilters()"
+          class="search-input">
+        <button class="btn-filter" (click)="showFilters = !showFilters" [class.active]="showFilters">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" style="width: 1rem; height: 1rem;">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 3c2.755 0 5.455.232 8.083.678.533.09.917.556.917 1.096v1.044a2.25 2.25 0 01-.659 1.591l-5.432 5.432a2.25 2.25 0 00-.659 1.591v2.927a2.25 2.25 0 01-1.244 2.013L9.75 21v-6.568a2.25 2.25 0 00-.659-1.591L3.659 7.409A2.25 2.25 0 013 5.818V4.774c0-.54.384-1.006.917-1.096A48.32 48.32 0 0112 3z" />
+          </svg>
+          Filters
+        </button>
+      </div>
       <button class="btn-secondary" (click)="openDefectModal()">+ New Defect</button>
     </div>
     
+    <!-- Advanced Filters for Defects -->
+    <div class="filters-panel" *ngIf="showFilters && activeTab === 'defects'" [formGroup]="filterForm">
+      <div class="filters-grid">
+        <div class="form-group">
+          <label>Severity</label>
+          <select formControlName="severity" (change)="applyFilters()" class="form-input">
+            <option [value]="null">All Severities</option>
+            <option [value]="DefectSeverity.LOW">Low</option>
+            <option [value]="DefectSeverity.MEDIUM">Medium</option>
+            <option [value]="DefectSeverity.HIGH">High</option>
+            <option [value]="DefectSeverity.CRITICAL">Critical</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Status</label>
+          <select formControlName="defectStatus" (change)="applyFilters()" class="form-input">
+            <option [value]="null">All Statuses</option>
+            <option [value]="DefectStatus.NEW">New</option>
+            <option [value]="DefectStatus.IN_PROGRESS">In Progress</option>
+            <option [value]="DefectStatus.RESOLVED">Resolved</option>
+            <option [value]="DefectStatus.CLOSED">Closed</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Assigned To</label>
+          <select formControlName="assignedToId" (change)="applyFilters()" class="form-input">
+            <option [value]="null">All Users</option>
+            <option *ngFor="let user of users" [value]="user.id">{{ user.username }}</option>
+          </select>
+        </div>
+      </div>
+      <div class="filters-actions">
+        <button class="btn-secondary" (click)="clearFilters()">Clear All</button>
+      </div>
+    </div>
+    
     <div class="table-container">
+      <div class="table-header-info">
+        <span>Showing {{ getPaginatedItems(filteredDefects, 'defects').length }} of {{ filteredDefects.length }} defects</span>
+        <select (change)="changePageSize(+$any($event.target).value)" class="page-size-select">
+          <option [value]="10">10 per page</option>
+          <option [value]="25">25 per page</option>
+          <option [value]="50">50 per page</option>
+          <option [value]="100">100 per page</option>
+        </select>
+      </div>
       <table class="data-table">
         <thead>
           <tr>
@@ -194,7 +383,7 @@
           </tr>
         </thead>
         <tbody>
-          <tr *ngFor="let defect of defects">
+          <tr *ngFor="let defect of getPaginatedItems(filteredDefects, 'defects')">
             <td>{{ defect.id }}</td>
             <td>{{ defect.title }}</td>
             <td>
@@ -217,39 +406,154 @@
               </button>
             </td>
           </tr>
+          <tr *ngIf="getPaginatedItems(filteredDefects, 'defects').length === 0">
+            <td colspan="7" class="text-center">No defects found</td>
+          </tr>
         </tbody>
       </table>
+      <!-- Pagination -->
+      <div class="pagination" *ngIf="totalPages.defects > 1">
+        <button class="pagination-btn" (click)="goToPage(currentPage.defects - 1, 'defects')" [disabled]="currentPage.defects === 1">
+          Previous
+        </button>
+        <span class="pagination-info">Page {{ currentPage.defects }} of {{ totalPages.defects }}</span>
+        <button class="pagination-btn" (click)="goToPage(currentPage.defects + 1, 'defects')" [disabled]="currentPage.defects === totalPages.defects">
+          Next
+        </button>
+      </div>
     </div>
   </div>
 
   <!-- Reports Tab -->
-  <div class="tab-content" *ngIf="activeTab === 'reports' && report">
-    <div class="report-grid">
-      <div class="stat-card">
-        <h3>Total Test Cases</h3>
-        <p class="stat-value">{{ report.totalTestCases }}</p>
+  <div class="tab-content" *ngIf="activeTab === 'reports'">
+    <div class="reports-container" *ngIf="report; else noReport">
+      <!-- Key Metrics -->
+      <div class="report-section">
+        <h2 class="section-title">Key Metrics</h2>
+        <div class="report-grid">
+          <div class="stat-card stat-card-primary">
+            <h3>Total Test Cases</h3>
+            <p class="stat-value">{{ report.totalTestCases }}</p>
+          </div>
+          <div class="stat-card stat-card-primary">
+            <h3>Total Executions</h3>
+            <p class="stat-value">{{ report.totalExecutions }}</p>
+          </div>
+          <div class="stat-card stat-card-success">
+            <h3>Passed</h3>
+            <p class="stat-value">{{ report.passedCount }}</p>
+            <p class="stat-percentage" *ngIf="report.totalExecutions > 0">{{ getPassRate() }}%</p>
+          </div>
+          <div class="stat-card stat-card-danger">
+            <h3>Failed</h3>
+            <p class="stat-value">{{ report.failedCount }}</p>
+            <p class="stat-percentage" *ngIf="report.totalExecutions > 0">{{ getFailureRate() }}%</p>
+          </div>
+          <div class="stat-card stat-card-warning">
+            <h3>Blocked</h3>
+            <p class="stat-value">{{ report.blockedCount }}</p>
+          </div>
+          <div class="stat-card stat-card-info">
+            <h3>Retest</h3>
+            <p class="stat-value">{{ report.retestCount }}</p>
+          </div>
+          <div class="stat-card stat-card-primary">
+            <h3>Total Defects</h3>
+            <p class="stat-value">{{ report.totalDefects }}</p>
+          </div>
+          <div class="stat-card stat-card-success">
+            <h3>Defect Resolution Rate</h3>
+            <p class="stat-value">{{ getDefectResolutionRate() }}%</p>
+          </div>
+        </div>
       </div>
-      <div class="stat-card">
-        <h3>Total Executions</h3>
-        <p class="stat-value">{{ report.totalExecutions }}</p>
+
+      <!-- Execution Status Distribution -->
+      <div class="report-section" *ngIf="report.totalExecutions > 0">
+        <h2 class="section-title">Execution Status Distribution</h2>
+        <div class="chart-container">
+          <div class="bar-chart">
+            <div class="bar-item">
+              <div class="bar-label">Passed</div>
+              <div class="bar-wrapper">
+                <div class="bar-fill bar-success" [style.width.%]="getPassRate()"></div>
+                <span class="bar-value">{{ report.passedCount }}</span>
+              </div>
+            </div>
+            <div class="bar-item">
+              <div class="bar-label">Failed</div>
+              <div class="bar-wrapper">
+                <div class="bar-fill bar-danger" [style.width.%]="getFailureRate()"></div>
+                <span class="bar-value">{{ report.failedCount }}</span>
+              </div>
+            </div>
+            <div class="bar-item" *ngIf="report.blockedCount > 0">
+              <div class="bar-label">Blocked</div>
+              <div class="bar-wrapper">
+                <div class="bar-fill bar-warning" [style.width.%]="(report.blockedCount / report.totalExecutions * 100)"></div>
+                <span class="bar-value">{{ report.blockedCount }}</span>
+              </div>
+            </div>
+            <div class="bar-item" *ngIf="report.retestCount > 0">
+              <div class="bar-label">Retest</div>
+              <div class="bar-wrapper">
+                <div class="bar-fill bar-info" [style.width.%]="(report.retestCount / report.totalExecutions * 100)"></div>
+                <span class="bar-value">{{ report.retestCount }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
-      <div class="stat-card">
-        <h3>Passed</h3>
-        <p class="stat-value text-green-600">{{ report.passedCount }}</p>
+
+      <!-- Test Case Status Distribution -->
+      <div class="report-section" *ngIf="report.statusDistribution">
+        <h2 class="section-title">Test Case Status Distribution</h2>
+        <div class="distribution-grid">
+          <div class="dist-item" *ngFor="let status of getObjectKeys(report.statusDistribution)">
+            <span class="dist-label">{{ status }}</span>
+            <span class="dist-value">{{ report.statusDistribution[status] }}</span>
+          </div>
+        </div>
       </div>
-      <div class="stat-card">
-        <h3>Failed</h3>
-        <p class="stat-value text-red-600">{{ report.failedCount }}</p>
+
+      <!-- Priority Distribution -->
+      <div class="report-section" *ngIf="report.priorityDistribution">
+        <h2 class="section-title">Priority Distribution</h2>
+        <div class="distribution-grid">
+          <div class="dist-item" *ngFor="let priority of getObjectKeys(report.priorityDistribution)">
+            <span class="dist-label">{{ priority }}</span>
+            <span class="dist-value">{{ report.priorityDistribution[priority] }}</span>
+          </div>
+        </div>
       </div>
-      <div class="stat-card">
-        <h3>Blocked</h3>
-        <p class="stat-value text-yellow-600">{{ report.blockedCount }}</p>
+
+      <!-- Defect Status Distribution -->
+      <div class="report-section" *ngIf="report.defectStatusDistribution">
+        <h2 class="section-title">Defect Status Distribution</h2>
+        <div class="distribution-grid">
+          <div class="dist-item" *ngFor="let status of getObjectKeys(report.defectStatusDistribution)">
+            <span class="dist-label">{{ status }}</span>
+            <span class="dist-value">{{ report.defectStatusDistribution[status] }}</span>
+          </div>
+        </div>
       </div>
-      <div class="stat-card">
-        <h3>Total Defects</h3>
-        <p class="stat-value">{{ report.totalDefects }}</p>
+
+      <!-- Defect Severity Distribution -->
+      <div class="report-section" *ngIf="report.defectSeverityDistribution">
+        <h2 class="section-title">Defect Severity Distribution</h2>
+        <div class="distribution-grid">
+          <div class="dist-item" *ngFor="let severity of getObjectKeys(report.defectSeverityDistribution)">
+            <span class="dist-label">{{ severity }}</span>
+            <span class="dist-value">{{ report.defectSeverityDistribution[severity] }}</span>
+          </div>
+        </div>
       </div>
     </div>
+    <ng-template #noReport>
+      <div class="no-data-message">
+        <p>No report data available. Please generate a report.</p>
+      </div>
+    </ng-template>
   </div>
 
   <!-- Modals -->

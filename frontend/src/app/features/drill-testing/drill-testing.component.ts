@@ -1,6 +1,7 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, OnDestroy, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, FormArray, Validators } from '@angular/forms';
+import { debounceTime, distinctUntilChanged, Subscription } from 'rxjs';
 import { TestManagementService } from '../../core/services/test-management.service';
 import { AdminUserService } from '../../core/services/admin-user.service';
 import {
@@ -30,10 +31,11 @@ import { User } from '../../core/models';
   templateUrl: './drill-testing.component.html',
   styleUrls: ['./drill-testing.component.scss']
 })
-export class DrillTestingComponent implements OnInit {
+export class DrillTestingComponent implements OnInit, OnDestroy {
   private testService = inject(TestManagementService);
   private userService = inject(AdminUserService);
   private fb = inject(FormBuilder);
+  private subscriptions = new Subscription();
 
   activeTab: 'modules' | 'test-cases' | 'executions' | 'defects' | 'reports' = 'test-cases';
   
@@ -44,6 +46,11 @@ export class DrillTestingComponent implements OnInit {
   defects: Defect[] = [];
   users: User[] = [];
   report: TestReport | null = null;
+  
+  // Filtered/Paginated Data
+  filteredTestCases: TestCase[] = [];
+  filteredExecutions: TestExecution[] = [];
+  filteredDefects: Defect[] = [];
   
   // Selected items
   selectedModule: TestModule | null = null;
@@ -57,6 +64,7 @@ export class DrillTestingComponent implements OnInit {
   executionForm: FormGroup;
   defectForm: FormGroup;
   commentForm: FormGroup;
+  filterForm: FormGroup;
   
   // UI States
   showModuleModal = false;
@@ -64,9 +72,23 @@ export class DrillTestingComponent implements OnInit {
   showExecutionModal = false;
   showDefectModal = false;
   showCommentModal = false;
+  showFilters = false;
   loading = false;
   searchTerm = '';
   errorMessages: { [key: string]: string } = {};
+  
+  // Pagination
+  currentPage = {
+    testCases: 1,
+    executions: 1,
+    defects: 1
+  };
+  itemsPerPage = 10;
+  totalPages = {
+    testCases: 1,
+    executions: 1,
+    defects: 1
+  };
   
   // Comments
   comments: Comment[] = [];
@@ -115,11 +137,40 @@ export class DrillTestingComponent implements OnInit {
     this.commentForm = this.fb.group({
       content: ['', Validators.required]
     });
+    
+    this.filterForm = this.fb.group({
+      status: [null],
+      priority: [null],
+      moduleId: [null],
+      assignedToId: [null],
+      severity: [null],
+      defectStatus: [null],
+      dateFrom: [null],
+      dateTo: [null]
+    });
   }
 
   ngOnInit(): void {
     this.loadData();
     this.loadUsers();
+    // Initialize filtered arrays
+    this.filteredTestCases = [];
+    this.filteredExecutions = [];
+    this.filteredDefects = [];
+    
+    // Subscribe to filter form changes with debounce
+    this.subscriptions.add(
+      this.filterForm.valueChanges.pipe(
+        debounceTime(300),
+        distinctUntilChanged()
+      ).subscribe(() => {
+        this.applyFilters();
+      })
+    );
+  }
+  
+  ngOnDestroy(): void {
+    this.subscriptions.unsubscribe();
   }
 
   loadData(): void {
@@ -147,6 +198,7 @@ export class DrillTestingComponent implements OnInit {
     this.testService.getAllTestCases().subscribe({
       next: (testCases) => {
         this.testCases = testCases;
+        this.applyFilters();
         this.errorMessages['testCases'] = '';
       },
       error: (err) => {
@@ -160,6 +212,7 @@ export class DrillTestingComponent implements OnInit {
     this.testService.getAllExecutions().subscribe({
       next: (executions) => {
         this.executions = executions;
+        this.applyFilters();
         this.errorMessages['executions'] = '';
       },
       error: (err) => {
@@ -173,6 +226,7 @@ export class DrillTestingComponent implements OnInit {
     this.testService.getAllDefects().subscribe({
       next: (defects) => {
         this.defects = defects;
+        this.applyFilters();
         this.errorMessages['defects'] = '';
       },
       error: (err) => {
@@ -440,7 +494,10 @@ export class DrillTestingComponent implements OnInit {
   searchTestCases(): void {
     if (this.searchTerm.trim()) {
       this.testService.searchTestCases(this.searchTerm).subscribe({
-        next: (testCases) => this.testCases = testCases,
+        next: (testCases) => {
+          this.testCases = testCases;
+          this.applyFilters();
+        },
         error: (err) => {
           console.error('Error searching:', err);
           this.handleError('search', err, 'Failed to search test cases');
@@ -449,6 +506,139 @@ export class DrillTestingComponent implements OnInit {
     } else {
       this.loadTestCases();
     }
+  }
+  
+  // Advanced filtering
+  applyFilters(): void {
+    const filters = this.filterForm.value;
+    
+    // Filter Test Cases
+    let filtered = [...this.testCases];
+    
+    if (this.searchTerm && this.searchTerm.trim() && this.activeTab === 'test-cases') {
+      const searchLower = this.searchTerm.toLowerCase();
+      filtered = filtered.filter(tc => 
+        tc.title.toLowerCase().includes(searchLower) ||
+        (tc.preconditions && tc.preconditions.toLowerCase().includes(searchLower)) ||
+        (tc.expectedResult && tc.expectedResult.toLowerCase().includes(searchLower))
+      );
+    }
+    
+    if (this.activeTab === 'test-cases') {
+      if (filters.status) {
+        filtered = filtered.filter(tc => tc.status === filters.status);
+      }
+      if (filters.priority) {
+        filtered = filtered.filter(tc => tc.priority === filters.priority);
+      }
+      if (filters.moduleId) {
+        filtered = filtered.filter(tc => tc.moduleId === Number(filters.moduleId));
+      }
+      if (filters.assignedToId) {
+        filtered = filtered.filter(tc => tc.assignedToId === Number(filters.assignedToId));
+      }
+      
+      this.filteredTestCases = filtered;
+      this.updatePagination('testCases', filtered.length);
+    }
+    
+    // Filter Executions
+    if (this.activeTab === 'executions') {
+      let filteredExecutions = [...this.executions];
+      
+      if (this.searchTerm && this.searchTerm.trim()) {
+        const searchLower = this.searchTerm.toLowerCase();
+        filteredExecutions = filteredExecutions.filter(e => 
+          (e.testCaseTitle && e.testCaseTitle.toLowerCase().includes(searchLower)) ||
+          (e.executedByUsername && e.executedByUsername.toLowerCase().includes(searchLower)) ||
+          (e.comments && e.comments.toLowerCase().includes(searchLower))
+        );
+      }
+      
+      if (filters.status) {
+        filteredExecutions = filteredExecutions.filter(e => e.status === filters.status);
+      }
+      if (filters.dateFrom) {
+        const fromDate = new Date(filters.dateFrom);
+        filteredExecutions = filteredExecutions.filter(e => 
+          new Date(e.executedAt) >= fromDate
+        );
+      }
+      if (filters.dateTo) {
+        const toDate = new Date(filters.dateTo);
+        toDate.setHours(23, 59, 59, 999);
+        filteredExecutions = filteredExecutions.filter(e => 
+          new Date(e.executedAt) <= toDate
+        );
+      }
+      this.filteredExecutions = filteredExecutions;
+      this.updatePagination('executions', filteredExecutions.length);
+    }
+    
+    // Filter Defects
+    if (this.activeTab === 'defects') {
+      let filteredDefects = [...this.defects];
+      
+      if (this.searchTerm && this.searchTerm.trim()) {
+        const searchLower = this.searchTerm.toLowerCase();
+        filteredDefects = filteredDefects.filter(d => 
+          (d.title && d.title.toLowerCase().includes(searchLower)) ||
+          (d.description && d.description.toLowerCase().includes(searchLower)) ||
+          (d.reportedByUsername && d.reportedByUsername.toLowerCase().includes(searchLower))
+        );
+      }
+      
+      if (filters.severity) {
+        filteredDefects = filteredDefects.filter(d => d.severity === filters.severity);
+      }
+      if (filters.defectStatus) {
+        filteredDefects = filteredDefects.filter(d => d.status === filters.defectStatus);
+      }
+      if (filters.assignedToId) {
+        filteredDefects = filteredDefects.filter(d => d.assignedToId === Number(filters.assignedToId));
+      }
+      this.filteredDefects = filteredDefects;
+      this.updatePagination('defects', filteredDefects.length);
+    }
+  }
+  
+  clearFilters(): void {
+    this.filterForm.reset();
+    this.searchTerm = '';
+    this.currentPage = { testCases: 1, executions: 1, defects: 1 };
+    this.applyFilters();
+  }
+  
+  onTabChange(): void {
+    // Reset pagination when switching tabs
+    this.currentPage = { testCases: 1, executions: 1, defects: 1 };
+    this.applyFilters();
+  }
+  
+  // Pagination
+  updatePagination(type: 'testCases' | 'executions' | 'defects', totalItems: number): void {
+    this.totalPages[type] = Math.max(1, Math.ceil(totalItems / this.itemsPerPage));
+    if (this.currentPage[type] > this.totalPages[type]) {
+      this.currentPage[type] = 1;
+    }
+  }
+  
+  getPaginatedItems<T>(items: T[], type: 'testCases' | 'executions' | 'defects'): T[] {
+    const start = (this.currentPage[type] - 1) * this.itemsPerPage;
+    const end = start + this.itemsPerPage;
+    return items.slice(start, end);
+  }
+  
+  goToPage(page: number, type: 'testCases' | 'executions' | 'defects'): void {
+    if (page >= 1 && page <= this.totalPages[type]) {
+      this.currentPage[type] = page;
+    }
+  }
+  
+  changePageSize(size: number): void {
+    this.itemsPerPage = size;
+    this.currentPage = { testCases: 1, executions: 1, defects: 1 };
+    this.applyFilters();
   }
 
   getStatusColor(status: string): string {
@@ -524,5 +714,27 @@ export class DrillTestingComponent implements OnInit {
   // Clear error message
   clearError(key: string): void {
     this.errorMessages[key] = '';
+  }
+  
+  // Report calculations
+  getPassRate(): number {
+    if (!this.report || this.report.totalExecutions === 0) return 0;
+    return Math.round((this.report.passedCount / this.report.totalExecutions) * 100);
+  }
+  
+  getFailureRate(): number {
+    if (!this.report || this.report.totalExecutions === 0) return 0;
+    return Math.round((this.report.failedCount / this.report.totalExecutions) * 100);
+  }
+  
+  getDefectResolutionRate(): number {
+    if (!this.report || this.report.totalDefects === 0) return 0;
+    const resolved = this.report.defectStatusDistribution?.['RESOLVED'] || 0;
+    const closed = this.report.defectStatusDistribution?.['CLOSED'] || 0;
+    return Math.round(((resolved + closed) / this.report.totalDefects) * 100);
+  }
+  
+  getObjectKeys(obj: any): string[] {
+    return obj ? Object.keys(obj) : [];
   }
 }
