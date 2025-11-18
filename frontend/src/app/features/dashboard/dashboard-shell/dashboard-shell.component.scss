@@ -1,7 +1,8 @@
 .dashboard-container {
   display: flex;
   height: 100vh;
-  background: #f7f9fc;
+  background: linear-gradient(135deg, #f5f7fa 0%, #e8ecf1 100%);
+  overflow: hidden;
 }
 
 .main-content {
@@ -9,23 +10,60 @@
   margin-left: 280px;
   display: flex;
   flex-direction: column;
-  transition: margin-left 0.3s ease;
+  transition: margin-left var(--transition-slow) cubic-bezier(0.4, 0, 0.2, 1);
   min-width: 0;
+  overflow: hidden;
 
   &.sidebar-collapsed {
-    margin-left: 80px;
+    margin-left: 88px;
   }
 }
 
 .content-area {
   flex: 1;
-  padding: 2.5rem;
+  padding: var(--spacing-2xl);
   overflow-y: auto;
-  background: #f7f9fc;
+  overflow-x: hidden;
+  background: transparent;
+  position: relative;
+
+  // Smooth scroll behavior
+  scroll-behavior: smooth;
+
+  // Custom scrollbar
+  &::-webkit-scrollbar {
+    width: 10px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: var(--color-gray-300);
+    border-radius: var(--radius-full);
+    border: 2px solid transparent;
+    background-clip: padding-box;
+
+    &:hover {
+      background: var(--color-gray-400);
+      background-clip: padding-box;
+    }
+  }
+}
+
+@media (max-width: 1024px) {
+  .content-area {
+    padding: var(--spacing-lg);
+  }
 }
 
 @media (max-width: 768px) {
   .main-content {
     margin-left: 0;
+  }
+
+  .content-area {
+    padding: var(--spacing-md);
   }
 }
