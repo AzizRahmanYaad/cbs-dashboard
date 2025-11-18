@@ -21,7 +21,7 @@ export class LoginComponent {
   loginForm: FormGroup;
   isLoading = false;
   showPassword = false;
-  readonly logoPath = 'assets/Da_Afghanistan_Bank_Logo.svg';
+  readonly logoPath = 'assets/DAB.png';
 
   constructor() {
     this.loginForm = this.fb.group({
