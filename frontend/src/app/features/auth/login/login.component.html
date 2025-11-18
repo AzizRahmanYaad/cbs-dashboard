@@ -1,13 +1,11 @@
 <div class="login-container">
-  <div class="animated-background"></div>
-  
-  <div class="login-card glass-effect">
+  <div class="login-card">
     <div class="logo-section">
       <div class="logo-container">
         <img [src]="logoPath" alt="Da Afghanistan Bank logo" class="bank-logo" />
       </div>
-      <h1 class="app-title">CBS Dashboard</h1>
-      <p class="app-subtitle">Centralized Business Solutions</p>
+      <h1 class="app-title">CFO Administrative Suite</h1>
+      <p class="app-subtitle">Secure access</p>
     </div>
 
     <form [formGroup]="loginForm" (ngSubmit)="onSubmit()" class="login-form">
@@ -87,8 +85,5 @@
       </button>
     </form>
 
-    <div class="footer-text">
-      <p>© 2025 CBS Dashboard. All rights reserved.</p>
-    </div>
   </div>
 </div>
