@@ -4,6 +4,7 @@ import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, FormArray, Va
 import { debounceTime, distinctUntilChanged, Subscription } from 'rxjs';
 import { TestManagementService } from '../../core/services/test-management.service';
 import { AdminUserService } from '../../core/services/admin-user.service';
+import { AuthService } from '../../core/services/auth.service';
 import {
   TestModule,
   TestCase,
@@ -35,6 +36,7 @@ export class DrillTestingComponent implements OnInit, OnDestroy {
   private testService = inject(TestManagementService);
   private userService = inject(AdminUserService);
   private fb = inject(FormBuilder);
+  private authService = inject(AuthService);
   private subscriptions = new Subscription();
 
   activeTab: 'modules' | 'test-cases' | 'executions' | 'defects' | 'reports' = 'test-cases';
@@ -95,6 +97,12 @@ export class DrillTestingComponent implements OnInit, OnDestroy {
   commentContext: 'test-case' | 'defect' | null = null;
   commentContextId: number | null = null;
   
+  currentUser: User | null = null;
+  isAdmin = false;
+  isDrillTester = false;
+  private readonly DRILL_TEST_ROLE = 'ROLE_DRILL_TESTING';
+  private readonly ADMIN_ROLE = 'ROLE_ADMIN';
+
   // Enums for templates
   Priority = Priority;
   TestCaseStatus = TestCaseStatus;
@@ -167,6 +175,26 @@ export class DrillTestingComponent implements OnInit, OnDestroy {
         this.applyFilters();
       })
     );
+
+    // Subscribe to current user changes
+    this.subscriptions.add(
+      this.authService.currentUser$.subscribe(user => {
+        this.handleUserChange(user);
+      })
+    );
+
+    // Ensure current user is loaded
+    if (!this.authService.currentUserValue) {
+      this.subscriptions.add(
+        this.authService.getCurrentUser().subscribe({
+          error: () => {
+            // handled by auth service
+          }
+        })
+      );
+    } else {
+      this.handleUserChange(this.authService.currentUserValue);
+    }
   }
   
   ngOnDestroy(): void {
@@ -239,7 +267,7 @@ export class DrillTestingComponent implements OnInit, OnDestroy {
   loadUsers(): void {
     this.userService.getUsers().subscribe({
       next: (users) => {
-        this.users = users;
+        this.users = users.filter(user => user.roles?.includes(this.DRILL_TEST_ROLE));
         this.errorMessages['users'] = '';
       },
       error: (err) => {
@@ -268,6 +296,10 @@ export class DrillTestingComponent implements OnInit, OnDestroy {
 
   // Module operations
   openModuleModal(): void {
+    if (!this.canCreateModuleOrTestCase()) {
+      alert('You do not have permission to create modules. Only administrators and drill test users can create modules.');
+      return;
+    }
     this.moduleForm.reset();
     this.showModuleModal = true;
   }
@@ -301,6 +333,11 @@ export class DrillTestingComponent implements OnInit, OnDestroy {
 
   // Test Case operations
   openTestCaseModal(testCase?: TestCase): void {
+    // Allow editing existing test cases, but restrict creation to authorized users
+    if (!testCase && !this.canCreateModuleOrTestCase()) {
+      alert('You do not have permission to create test cases. Only administrators and drill test users can create test cases.');
+      return;
+    }
     if (testCase) {
       this.selectedTestCase = testCase;
       this.testCaseForm.patchValue({
@@ -511,11 +548,19 @@ export class DrillTestingComponent implements OnInit, OnDestroy {
   // Advanced filtering
   applyFilters(): void {
     const filters = this.filterForm.value;
+    const restrictToAssigned = this.shouldRestrictToAssigned();
+    const assignedCaseIdSet = restrictToAssigned && this.currentUser
+      ? new Set(this.testCases.filter(tc => tc.assignedToId === this.currentUser!.id).map(tc => tc.id))
+      : null;
     
     // Filter Test Cases
     let filtered = [...this.testCases];
     
-    if (this.searchTerm && this.searchTerm.trim() && this.activeTab === 'test-cases') {
+    if (assignedCaseIdSet) {
+      filtered = filtered.filter(tc => assignedCaseIdSet!.has(tc.id));
+    }
+
+    if (this.searchTerm && this.searchTerm.trim()) {
       const searchLower = this.searchTerm.toLowerCase();
       filtered = filtered.filter(tc => 
         tc.title.toLowerCase().includes(searchLower) ||
@@ -545,6 +590,13 @@ export class DrillTestingComponent implements OnInit, OnDestroy {
     // Filter Executions
     if (this.activeTab === 'executions') {
       let filteredExecutions = [...this.executions];
+
+      if (assignedCaseIdSet && this.currentUser) {
+        filteredExecutions = filteredExecutions.filter(e =>
+          assignedCaseIdSet!.has(e.testCaseId) ||
+          e.executedById === this.currentUser!.id
+        );
+      }
       
       if (this.searchTerm && this.searchTerm.trim()) {
         const searchLower = this.searchTerm.toLowerCase();
@@ -579,6 +631,13 @@ export class DrillTestingComponent implements OnInit, OnDestroy {
     if (this.activeTab === 'defects') {
       let filteredDefects = [...this.defects];
       
+      if (assignedCaseIdSet && this.currentUser) {
+        filteredDefects = filteredDefects.filter(d =>
+          (d.assignedToId === this.currentUser!.id) ||
+          (d.testCaseId && assignedCaseIdSet!.has(d.testCaseId))
+        );
+      }
+
       if (this.searchTerm && this.searchTerm.trim()) {
         const searchLower = this.searchTerm.toLowerCase();
         filteredDefects = filteredDefects.filter(d => 
@@ -736,5 +795,20 @@ export class DrillTestingComponent implements OnInit, OnDestroy {
   
   getObjectKeys(obj: any): string[] {
     return obj ? Object.keys(obj) : [];
+  }
+
+  private handleUserChange(user: User | null): void {
+    this.currentUser = user;
+    this.isAdmin = !!user?.roles?.includes(this.ADMIN_ROLE);
+    this.isDrillTester = !!user?.roles?.includes(this.DRILL_TEST_ROLE);
+    this.applyFilters();
+  }
+
+  private shouldRestrictToAssigned(): boolean {
+    return !!this.currentUser && this.isDrillTester && !this.isAdmin;
+  }
+
+  canCreateModuleOrTestCase(): boolean {
+    return this.isAdmin || this.isDrillTester;
   }
 }

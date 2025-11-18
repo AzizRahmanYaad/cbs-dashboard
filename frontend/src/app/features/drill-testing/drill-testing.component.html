@@ -5,7 +5,7 @@
       <p class="page-subtitle">Plan, execute, and track drill tests and issues</p>
     </div>
     <div class="header-actions">
-      <button class="btn-primary" (click)="openTestCaseModal()">
+      <button class="btn-primary" *ngIf="canCreateModuleOrTestCase()" (click)="openTestCaseModal()">
         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="icon">
           <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
         </svg>
@@ -52,7 +52,7 @@
   <div class="tab-content" *ngIf="activeTab === 'modules'">
     <div class="section-header">
       <h2>Test Modules</h2>
-      <button class="btn-secondary" (click)="openModuleModal()">+ New Module</button>
+      <button class="btn-secondary" *ngIf="canCreateModuleOrTestCase()" (click)="openModuleModal()">+ New Module</button>
     </div>
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
       <div class="card" *ngFor="let module of modules">
@@ -82,7 +82,7 @@
           Filters
         </button>
       </div>
-      <button class="btn-secondary" (click)="openTestCaseModal()">+ New Test Case</button>
+      <button class="btn-secondary" *ngIf="canCreateModuleOrTestCase()" (click)="openTestCaseModal()">+ New Test Case</button>
     </div>
     
     <!-- Advanced Filters -->
