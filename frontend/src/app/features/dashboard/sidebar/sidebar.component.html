@@ -4,7 +4,6 @@
       <img [src]="logoPath" alt="Bank insignia" class="brand-logo" />
       <div class="brand-copy" *ngIf="!isCollapsed">
         <span class="brand-office">{{ officeShort }} Secretariat</span>
-        <span class="brand-name">{{ institutionName }}</span>
       </div>
     </div>
     <button class="toggle-button" (click)="toggleSidebar()" aria-label="Toggle navigation">
@@ -14,7 +13,6 @@
     </button>
   </div>
 
-  <p class="motto" *ngIf="!isCollapsed">{{ motto }}</p>
 
   <nav class="sidebar-nav">
     <p class="section-label" *ngIf="!isCollapsed">Operational suites</p>

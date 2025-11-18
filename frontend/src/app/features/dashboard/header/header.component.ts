@@ -20,7 +20,7 @@ export class HeaderComponent implements OnInit {
   readonly logoPath = 'assets/DAB.png';
   readonly institutionName = 'Da Afghanistan Bank';
   readonly officeName = 'Chief Finance Office';
-  readonly officeLocation = 'Islamic Republic of Afghanistan';
+  readonly officeLocation = 'Islamic Emirate of Afghanistan';
 
   ngOnInit(): void {
     this.authService.currentUser$.subscribe(user => {
