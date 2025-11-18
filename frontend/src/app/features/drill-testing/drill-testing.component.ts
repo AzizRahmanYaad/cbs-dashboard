@@ -66,6 +66,7 @@ export class DrillTestingComponent implements OnInit {
   showCommentModal = false;
   loading = false;
   searchTerm = '';
+  errorMessages: { [key: string]: string } = {};
   
   // Comments
   comments: Comment[] = [];
@@ -127,10 +128,12 @@ export class DrillTestingComponent implements OnInit {
       next: (modules) => {
         this.modules = modules;
         this.loading = false;
+        this.errorMessages['modules'] = '';
       },
       error: (err) => {
         console.error('Error loading modules:', err);
         this.loading = false;
+        this.handleError('modules', err, 'Failed to load modules');
       }
     });
     
@@ -144,8 +147,12 @@ export class DrillTestingComponent implements OnInit {
     this.testService.getAllTestCases().subscribe({
       next: (testCases) => {
         this.testCases = testCases;
+        this.errorMessages['testCases'] = '';
       },
-      error: (err) => console.error('Error loading test cases:', err)
+      error: (err) => {
+        console.error('Error loading test cases:', err);
+        this.handleError('testCases', err, 'Failed to load test cases');
+      }
     });
   }
 
@@ -153,8 +160,12 @@ export class DrillTestingComponent implements OnInit {
     this.testService.getAllExecutions().subscribe({
       next: (executions) => {
         this.executions = executions;
+        this.errorMessages['executions'] = '';
       },
-      error: (err) => console.error('Error loading executions:', err)
+      error: (err) => {
+        console.error('Error loading executions:', err);
+        this.handleError('executions', err, 'Failed to load executions');
+      }
     });
   }
 
@@ -162,8 +173,12 @@ export class DrillTestingComponent implements OnInit {
     this.testService.getAllDefects().subscribe({
       next: (defects) => {
         this.defects = defects;
+        this.errorMessages['defects'] = '';
       },
-      error: (err) => console.error('Error loading defects:', err)
+      error: (err) => {
+        console.error('Error loading defects:', err);
+        this.handleError('defects', err, 'Failed to load defects');
+      }
     });
   }
 
@@ -171,8 +186,16 @@ export class DrillTestingComponent implements OnInit {
     this.userService.getUsers().subscribe({
       next: (users) => {
         this.users = users;
+        this.errorMessages['users'] = '';
       },
-      error: (err) => console.error('Error loading users:', err)
+      error: (err) => {
+        console.error('Error loading users:', err);
+        if (err.status === 403) {
+          this.errorMessages['users'] = 'You do not have permission to access user data';
+        } else {
+          this.handleError('users', err, 'Failed to load users');
+        }
+      }
     });
   }
 
@@ -180,8 +203,12 @@ export class DrillTestingComponent implements OnInit {
     this.testService.generateReport().subscribe({
       next: (report) => {
         this.report = report;
+        this.errorMessages['report'] = '';
       },
-      error: (err) => console.error('Error loading report:', err)
+      error: (err) => {
+        console.error('Error loading report:', err);
+        this.handleError('report', err, 'Failed to load report');
+      }
     });
   }
 
@@ -193,13 +220,27 @@ export class DrillTestingComponent implements OnInit {
 
   createModule(): void {
     if (this.moduleForm.valid) {
+      this.loading = true;
       const request: CreateTestModuleRequest = this.moduleForm.value;
       this.testService.createModule(request).subscribe({
         next: () => {
           this.loadData();
           this.showModuleModal = false;
+          this.loading = false;
+          this.moduleForm.reset();
         },
-        error: (err) => console.error('Error creating module:', err)
+        error: (err) => {
+          console.error('Error creating module:', err);
+          this.loading = false;
+          this.handleError('createModule', err, 'Failed to create module');
+          let errorMessage = this.errorMessages['createModule'] || 'Unknown error';
+          alert('Error creating module: ' + errorMessage);
+        }
+      });
+    } else {
+      // Mark all fields as touched to show validation errors
+      Object.keys(this.moduleForm.controls).forEach(key => {
+        this.moduleForm.get(key)?.markAsTouched();
       });
     }
   }
@@ -263,8 +304,8 @@ export class DrillTestingComponent implements OnInit {
       steps: stepsArray,
       expectedResult: this.testCaseForm.value.expectedResult || undefined,
       priority: this.testCaseForm.value.priority,
-      moduleId: this.testCaseForm.value.moduleId || undefined,
-      assignedToId: this.testCaseForm.value.assignedToId || undefined
+      moduleId: this.testCaseForm.value.moduleId ? Number(this.testCaseForm.value.moduleId) : undefined,
+      assignedToId: this.testCaseForm.value.assignedToId ? Number(this.testCaseForm.value.assignedToId) : undefined
     };
 
     this.loading = true;
@@ -273,11 +314,17 @@ export class DrillTestingComponent implements OnInit {
         this.loadTestCases();
         this.showTestCaseModal = false;
         this.loading = false;
+        this.testCaseForm.reset({
+          priority: Priority.MEDIUM,
+          steps: ''
+        });
       },
       error: (err) => {
         console.error('Error creating test case:', err);
-        alert('Error creating test case: ' + (err.error?.message || err.message || 'Unknown error'));
         this.loading = false;
+        this.handleError('createTestCase', err, 'Failed to create test case');
+        let errorMessage = this.errorMessages['createTestCase'] || 'Unknown error';
+        alert('Error creating test case: ' + errorMessage);
       }
     });
   }
@@ -299,7 +346,11 @@ export class DrillTestingComponent implements OnInit {
           this.loadExecutions();
           this.showExecutionModal = false;
         },
-        error: (err) => console.error('Error creating execution:', err)
+        error: (err) => {
+          console.error('Error creating execution:', err);
+          this.handleError('createExecution', err, 'Failed to create execution');
+          alert('Error creating execution: ' + (this.errorMessages['createExecution'] || 'Unknown error'));
+        }
       });
     }
   }
@@ -322,7 +373,11 @@ export class DrillTestingComponent implements OnInit {
           this.loadDefects();
           this.showDefectModal = false;
         },
-        error: (err) => console.error('Error creating defect:', err)
+        error: (err) => {
+          console.error('Error creating defect:', err);
+          this.handleError('createDefect', err, 'Failed to create defect');
+          alert('Error creating defect: ' + (this.errorMessages['createDefect'] || 'Unknown error'));
+        }
       });
     }
   }
@@ -339,13 +394,25 @@ export class DrillTestingComponent implements OnInit {
   loadComments(context: 'test-case' | 'defect', id: number): void {
     if (context === 'test-case') {
       this.testService.getCommentsByTestCase(id).subscribe({
-        next: (comments) => this.comments = comments,
-        error: (err) => console.error('Error loading comments:', err)
+        next: (comments) => {
+          this.comments = comments;
+          this.errorMessages['comments'] = '';
+        },
+        error: (err) => {
+          console.error('Error loading comments:', err);
+          this.handleError('comments', err, 'Failed to load comments');
+        }
       });
     } else {
       this.testService.getCommentsByDefect(id).subscribe({
-        next: (comments) => this.comments = comments,
-        error: (err) => console.error('Error loading comments:', err)
+        next: (comments) => {
+          this.comments = comments;
+          this.errorMessages['comments'] = '';
+        },
+        error: (err) => {
+          console.error('Error loading comments:', err);
+          this.handleError('comments', err, 'Failed to load comments');
+        }
       });
     }
   }
@@ -361,7 +428,11 @@ export class DrillTestingComponent implements OnInit {
           this.loadComments(this.commentContext!, this.commentContextId!);
           this.commentForm.reset();
         },
-        error: (err) => console.error('Error creating comment:', err)
+        error: (err) => {
+          console.error('Error creating comment:', err);
+          this.handleError('createComment', err, 'Failed to create comment');
+          alert('Error creating comment: ' + (this.errorMessages['createComment'] || 'Unknown error'));
+        }
       });
     }
   }
@@ -370,7 +441,10 @@ export class DrillTestingComponent implements OnInit {
     if (this.searchTerm.trim()) {
       this.testService.searchTestCases(this.searchTerm).subscribe({
         next: (testCases) => this.testCases = testCases,
-        error: (err) => console.error('Error searching:', err)
+        error: (err) => {
+          console.error('Error searching:', err);
+          this.handleError('search', err, 'Failed to search test cases');
+        }
       });
     } else {
       this.loadTestCases();
@@ -417,5 +491,38 @@ export class DrillTestingComponent implements OnInit {
       return { required: true };
     }
     return null;
+  }
+
+  // Error handling helper
+  private handleError(key: string, err: any, defaultMessage: string): void {
+    let errorMessage = defaultMessage;
+    
+    if (err.status === 403) {
+      errorMessage = 'You do not have permission to access this resource';
+    } else if (err.status === 500) {
+      errorMessage = 'Server error. Please try again later or contact support';
+    } else if (err.status === 404) {
+      errorMessage = 'Resource not found';
+    } else if (err.status === 401) {
+      errorMessage = 'Authentication required. Please log in again';
+    } else if (err.error?.message) {
+      errorMessage = err.error.message;
+    } else if (err.message) {
+      errorMessage = err.message;
+    }
+    
+    this.errorMessages[key] = errorMessage;
+    
+    // Show alert for critical errors (500, 401)
+    if (err.status === 500 || err.status === 401) {
+      setTimeout(() => {
+        alert(errorMessage);
+      }, 100);
+    }
+  }
+
+  // Clear error message
+  clearError(key: string): void {
+    this.errorMessages[key] = '';
   }
 }

@@ -260,15 +260,21 @@
       <form [formGroup]="moduleForm" (ngSubmit)="createModule()">
         <div class="form-group">
           <label>Name *</label>
-          <input type="text" formControlName="name" class="form-input">
+          <input type="text" formControlName="name" class="form-input" [class.error]="moduleForm.get('name')?.invalid && moduleForm.get('name')?.touched">
+          <div class="error-message" *ngIf="moduleForm.get('name')?.invalid && moduleForm.get('name')?.touched">
+            <span *ngIf="moduleForm.get('name')?.errors?.['required']">Module name is required</span>
+          </div>
         </div>
         <div class="form-group">
           <label>Description</label>
           <textarea formControlName="description" class="form-input" rows="3"></textarea>
         </div>
         <div class="modal-actions">
-          <button type="button" class="btn-secondary" (click)="showModuleModal = false">Cancel</button>
-          <button type="submit" class="btn-primary">Create</button>
+          <button type="button" class="btn-secondary" (click)="showModuleModal = false" [disabled]="loading">Cancel</button>
+          <button type="submit" class="btn-primary" [disabled]="loading || moduleForm.invalid">
+            <span *ngIf="loading">Creating...</span>
+            <span *ngIf="!loading">Create</span>
+          </button>
         </div>
       </form>
     </div>
