@@ -1,4 +1,4 @@
-import { Component, inject, OnInit, HostListener } from '@angular/core';
+import { Component, inject, OnInit, HostListener, Output, EventEmitter } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { AuthService } from '../../../core/services/auth.service';
 import { User } from '../../../core/models';
@@ -12,6 +12,8 @@ import { User } from '../../../core/models';
 })
 export class HeaderComponent implements OnInit {
   private authService = inject(AuthService);
+
+  @Output() mobileMenuToggle = new EventEmitter<void>();
 
   currentUser: User | null = null;
   showUserMenu = false;
@@ -28,6 +30,10 @@ export class HeaderComponent implements OnInit {
 
   toggleUserMenu(): void {
     this.showUserMenu = !this.showUserMenu;
+  }
+
+  toggleMobileMenu(): void {
+    this.mobileMenuToggle.emit();
   }
 
   @HostListener('document:click', ['$event'])

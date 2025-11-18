@@ -1,4 +1,4 @@
-import { Component, Output, EventEmitter, inject } from '@angular/core';
+import { Component, Output, EventEmitter, inject, Input } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { AuthService } from '../../../core/services/auth.service';
@@ -20,6 +20,8 @@ interface MenuItem {
 })
 export class SidebarComponent {
   @Output() sidebarToggle = new EventEmitter<boolean>();
+  @Output() mobileMenuClose = new EventEmitter<void>();
+  @Input() isMobileOpen = false;
 
   isCollapsed = false;
   private authService = inject(AuthService);
@@ -64,6 +66,13 @@ export class SidebarComponent {
   toggleSidebar(): void {
     this.isCollapsed = !this.isCollapsed;
     this.sidebarToggle.emit(this.isCollapsed);
+  }
+
+  onNavItemClick(): void {
+    // Close mobile sidebar when a nav item is clicked
+    if (this.isMobileOpen && window.innerWidth <= 768) {
+      this.mobileMenuClose.emit();
+    }
   }
 
   hasAccess(item: MenuItem): boolean {

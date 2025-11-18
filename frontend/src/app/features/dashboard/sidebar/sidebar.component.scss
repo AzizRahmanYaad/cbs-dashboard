@@ -308,11 +308,20 @@
   .sidebar {
     transform: translateX(-100%);
     box-shadow: none;
+    transition: transform var(--transition-slow) cubic-bezier(0.4, 0, 0.2, 1);
+
+    &.mobile-open {
+      transform: translateX(0);
+      box-shadow: 4px 0 20px rgba(0, 0, 0, 0.15);
+      z-index: 1001;
+    }
 
     &.collapsed {
-      transform: translateX(0);
-      width: 100%;
-      box-shadow: 2px 0 8px rgba(0, 0, 0, 0.1);
+      transform: translateX(-100%);
+      
+      &.mobile-open {
+        transform: translateX(0);
+      }
     }
   }
 }

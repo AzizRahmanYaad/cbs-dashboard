@@ -1,4 +1,4 @@
-<aside class="sidebar" [class.collapsed]="isCollapsed">
+<aside class="sidebar" [class.collapsed]="isCollapsed" [class.mobile-open]="isMobileOpen">
   <div class="brand-panel">
     <div class="brand-identity">
       <img [src]="logoPath" alt="Bank insignia" class="brand-logo" />
@@ -26,6 +26,7 @@
             routerLinkActive="active"
             class="nav-item"
             [title]="isCollapsed ? item.label : ''"
+            (click)="onNavItemClick()"
           >
             <span class="nav-icon">
               <ng-container [ngSwitch]="item.icon">

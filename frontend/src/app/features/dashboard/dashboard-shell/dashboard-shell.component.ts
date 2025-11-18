@@ -13,8 +13,17 @@ import { HeaderComponent } from '../header/header.component';
 })
 export class DashboardShellComponent {
   isSidebarCollapsed = false;
+  isMobileSidebarOpen = false;
 
   onSidebarToggle(collapsed: boolean): void {
     this.isSidebarCollapsed = collapsed;
+  }
+
+  toggleMobileSidebar(): void {
+    this.isMobileSidebarOpen = !this.isMobileSidebarOpen;
+  }
+
+  closeMobileSidebar(): void {
+    this.isMobileSidebarOpen = false;
   }
 }

@@ -1,8 +1,14 @@
 <div class="dashboard-container">
-  <app-sidebar (sidebarToggle)="onSidebarToggle($event)"></app-sidebar>
+  <app-sidebar 
+    (sidebarToggle)="onSidebarToggle($event)"
+    (mobileMenuClose)="closeMobileSidebar()"
+    [isMobileOpen]="isMobileSidebarOpen">
+  </app-sidebar>
   
-  <div class="main-content" [class.sidebar-collapsed]="isSidebarCollapsed">
-    <app-header></app-header>
+  <div class="main-content" [class.sidebar-collapsed]="isSidebarCollapsed" [class.mobile-sidebar-open]="isMobileSidebarOpen">
+    <app-header (mobileMenuToggle)="toggleMobileSidebar()"></app-header>
+    
+    <div class="overlay" *ngIf="isMobileSidebarOpen" (click)="closeMobileSidebar()"></div>
     
     <main class="content-area">
       <router-outlet></router-outlet>
