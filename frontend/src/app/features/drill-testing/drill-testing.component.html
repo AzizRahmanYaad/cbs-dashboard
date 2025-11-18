@@ -42,6 +42,7 @@
     </button>
     <button 
       class="tab" 
+      *ngIf="canCreateModuleOrTestCase()"
       [class.active]="activeTab === 'reports'"
       (click)="activeTab = 'reports'; onTabChange()">
       Reports
@@ -425,7 +426,7 @@
   </div>
 
   <!-- Reports Tab -->
-  <div class="tab-content" *ngIf="activeTab === 'reports'">
+  <div class="tab-content" *ngIf="activeTab === 'reports' && canCreateModuleOrTestCase()">
     <div class="reports-container" *ngIf="report; else noReport">
       <!-- Key Metrics -->
       <div class="report-section">

@@ -282,6 +282,10 @@ export class DrillTestingComponent implements OnInit, OnDestroy {
   }
 
   loadReport(): void {
+    // Only load reports for admins and drill testers
+    if (!this.canCreateModuleOrTestCase()) {
+      return;
+    }
     this.testService.generateReport().subscribe({
       next: (report) => {
         this.report = report;
@@ -669,6 +673,12 @@ export class DrillTestingComponent implements OnInit, OnDestroy {
   }
   
   onTabChange(): void {
+    // Prevent unauthorized users from accessing reports tab
+    if (this.activeTab === 'reports' && !this.canCreateModuleOrTestCase()) {
+      this.activeTab = 'test-cases';
+      alert('You do not have permission to view reports. Only administrators and drill test users can view reports.');
+      return;
+    }
     // Reset pagination when switching tabs
     this.currentPage = { testCases: 1, executions: 1, defects: 1 };
     this.applyFilters();
@@ -801,11 +811,23 @@ export class DrillTestingComponent implements OnInit, OnDestroy {
     this.currentUser = user;
     this.isAdmin = !!user?.roles?.includes(this.ADMIN_ROLE);
     this.isDrillTester = !!user?.roles?.includes(this.DRILL_TEST_ROLE);
+    
+    // Redirect unauthorized users away from reports tab
+    if (this.activeTab === 'reports' && !this.canCreateModuleOrTestCase()) {
+      this.activeTab = 'test-cases';
+    }
+    
     this.applyFilters();
   }
 
   private shouldRestrictToAssigned(): boolean {
-    return !!this.currentUser && this.isDrillTester && !this.isAdmin;
+    // Admins and drill testers see ALL data (no restrictions)
+    // Other users only see their assigned items
+    if (this.isAdmin || this.isDrillTester) {
+      return false;
+    }
+    // For other users, restrict to assigned items if they have a user account
+    return !!this.currentUser;
   }
 
   canCreateModuleOrTestCase(): boolean {
