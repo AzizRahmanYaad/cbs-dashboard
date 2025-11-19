@@ -107,9 +107,10 @@
                     [class.selected]="isRoleSelected(role.name)"
                   >
                     <input
+                      #roleCheckbox
                       type="checkbox"
                       [checked]="isRoleSelected(role.name)"
-                      (change)="onRoleToggle(role.name, $event)"
+                      (change)="onRoleToggle(role.name, roleCheckbox.checked)"
                     />
                     <div class="role-info">
                       <span class="role-name">{{ formatRoleName(role.name) }}</span>

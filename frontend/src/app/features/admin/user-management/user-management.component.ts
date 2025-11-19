@@ -125,8 +125,7 @@ export class UserManagementComponent implements OnInit, OnDestroy {
     return this.expandedModules.has(moduleName);
   }
 
-  onRoleToggle(roleName: string, event: Event): void {
-    const checked = (event.target as HTMLInputElement).checked;
+  onRoleToggle(roleName: string, checked: boolean): void {
     const selectedRoles = new Set(this.rolesControl.value ?? []);
     if (checked) {
       selectedRoles.add(roleName);
