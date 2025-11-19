@@ -4,12 +4,13 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.List;
+
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class RoleDto {
-    private String name;
-    private String description;
-    private String module;
+public class ModuleRoleDto {
+    private String moduleName;
+    private String moduleDisplayName;
+    private List<RoleDto> roles;
 }
-

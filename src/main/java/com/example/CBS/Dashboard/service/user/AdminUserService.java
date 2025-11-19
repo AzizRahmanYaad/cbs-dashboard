@@ -1,6 +1,7 @@
 package com.example.CBS.Dashboard.service.user;
 
 import com.example.CBS.Dashboard.dto.user.CreateUserRequest;
+import com.example.CBS.Dashboard.dto.user.ModuleRoleDto;
 import com.example.CBS.Dashboard.dto.user.RoleDto;
 import com.example.CBS.Dashboard.dto.user.UpdateUserRequest;
 import com.example.CBS.Dashboard.dto.user.UserDto;
@@ -11,12 +12,14 @@ import com.example.CBS.Dashboard.repository.RoleRepository;
 import com.example.CBS.Dashboard.repository.UserRepository;
 import jakarta.persistence.EntityNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -55,8 +58,55 @@ public class AdminUserService {
     public List<RoleDto> getAvailableRoles() {
         return roleRepository.findAllByOrderByNameAsc()
                 .stream()
-                .map(role -> new RoleDto(role.getName(), buildRoleDescription(role.getName())))
+                .map(role -> {
+                    String module = extractModuleFromRole(role.getName());
+                    return new RoleDto(role.getName(), buildRoleDescription(role.getName()), module);
+                })
                 .collect(Collectors.toList());
+    }
+
+    @Transactional(readOnly = true)
+    public List<ModuleRoleDto> getRolesByModule() {
+        Map<String, List<RoleDto>> moduleMap = new LinkedHashMap<>();
+        
+        // Define module display order
+        List<String> moduleOrder = Arrays.asList("ADMIN", "GENERAL", "DRILL", "TRAINING", "DAILY", "TEST_MANAGEMENT", "MANAGER", "OTHER");
+        
+        roleRepository.findAllByOrderByNameAsc().forEach(role -> {
+            String module = extractModuleFromRole(role.getName());
+            String moduleDisplayName = getModuleDisplayName(module);
+            
+            moduleMap.computeIfAbsent(module, k -> new ArrayList<>())
+                    .add(new RoleDto(role.getName(), buildRoleDescription(role.getName()), module));
+        });
+        
+        // Sort modules according to predefined order
+        return moduleOrder.stream()
+                .filter(moduleMap::containsKey)
+                .map(module -> new ModuleRoleDto(
+                        module,
+                        getModuleDisplayName(module),
+                        moduleMap.get(module)
+                ))
+                .collect(Collectors.toList());
+    }
+
+    @Transactional(readOnly = true)
+    public Page<UserDto> getUsers(Pageable pageable, String search) {
+        Specification<User> spec = Specification.where(null);
+        
+        if (search != null && !search.trim().isEmpty()) {
+            String searchTerm = "%" + search.toLowerCase() + "%";
+            spec = spec.and((root, query, cb) -> 
+                cb.or(
+                    cb.like(cb.lower(root.get("username")), searchTerm),
+                    cb.like(cb.lower(root.get("email")), searchTerm)
+                )
+            );
+        }
+        
+        return userRepository.findAll(spec, pageable)
+                .map(userMapper::toDto);
     }
 
     @Transactional
@@ -131,6 +181,60 @@ public class AdminUserService {
             return module + ROLE_DESCRIPTION_SUFFIX;
         }
         return "Application role";
+    }
+
+    private String extractModuleFromRole(String roleName) {
+        if (roleName.equalsIgnoreCase("ROLE_ADMIN")) {
+            return "ADMIN";
+        }
+        if (roleName.equalsIgnoreCase("ROLE_USER")) {
+            return "GENERAL";
+        }
+        if (roleName.startsWith("ROLE_")) {
+            String rolePart = roleName.replace("ROLE_", "").toUpperCase();
+            
+            // Handle specific role mappings
+            if (rolePart.equals("DRILL_TESTING") || rolePart.startsWith("DRILL")) {
+                return "DRILL";
+            }
+            if (rolePart.equals("TRAINING")) {
+                return "TRAINING";
+            }
+            if (rolePart.equals("DAILY_REPORT") || rolePart.startsWith("DAILY")) {
+                return "DAILY";
+            }
+            if (rolePart.equals("QA_LEAD") || rolePart.equals("TESTER") || rolePart.startsWith("QA") || rolePart.startsWith("TEST")) {
+                return "TEST_MANAGEMENT";
+            }
+            if (rolePart.equals("MANAGER")) {
+                return "MANAGER";
+            }
+            
+            // Handle compound roles
+            if (rolePart.contains("_")) {
+                String[] parts = rolePart.split("_");
+                return parts[0];
+            }
+            
+            return rolePart;
+        }
+        return "OTHER";
+    }
+
+    private String getModuleDisplayName(String module) {
+        Map<String, String> moduleNames = new HashMap<>();
+        moduleNames.put("ADMIN", "Administration");
+        moduleNames.put("GENERAL", "General Access");
+        moduleNames.put("DRILL", "Drill Test Module");
+        moduleNames.put("TRAINING", "Training Module");
+        moduleNames.put("DAILY", "Daily Report Module");
+        moduleNames.put("TEST_MANAGEMENT", "Test Management Module");
+        moduleNames.put("QA", "Test Management Module");
+        moduleNames.put("TESTER", "Test Management Module");
+        moduleNames.put("MANAGER", "Management Module");
+        moduleNames.put("OTHER", "Other Modules");
+        
+        return moduleNames.getOrDefault(module, module.replace("_", " "));
     }
 }
 
