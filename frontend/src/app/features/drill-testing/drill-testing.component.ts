@@ -102,7 +102,12 @@ export class DrillTestingComponent implements OnInit, OnDestroy {
   isDrillTester = false;
   isDrillTestAdmin = false;
   private readonly DRILL_TEST_ROLE = 'ROLE_DRILL_TESTING';
-  private readonly DRILL_TEST_ADMIN_ROLE = 'ROLE_DRILL_TEST_ADMIN';
+  private readonly DRILL_TEST_ADMIN_ROLES = [
+    'ROLE_DRILL_TEST_ADMIN',
+    'ROLE_DRILL_TESTING_ADMIN',
+    'DRILL_TEST_ADMIN',
+    'DRILL_TESTING_ADMIN'
+  ];
   private readonly ADMIN_ROLE = 'ROLE_ADMIN';
 
   // Enums for templates
@@ -812,9 +817,9 @@ export class DrillTestingComponent implements OnInit, OnDestroy {
   private handleUserChange(user: User | null): void {
     this.currentUser = user;
     this.isAdmin = !!user?.roles?.includes(this.ADMIN_ROLE);
-    this.isDrillTestAdmin = !!user?.roles?.includes(this.DRILL_TEST_ADMIN_ROLE);
+    this.isDrillTestAdmin = !!user?.roles?.some(role => this.DRILL_TEST_ADMIN_ROLES.includes(role));
     this.isDrillTester = !!user?.roles?.some(role => 
-      role === this.DRILL_TEST_ROLE || role === this.DRILL_TEST_ADMIN_ROLE
+      role === this.DRILL_TEST_ROLE || this.DRILL_TEST_ADMIN_ROLES.includes(role)
     );
     
     // Redirect unauthorized users away from reports tab
