@@ -76,7 +76,12 @@
             >
               <div 
                 class="module-header"
+                role="button"
+                tabindex="0"
                 (click)="toggleModule(moduleRole.moduleName)"
+                (keydown.enter)="toggleModule(moduleRole.moduleName)"
+                (keydown.space)="toggleModule(moduleRole.moduleName)"
+                [attr.aria-expanded]="isModuleExpanded(moduleRole.moduleName)"
               >
                 <div class="module-title">
                   <svg 
@@ -99,7 +104,11 @@
                 </div>
               </div>
               
-              <div class="module-content" *ngIf="isModuleExpanded(moduleRole.moduleName)">
+              <div 
+                class="module-content"
+                [class.open]="isModuleExpanded(moduleRole.moduleName)"
+                [attr.aria-hidden]="!isModuleExpanded(moduleRole.moduleName)"
+              >
                 <div class="roles-list">
                   <label 
                     *ngFor="let role of moduleRole.roles; trackBy: trackByRoleName"
