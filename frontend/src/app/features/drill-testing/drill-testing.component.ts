@@ -39,7 +39,7 @@ export class DrillTestingComponent implements OnInit, OnDestroy {
   private authService = inject(AuthService);
   private subscriptions = new Subscription();
 
-  activeTab: 'modules' | 'test-cases' | 'executions' | 'defects' | 'reports' = 'test-cases';
+  activeTab: 'dashboard' | 'modules' | 'test-cases' | 'executions' | 'defects' | 'reports' = 'dashboard';
   
   // Data
   modules: TestModule[] = [];
@@ -76,6 +76,7 @@ export class DrillTestingComponent implements OnInit, OnDestroy {
   showCommentModal = false;
   showFilters = false;
   loading = false;
+  loadingReport = false;
   searchTerm = '';
   errorMessages: { [key: string]: string } = {};
   
@@ -853,5 +854,113 @@ export class DrillTestingComponent implements OnInit, OnDestroy {
       this.DRILL_TEST_ADMIN_ROLES.includes(role) ||
       /DRILL(_| )?TEST(ING)?(_| )?ADMIN/i.test(role)
     );
+  }
+
+  // Dashboard methods
+  generateReport(): void {
+    this.loadingReport = true;
+    this.testService.generateReport().subscribe({
+      next: (report) => {
+        this.report = report;
+        this.loadingReport = false;
+        this.activeTab = 'reports';
+        this.errorMessages['report'] = '';
+      },
+      error: (err) => {
+        console.error('Error generating report:', err);
+        this.loadingReport = false;
+        this.handleError('report', err, 'Failed to generate report');
+      }
+    });
+  }
+
+  getPassedExecutionsCount(): number {
+    return this.executions.filter(e => e.status === ExecutionStatus.PASSED).length;
+  }
+
+  getFailedExecutionsCount(): number {
+    return this.executions.filter(e => e.status === ExecutionStatus.FAILED).length;
+  }
+
+  getBlockedExecutionsCount(): number {
+    return this.executions.filter(e => e.status === ExecutionStatus.BLOCKED).length;
+  }
+
+  getActiveDefectsCount(): number {
+    return this.defects.filter(d => d.status !== DefectStatus.CLOSED && d.status !== DefectStatus.RESOLVED).length;
+  }
+
+  getCriticalDefectsCount(): number {
+    return this.defects.filter(d => d.severity === DefectSeverity.CRITICAL && d.status !== DefectStatus.CLOSED).length;
+  }
+
+  getActiveModulesCount(): number {
+    return this.modules.length; // All modules are considered active
+  }
+
+  getRecentExecutionsCount(): number {
+    const sevenDaysAgo = new Date();
+    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+    return this.executions.filter(e => new Date(e.executedAt) >= sevenDaysAgo).length;
+  }
+
+  getNewTestCasesCount(): number {
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+    // Assuming test cases have createdAt field, otherwise return 0
+    return 0; // Update when createdAt is available
+  }
+
+  getPriorityCount(priority: string): number {
+    return this.testCases.filter(tc => tc.priority === priority).length;
+  }
+
+  getPriorityPercentage(priority: string): number {
+    if (this.testCases.length === 0) return 0;
+    return (this.getPriorityCount(priority) / this.testCases.length) * 100;
+  }
+
+  getRecentActivity(): Array<{type: string, description: string, time: string}> {
+    const activities: Array<{type: string, description: string, time: string}> = [];
+    
+    // Add recent executions
+    const recentExecutions = [...this.executions]
+      .sort((a, b) => new Date(b.executedAt).getTime() - new Date(a.executedAt).getTime())
+      .slice(0, 3);
+    
+    recentExecutions.forEach(exec => {
+      activities.push({
+        type: 'execution',
+        description: `Test case "${exec.testCaseTitle}" ${exec.status.toLowerCase()} by ${exec.executedByUsername}`,
+        time: this.formatTimeAgo(new Date(exec.executedAt))
+      });
+    });
+
+    // Add recent defects
+    const recentDefects = [...this.defects]
+      .sort((a, b) => new Date(b.createdAt || '').getTime() - new Date(a.createdAt || '').getTime())
+      .slice(0, 2);
+    
+    recentDefects.forEach(defect => {
+      activities.push({
+        type: 'defect',
+        description: `Defect "${defect.title}" reported by ${defect.reportedByUsername}`,
+        time: defect.createdAt ? this.formatTimeAgo(new Date(defect.createdAt)) : 'Recently'
+      });
+    });
+
+    // Sort by time and return top 5
+    return activities.slice(0, 5);
+  }
+
+  formatTimeAgo(date: Date): string {
+    const now = new Date();
+    const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000);
+    
+    if (diffInSeconds < 60) return 'Just now';
+    if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)} minutes ago`;
+    if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)} hours ago`;
+    if (diffInSeconds < 604800) return `${Math.floor(diffInSeconds / 86400)} days ago`;
+    return date.toLocaleDateString();
   }
 }
