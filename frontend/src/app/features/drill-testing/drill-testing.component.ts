@@ -100,7 +100,9 @@ export class DrillTestingComponent implements OnInit, OnDestroy {
   currentUser: User | null = null;
   isAdmin = false;
   isDrillTester = false;
+  isDrillTestAdmin = false;
   private readonly DRILL_TEST_ROLE = 'ROLE_DRILL_TESTING';
+  private readonly DRILL_TEST_ADMIN_ROLE = 'ROLE_DRILL_TEST_ADMIN';
   private readonly ADMIN_ROLE = 'ROLE_ADMIN';
 
   // Enums for templates
@@ -267,7 +269,7 @@ export class DrillTestingComponent implements OnInit, OnDestroy {
   loadUsers(): void {
     this.userService.getAllUsers().subscribe({
       next: (users: User[]) => {
-        this.users = users.filter((user: User) => user.roles?.includes(this.DRILL_TEST_ROLE));
+        this.users = users;
         this.errorMessages['users'] = '';
       },
       error: (err) => {
@@ -810,7 +812,10 @@ export class DrillTestingComponent implements OnInit, OnDestroy {
   private handleUserChange(user: User | null): void {
     this.currentUser = user;
     this.isAdmin = !!user?.roles?.includes(this.ADMIN_ROLE);
-    this.isDrillTester = !!user?.roles?.includes(this.DRILL_TEST_ROLE);
+    this.isDrillTestAdmin = !!user?.roles?.includes(this.DRILL_TEST_ADMIN_ROLE);
+    this.isDrillTester = !!user?.roles?.some(role => 
+      role === this.DRILL_TEST_ROLE || role === this.DRILL_TEST_ADMIN_ROLE
+    );
     
     // Redirect unauthorized users away from reports tab
     if (this.activeTab === 'reports' && !this.canCreateModuleOrTestCase()) {
@@ -831,6 +836,6 @@ export class DrillTestingComponent implements OnInit, OnDestroy {
   }
 
   canCreateModuleOrTestCase(): boolean {
-    return this.isAdmin || this.isDrillTester;
+    return this.isDrillTestAdmin;
   }
 }
