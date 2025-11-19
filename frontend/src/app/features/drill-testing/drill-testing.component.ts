@@ -265,9 +265,9 @@ export class DrillTestingComponent implements OnInit, OnDestroy {
   }
 
   loadUsers(): void {
-    this.userService.getUsers().subscribe({
-      next: (users) => {
-        this.users = users.filter(user => user.roles?.includes(this.DRILL_TEST_ROLE));
+    this.userService.getAllUsers().subscribe({
+      next: (users: User[]) => {
+        this.users = users.filter((user: User) => user.roles?.includes(this.DRILL_TEST_ROLE));
         this.errorMessages['users'] = '';
       },
       error: (err) => {

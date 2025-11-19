@@ -109,7 +109,7 @@
                     <input
                       type="checkbox"
                       [checked]="isRoleSelected(role.name)"
-                      (change)="onRoleToggle(role.name, ($event.target as HTMLInputElement).checked)"
+                      (change)="onRoleToggle(role.name, $event)"
                     />
                     <div class="role-info">
                       <span class="role-name">{{ formatRoleName(role.name) }}</span>
