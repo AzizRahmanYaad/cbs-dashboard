@@ -300,4 +300,20 @@ export class UserManagementComponent implements OnInit, OnDestroy {
   formatRoleName(roleName: string): string {
     return roleName.replace('ROLE_', '').replace(/_/g, ' ');
   }
+
+  get totalUserCount(): number {
+    return this.totalElements || this.users.length;
+  }
+
+  get activeUsersCount(): number {
+    return this.users.filter(user => user.enabled).length;
+  }
+
+  get inactiveUsersCount(): number {
+    return this.users.filter(user => !user.enabled).length;
+  }
+
+  get selectedRoleCount(): number {
+    return this.rolesControl.value.length;
+  }
 }
