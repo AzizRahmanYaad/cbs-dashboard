@@ -106,7 +106,8 @@ export class DrillTestingComponent implements OnInit, OnDestroy {
     'ROLE_DRILL_TEST_ADMIN',
     'ROLE_DRILL_TESTING_ADMIN',
     'DRILL_TEST_ADMIN',
-    'DRILL_TESTING_ADMIN'
+    'DRILL_TESTING_ADMIN',
+    'ROLE_DRILL_ADMIN'
   ];
   private readonly ADMIN_ROLE = 'ROLE_ADMIN';
 
@@ -817,9 +818,9 @@ export class DrillTestingComponent implements OnInit, OnDestroy {
   private handleUserChange(user: User | null): void {
     this.currentUser = user;
     this.isAdmin = !!user?.roles?.includes(this.ADMIN_ROLE);
-    this.isDrillTestAdmin = !!user?.roles?.some(role => this.DRILL_TEST_ADMIN_ROLES.includes(role));
+    this.isDrillTestAdmin = this.hasDrillTestAdminRole(user?.roles);
     this.isDrillTester = !!user?.roles?.some(role => 
-      role === this.DRILL_TEST_ROLE || this.DRILL_TEST_ADMIN_ROLES.includes(role)
+      role === this.DRILL_TEST_ROLE || this.hasDrillTestAdminRole([role])
     );
     
     // Redirect unauthorized users away from reports tab
@@ -842,5 +843,15 @@ export class DrillTestingComponent implements OnInit, OnDestroy {
 
   canCreateModuleOrTestCase(): boolean {
     return this.isDrillTestAdmin;
+  }
+
+  private hasDrillTestAdminRole(roles?: string[]): boolean {
+    if (!roles || !roles.length) {
+      return false;
+    }
+    return roles.some(role => 
+      this.DRILL_TEST_ADMIN_ROLES.includes(role) ||
+      /DRILL(_| )?TEST(ING)?(_| )?ADMIN/i.test(role)
+    );
   }
 }
