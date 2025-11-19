@@ -109,10 +109,10 @@
                     <input
                       type="checkbox"
                       [checked]="isRoleSelected(role.name)"
-                      (change)="onRoleToggle(role.name, $any($event.target).checked)"
+                      (change)="onRoleToggle(role.name, ($event.target as HTMLInputElement).checked)"
                     />
                     <div class="role-info">
-                      <span class="role-name">{{ role.name.replace('ROLE_', '').replace(/_/g, ' ') }}</span>
+                      <span class="role-name">{{ formatRoleName(role.name) }}</span>
                       <span class="role-description">{{ role.description }}</span>
                     </div>
                   </label>
@@ -171,7 +171,7 @@
             type="button"
             class="filter-btn"
             [class.active]="statusFilter === filter"
-            (click)="onStatusFilterChange(filter as any)"
+            (click)="onStatusFilterChange(filter)"
           >
             {{ filter === 'all' ? 'All' : filter === 'active' ? 'Active' : 'Inactive' }}
           </button>
@@ -209,7 +209,7 @@
                     class="role-badge"
                     [title]="role"
                   >
-                    {{ role.replace('ROLE_', '').replace(/_/g, ' ') }}
+                    {{ formatRoleName(role) }}
                   </span>
                   <span *ngIf="!user.roles || user.roles.length === 0" class="no-roles">No roles</span>
                 </div>
@@ -278,7 +278,7 @@
 
         <div class="page-size-selector">
           <label>Per page:</label>
-          <select (change)="onPageSizeChange(+$any($event.target).value)" [value]="pageSize">
+          <select (change)="onPageSizeChange($event)" [value]="pageSize">
             <option *ngFor="let size of pageSizeOptions" [value]="size">{{ size }}</option>
           </select>
         </div>

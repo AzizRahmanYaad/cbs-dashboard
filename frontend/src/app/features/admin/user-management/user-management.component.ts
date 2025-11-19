@@ -144,8 +144,8 @@ export class UserManagementComponent implements OnInit, OnDestroy {
     this.searchSubject.next(value);
   }
 
-  onStatusFilterChange(filter: 'all' | 'active' | 'inactive'): void {
-    this.statusFilter = filter;
+  onStatusFilterChange(filter: string): void {
+    this.statusFilter = filter as 'all' | 'active' | 'inactive';
     this.currentPage = 0;
     this.loadUsers();
   }
@@ -155,7 +155,8 @@ export class UserManagementComponent implements OnInit, OnDestroy {
     this.loadUsers();
   }
 
-  onPageSizeChange(size: number): void {
+  onPageSizeChange(event: Event): void {
+    const size = +(event.target as HTMLSelectElement).value;
     this.pageSize = size;
     this.currentPage = 0;
     this.loadUsers();
@@ -294,4 +295,9 @@ export class UserManagementComponent implements OnInit, OnDestroy {
 
   // Expose Math to template
   Math = Math;
+
+  // Helper method to format role names for display
+  formatRoleName(roleName: string): string {
+    return roleName.replace('ROLE_', '').replace(/_/g, ' ');
+  }
 }
