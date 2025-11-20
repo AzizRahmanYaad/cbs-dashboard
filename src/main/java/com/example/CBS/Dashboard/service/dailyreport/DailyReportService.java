@@ -159,8 +159,21 @@ public class DailyReportService {
     
     @Transactional(readOnly = true)
     public Page<DailyReportDto> getMyReports(Long employeeId, Pageable pageable) {
-        return dailyReportRepository.findByEmployeeIdOrderByBusinessDateDesc(employeeId, pageable)
-            .map(dailyReportMapper::toDto);
+        Page<DailyReport> reports = dailyReportRepository.findByEmployeeIdOrderByBusinessDateDesc(employeeId, pageable);
+        // Ensure collections are loaded by accessing them
+        reports.getContent().forEach(report -> {
+            report.getChatCommunications().size();
+            report.getEmailCommunications().size();
+            report.getProblemEscalations().size();
+            report.getTrainingCapacityBuildings().size();
+            report.getProjectProgressUpdates().size();
+            report.getCbsTeamActivities().size();
+            report.getPendingActivities().size();
+            report.getMeetings().size();
+            report.getAfpayCardRequests().size();
+            report.getQrmisIssues().size();
+        });
+        return reports.map(dailyReportMapper::toDto);
     }
     
     @Transactional(readOnly = true)

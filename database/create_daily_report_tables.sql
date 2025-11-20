@@ -1,134 +1,7 @@
--- Schema bootstrap for test management module
--- Creates tables if they do not already exist (PostgreSQL)
+-- Create Daily Report Module Tables
+-- Run this script in your PostgreSQL database to create all required tables
 
-CREATE TABLE IF NOT EXISTS test_modules (
-    id              BIGSERIAL PRIMARY KEY,
-    name            VARCHAR(200) NOT NULL,
-    description     VARCHAR(1000),
-    created_by_id   BIGINT NOT NULL,
-    created_at      TIMESTAMP,
-    updated_at      TIMESTAMP,
-    CONSTRAINT fk_test_modules_created_by
-        FOREIGN KEY (created_by_id) REFERENCES users(id)
-);
-
-CREATE TABLE IF NOT EXISTS test_cases (
-    id               BIGSERIAL PRIMARY KEY,
-    title            VARCHAR(500) NOT NULL,
-    preconditions    TEXT,
-    expected_result  TEXT,
-    priority         VARCHAR(50) NOT NULL DEFAULT 'MEDIUM',
-    status           VARCHAR(50) NOT NULL DEFAULT 'DRAFT',
-    module_id        BIGINT,
-    created_by_id    BIGINT NOT NULL,
-    assigned_to_id   BIGINT,
-    created_at       TIMESTAMP,
-    updated_at       TIMESTAMP,
-    CONSTRAINT fk_test_cases_module
-        FOREIGN KEY (module_id) REFERENCES test_modules(id) ON DELETE SET NULL,
-    CONSTRAINT fk_test_cases_created_by
-        FOREIGN KEY (created_by_id) REFERENCES users(id),
-    CONSTRAINT fk_test_cases_assigned_to
-        FOREIGN KEY (assigned_to_id) REFERENCES users(id)
-);
-
-CREATE TABLE IF NOT EXISTS test_case_steps (
-    test_case_id BIGINT NOT NULL,
-    step_order   INTEGER NOT NULL,
-    step         TEXT NOT NULL,
-    PRIMARY KEY (test_case_id, step_order),
-    CONSTRAINT fk_test_case_steps_case
-        FOREIGN KEY (test_case_id) REFERENCES test_cases(id) ON DELETE CASCADE
-);
-
-CREATE TABLE IF NOT EXISTS test_executions (
-    id             BIGSERIAL PRIMARY KEY,
-    test_case_id   BIGINT NOT NULL,
-    executed_by_id BIGINT NOT NULL,
-    status         VARCHAR(50) NOT NULL,
-    comments       TEXT,
-    executed_at    TIMESTAMP,
-    updated_at     TIMESTAMP,
-    CONSTRAINT fk_test_executions_case
-        FOREIGN KEY (test_case_id) REFERENCES test_cases(id) ON DELETE CASCADE,
-    CONSTRAINT fk_test_executions_user
-        FOREIGN KEY (executed_by_id) REFERENCES users(id)
-);
-
-CREATE TABLE IF NOT EXISTS execution_attachments (
-    execution_id BIGINT NOT NULL,
-    file_path    VARCHAR(500) NOT NULL,
-    CONSTRAINT fk_execution_attachments_execution
-        FOREIGN KEY (execution_id) REFERENCES test_executions(id) ON DELETE CASCADE
-);
-
-CREATE TABLE IF NOT EXISTS defects (
-    id               BIGSERIAL PRIMARY KEY,
-    title            VARCHAR(500) NOT NULL,
-    description      TEXT,
-    severity         VARCHAR(50) NOT NULL DEFAULT 'MEDIUM',
-    status           VARCHAR(50) NOT NULL DEFAULT 'NEW',
-    test_case_id     BIGINT,
-    test_execution_id BIGINT,
-    reported_by_id   BIGINT NOT NULL,
-    assigned_to_id   BIGINT,
-    created_at       TIMESTAMP,
-    updated_at       TIMESTAMP,
-    CONSTRAINT fk_defects_case
-        FOREIGN KEY (test_case_id) REFERENCES test_cases(id) ON DELETE SET NULL,
-    CONSTRAINT fk_defects_execution
-        FOREIGN KEY (test_execution_id) REFERENCES test_executions(id) ON DELETE SET NULL,
-    CONSTRAINT fk_defects_reporter
-        FOREIGN KEY (reported_by_id) REFERENCES users(id),
-    CONSTRAINT fk_defects_assignee
-        FOREIGN KEY (assigned_to_id) REFERENCES users(id)
-);
-
-CREATE TABLE IF NOT EXISTS defect_attachments (
-    defect_id BIGINT NOT NULL,
-    file_path VARCHAR(500) NOT NULL,
-    CONSTRAINT fk_defect_attachments_defect
-        FOREIGN KEY (defect_id) REFERENCES defects(id) ON DELETE CASCADE
-);
-
-CREATE TABLE IF NOT EXISTS comments (
-    id             BIGSERIAL PRIMARY KEY,
-    content        TEXT NOT NULL,
-    created_by_id  BIGINT NOT NULL,
-    test_case_id   BIGINT,
-    defect_id      BIGINT,
-    created_at     TIMESTAMP,
-    updated_at     TIMESTAMP,
-    CONSTRAINT fk_comments_user
-        FOREIGN KEY (created_by_id) REFERENCES users(id),
-    CONSTRAINT fk_comments_case
-        FOREIGN KEY (test_case_id) REFERENCES test_cases(id) ON DELETE CASCADE,
-    CONSTRAINT fk_comments_defect
-        FOREIGN KEY (defect_id) REFERENCES defects(id) ON DELETE CASCADE
-);
-
-CREATE TABLE IF NOT EXISTS audit_logs (
-    id          BIGSERIAL PRIMARY KEY,
-    entity_type VARCHAR(100) NOT NULL,
-    entity_id   BIGINT NOT NULL,
-    action      VARCHAR(50) NOT NULL,
-    user_id     BIGINT NOT NULL,
-    old_value   TEXT,
-    new_value   TEXT,
-    description TEXT,
-    created_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    CONSTRAINT fk_audit_logs_user
-        FOREIGN KEY (user_id) REFERENCES users(id)
-);
-
-CREATE INDEX IF NOT EXISTS idx_test_cases_module ON test_cases(module_id);
-CREATE INDEX IF NOT EXISTS idx_test_cases_assigned_to ON test_cases(assigned_to_id);
-CREATE INDEX IF NOT EXISTS idx_test_executions_case ON test_executions(test_case_id);
-CREATE INDEX IF NOT EXISTS idx_defects_case ON defects(test_case_id);
-CREATE INDEX IF NOT EXISTS idx_comments_case ON comments(test_case_id);
-CREATE INDEX IF NOT EXISTS idx_comments_defect ON comments(defect_id);
-
--- Daily Report Module Tables
+-- Main Daily Report table
 CREATE TABLE IF NOT EXISTS daily_reports (
     id                      BIGSERIAL PRIMARY KEY,
     business_date           DATE NOT NULL,
@@ -140,16 +13,17 @@ CREATE TABLE IF NOT EXISTS daily_reports (
     reviewed_at             TIMESTAMP,
     review_comments         TEXT,
     reporting_line          VARCHAR(200),
-    created_at              TIMESTAMP,
-    updated_at              TIMESTAMP,
+    created_at              TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at              TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT fk_daily_reports_employee
-        FOREIGN KEY (employee_id) REFERENCES users(id),
+        FOREIGN KEY (employee_id) REFERENCES users(id) ON DELETE CASCADE,
     CONSTRAINT fk_daily_reports_reviewed_by
-        FOREIGN KEY (reviewed_by_id) REFERENCES users(id),
+        FOREIGN KEY (reviewed_by_id) REFERENCES users(id) ON DELETE SET NULL,
     CONSTRAINT uk_daily_reports_date_employee
         UNIQUE (business_date, employee_id)
 );
 
+-- Chat Communications table
 CREATE TABLE IF NOT EXISTS chat_communications (
     id                  BIGSERIAL PRIMARY KEY,
     daily_report_id     BIGINT NOT NULL,
@@ -162,6 +36,7 @@ CREATE TABLE IF NOT EXISTS chat_communications (
         FOREIGN KEY (daily_report_id) REFERENCES daily_reports(id) ON DELETE CASCADE
 );
 
+-- Email Communications table
 CREATE TABLE IF NOT EXISTS email_communications (
     id                  BIGSERIAL PRIMARY KEY,
     daily_report_id     BIGINT NOT NULL,
@@ -176,6 +51,7 @@ CREATE TABLE IF NOT EXISTS email_communications (
         FOREIGN KEY (daily_report_id) REFERENCES daily_reports(id) ON DELETE CASCADE
 );
 
+-- Problem Escalations table
 CREATE TABLE IF NOT EXISTS problem_escalations (
     id                  BIGSERIAL PRIMARY KEY,
     daily_report_id     BIGINT NOT NULL,
@@ -188,6 +64,7 @@ CREATE TABLE IF NOT EXISTS problem_escalations (
         FOREIGN KEY (daily_report_id) REFERENCES daily_reports(id) ON DELETE CASCADE
 );
 
+-- Training & Capacity Building table
 CREATE TABLE IF NOT EXISTS training_capacity_buildings (
     id                  BIGSERIAL PRIMARY KEY,
     daily_report_id     BIGINT NOT NULL,
@@ -201,6 +78,7 @@ CREATE TABLE IF NOT EXISTS training_capacity_buildings (
         FOREIGN KEY (daily_report_id) REFERENCES daily_reports(id) ON DELETE CASCADE
 );
 
+-- Project Progress Updates table
 CREATE TABLE IF NOT EXISTS project_progress_updates (
     id                      BIGSERIAL PRIMARY KEY,
     daily_report_id         BIGINT NOT NULL,
@@ -214,9 +92,10 @@ CREATE TABLE IF NOT EXISTS project_progress_updates (
         FOREIGN KEY (daily_report_id) REFERENCES daily_reports(id) ON DELETE CASCADE
 );
 
+-- CBS Team Activities table
 CREATE TABLE IF NOT EXISTS cbs_team_activities (
     id                  BIGSERIAL PRIMARY KEY,
-    daily_report_id      BIGINT NOT NULL,
+    daily_report_id     BIGINT NOT NULL,
     description         TEXT NOT NULL,
     branch              VARCHAR(100),
     account_number      VARCHAR(100),
@@ -227,6 +106,7 @@ CREATE TABLE IF NOT EXISTS cbs_team_activities (
         FOREIGN KEY (daily_report_id) REFERENCES daily_reports(id) ON DELETE CASCADE
 );
 
+-- Pending Activities table
 CREATE TABLE IF NOT EXISTS pending_activities (
     id                  BIGSERIAL PRIMARY KEY,
     daily_report_id     BIGINT NOT NULL,
@@ -235,11 +115,12 @@ CREATE TABLE IF NOT EXISTS pending_activities (
     status              VARCHAR(100) NOT NULL,
     amount              DECIMAL(19, 2),
     follow_up_required  BOOLEAN NOT NULL DEFAULT FALSE,
-    responsible_person   VARCHAR(200),
+    responsible_person  VARCHAR(200),
     CONSTRAINT fk_pending_activities_report
         FOREIGN KEY (daily_report_id) REFERENCES daily_reports(id) ON DELETE CASCADE
 );
 
+-- Meetings table
 CREATE TABLE IF NOT EXISTS meetings (
     id                  BIGSERIAL PRIMARY KEY,
     daily_report_id     BIGINT NOT NULL,
@@ -253,6 +134,7 @@ CREATE TABLE IF NOT EXISTS meetings (
         FOREIGN KEY (daily_report_id) REFERENCES daily_reports(id) ON DELETE CASCADE
 );
 
+-- AFPay Card Requests table
 CREATE TABLE IF NOT EXISTS afpay_card_requests (
     id                      BIGSERIAL PRIMARY KEY,
     daily_report_id         BIGINT NOT NULL,
@@ -267,6 +149,7 @@ CREATE TABLE IF NOT EXISTS afpay_card_requests (
         FOREIGN KEY (daily_report_id) REFERENCES daily_reports(id) ON DELETE CASCADE
 );
 
+-- QRMIS Issues table
 CREATE TABLE IF NOT EXISTS qrmis_issues (
     id                          BIGSERIAL PRIMARY KEY,
     daily_report_id             BIGINT NOT NULL,
@@ -274,17 +157,19 @@ CREATE TABLE IF NOT EXISTS qrmis_issues (
     problem_description         TEXT NOT NULL,
     solution_provided           TEXT,
     posted_by                   VARCHAR(200),
-    authorized_by                VARCHAR(200),
+    authorized_by               VARCHAR(200),
     supporting_documents_archived VARCHAR(500),
     operator                    VARCHAR(200),
     CONSTRAINT fk_qrmis_issues_report
         FOREIGN KEY (daily_report_id) REFERENCES daily_reports(id) ON DELETE CASCADE
 );
 
--- Indexes for Daily Report tables
+-- Create indexes for better performance
 CREATE INDEX IF NOT EXISTS idx_daily_reports_employee ON daily_reports(employee_id);
 CREATE INDEX IF NOT EXISTS idx_daily_reports_business_date ON daily_reports(business_date);
 CREATE INDEX IF NOT EXISTS idx_daily_reports_status ON daily_reports(status);
+CREATE INDEX IF NOT EXISTS idx_daily_reports_reviewed_by ON daily_reports(reviewed_by_id);
+
 CREATE INDEX IF NOT EXISTS idx_chat_communications_report ON chat_communications(daily_report_id);
 CREATE INDEX IF NOT EXISTS idx_email_communications_report ON email_communications(daily_report_id);
 CREATE INDEX IF NOT EXISTS idx_problem_escalations_report ON problem_escalations(daily_report_id);
@@ -295,4 +180,17 @@ CREATE INDEX IF NOT EXISTS idx_pending_activities_report ON pending_activities(d
 CREATE INDEX IF NOT EXISTS idx_meetings_report ON meetings(daily_report_id);
 CREATE INDEX IF NOT EXISTS idx_afpay_card_requests_report ON afpay_card_requests(daily_report_id);
 CREATE INDEX IF NOT EXISTS idx_qrmis_issues_report ON qrmis_issues(daily_report_id);
+
+-- Verify tables were created
+SELECT 
+    table_name 
+FROM 
+    information_schema.tables 
+WHERE 
+    table_schema = 'public' 
+    AND table_name LIKE '%daily%' OR table_name LIKE '%chat%' OR table_name LIKE '%email%' 
+    OR table_name LIKE '%problem%' OR table_name LIKE '%training%' OR table_name LIKE '%project%'
+    OR table_name LIKE '%cbs_team%' OR table_name LIKE '%pending%' OR table_name LIKE '%meeting%'
+    OR table_name LIKE '%afpay%' OR table_name LIKE '%qrmis%'
+ORDER BY table_name;
 

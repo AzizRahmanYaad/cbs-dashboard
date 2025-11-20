@@ -534,7 +534,22 @@
 
   <!-- My Reports Tab -->
   <div class="tab-content" *ngIf="activeTab === 'my-reports'">
-    <div class="reports-list">
+    <div class="reports-header">
+      <h2>My Reports</h2>
+      <button class="btn-secondary" (click)="loadMyReports()" [disabled]="loading">
+        {{ loading ? 'Loading...' : 'Refresh' }}
+      </button>
+    </div>
+    
+    <div *ngIf="errorMessage" class="error-message">
+      {{ errorMessage }}
+    </div>
+    
+    <div *ngIf="loading" class="loading-message">
+      <p>Loading reports...</p>
+    </div>
+    
+    <div class="reports-list" *ngIf="!loading">
       <div *ngFor="let report of myReports" class="report-card">
         <div class="report-header">
           <h3>{{ report.businessDate | date:'mediumDate' }}</h3>
@@ -543,16 +558,22 @@
           </span>
         </div>
         <div class="report-info">
-          <p><strong>Activities:</strong> {{ report.cbsTeamActivities.length }}</p>
+          <p><strong>Activities:</strong> {{ report.cbsTeamActivities?.length || 0 }}</p>
           <p><strong>Created:</strong> {{ report.createdAt | date:'short' }}</p>
           <p *ngIf="report.reviewedByUsername"><strong>Reviewed by:</strong> {{ report.reviewedByUsername }}</p>
+          <p *ngIf="report.reviewComments"><strong>Review Comments:</strong> {{ report.reviewComments }}</p>
         </div>
         <div class="report-actions">
-          <button class="btn-sm btn-primary" (click)="loadReportForEdit(report)">Edit</button>
+          <button 
+            class="btn-sm btn-primary" 
+            (click)="loadReportForEdit(report)"
+            *ngIf="canEditReport(report)">
+            Edit
+          </button>
           <button class="btn-sm btn-secondary" (click)="viewReport(report)">View</button>
         </div>
       </div>
-      <div *ngIf="myReports.length === 0" class="no-data">
+      <div *ngIf="myReports.length === 0 && !loading" class="no-data">
         <p>No reports found. Create your first report!</p>
       </div>
     </div>

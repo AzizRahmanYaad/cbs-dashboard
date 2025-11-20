@@ -383,12 +383,17 @@ export class DailyReportComponent implements OnInit {
       };
 
       if (this.currentReport?.id) {
-        await this.reportService.updateReport(this.currentReport.id, request).toPromise();
+        const updatedReport = await this.reportService.updateReport(this.currentReport.id, request).toPromise();
+        this.currentReport = updatedReport!;
         this.successMessage = 'Report saved successfully';
+        // Reload reports list
+        this.loadMyReports();
       } else {
         const report = await this.reportService.createReport(request).toPromise();
         this.currentReport = report!;
         this.successMessage = 'Report created successfully';
+        // Reload reports list
+        this.loadMyReports();
       }
     } catch (error: any) {
       this.errorMessage = error.error?.message || 'Failed to save report';
@@ -434,11 +439,21 @@ export class DailyReportComponent implements OnInit {
 
   async loadMyReports() {
     this.loading = true;
+    this.errorMessage = '';
     try {
       const response = await this.reportService.getMyReports(0, 100).toPromise();
-      this.myReports = response?.content || [];
+      console.log('Reports loaded:', response);
+      if (response && response.content) {
+        this.myReports = response.content;
+        console.log('My reports count:', this.myReports.length);
+      } else {
+        this.myReports = [];
+        console.log('No reports in response');
+      }
     } catch (error: any) {
-      this.errorMessage = 'Failed to load reports';
+      console.error('Error loading reports:', error);
+      this.errorMessage = error.error?.message || 'Failed to load reports';
+      this.myReports = [];
     } finally {
       this.loading = false;
     }
@@ -470,7 +485,10 @@ export class DailyReportComponent implements OnInit {
   setActiveTab(tab: 'create' | 'my-reports' | 'dashboard') {
     this.activeTab = tab;
     if (tab === 'my-reports') {
-      this.loadMyReports();
+      // Small delay to ensure tab is visible before loading
+      setTimeout(() => {
+        this.loadMyReports();
+      }, 100);
     }
   }
 

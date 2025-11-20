@@ -247,9 +247,28 @@ textarea.form-input {
   font-size: 0.875rem;
 }
 
+.reports-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+  
+  h2 {
+    margin: 0;
+    font-size: 1.5rem;
+    color: #1f2937;
+  }
+}
+
 .reports-list {
   display: grid;
   gap: 1rem;
+}
+
+.loading-message {
+  text-align: center;
+  padding: 2rem;
+  color: #6b7280;
 }
 
 .report-card {
