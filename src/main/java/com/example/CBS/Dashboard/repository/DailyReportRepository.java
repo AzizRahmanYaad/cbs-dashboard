@@ -20,6 +20,12 @@ public interface DailyReportRepository extends JpaRepository<DailyReport, Long>,
     
     List<DailyReport> findByEmployeeIdOrderByBusinessDateDesc(Long employeeId);
     
+    @Query("SELECT DISTINCT dr FROM DailyReport dr " +
+           "LEFT JOIN FETCH dr.cbsTeamActivities " +
+           "WHERE dr.employee.id = :employeeId " +
+           "ORDER BY dr.businessDate DESC")
+    List<DailyReport> findByEmployeeIdWithActivities(@Param("employeeId") Long employeeId);
+    
     Page<DailyReport> findByEmployeeIdOrderByBusinessDateDesc(Long employeeId, Pageable pageable);
     
     Page<DailyReport> findByStatusOrderByBusinessDateDesc(DailyReport.ReportStatus status, Pageable pageable);

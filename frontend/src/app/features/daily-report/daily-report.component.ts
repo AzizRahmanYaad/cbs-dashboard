@@ -440,22 +440,47 @@ export class DailyReportComponent implements OnInit {
   async loadMyReports() {
     this.loading = true;
     this.errorMessage = '';
+    this.myReports = []; // Clear existing reports
+    
     try {
+      console.log('Loading my reports...');
       const response = await this.reportService.getMyReports(0, 100).toPromise();
-      console.log('Reports loaded:', response);
-      if (response && response.content) {
-        this.myReports = response.content;
-        console.log('My reports count:', this.myReports.length);
+      console.log('Full API response:', JSON.stringify(response, null, 2));
+      
+      if (response) {
+        if (response.content && Array.isArray(response.content)) {
+          this.myReports = response.content;
+          console.log('My reports loaded successfully. Count:', this.myReports.length);
+          console.log('First report:', this.myReports[0]);
+        } else if (Array.isArray(response)) {
+          // Handle case where API returns array directly instead of PageResponse
+          this.myReports = response;
+          console.log('My reports loaded (array format). Count:', this.myReports.length);
+        } else {
+          console.warn('Unexpected response format:', response);
+          this.myReports = [];
+        }
       } else {
+        console.warn('Empty response received');
         this.myReports = [];
-        console.log('No reports in response');
+      }
+      
+      if (this.myReports.length === 0) {
+        console.log('No reports found for current user');
       }
     } catch (error: any) {
       console.error('Error loading reports:', error);
-      this.errorMessage = error.error?.message || 'Failed to load reports';
+      console.error('Error details:', {
+        status: error.status,
+        statusText: error.statusText,
+        message: error.message,
+        error: error.error
+      });
+      this.errorMessage = error.error?.message || error.message || 'Failed to load reports';
       this.myReports = [];
     } finally {
       this.loading = false;
+      console.log('Loading completed. Reports count:', this.myReports.length);
     }
   }
 

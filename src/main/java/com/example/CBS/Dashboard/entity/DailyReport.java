@@ -29,7 +29,7 @@ public class DailyReport {
     @Column(name = "business_date", nullable = false)
     private LocalDate businessDate;
     
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "employee_id", nullable = false)
     private User employee;
     
@@ -46,7 +46,7 @@ public class DailyReport {
     private ReportStatus status = ReportStatus.DRAFT;
     
     // Approval Information
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "reviewed_by_id")
     private User reviewedBy;
     

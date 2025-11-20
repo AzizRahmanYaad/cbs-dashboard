@@ -37,27 +37,37 @@ public class DailyReportMapper {
         }
         dto.setReviewedAt(report.getReviewedAt());
         
-        // Map collections
-        dto.setChatCommunications(report.getChatCommunications().stream()
-            .map(this::toChatDto).collect(Collectors.toList()));
-        dto.setEmailCommunications(report.getEmailCommunications().stream()
-            .map(this::toEmailDto).collect(Collectors.toList()));
-        dto.setProblemEscalations(report.getProblemEscalations().stream()
-            .map(this::toEscalationDto).collect(Collectors.toList()));
-        dto.setTrainingCapacityBuildings(report.getTrainingCapacityBuildings().stream()
-            .map(this::toTrainingDto).collect(Collectors.toList()));
-        dto.setProjectProgressUpdates(report.getProjectProgressUpdates().stream()
-            .map(this::toProjectDto).collect(Collectors.toList()));
-        dto.setCbsTeamActivities(report.getCbsTeamActivities().stream()
-            .map(this::toActivityDto).collect(Collectors.toList()));
-        dto.setPendingActivities(report.getPendingActivities().stream()
-            .map(this::toPendingDto).collect(Collectors.toList()));
-        dto.setMeetings(report.getMeetings().stream()
-            .map(this::toMeetingDto).collect(Collectors.toList()));
-        dto.setAfpayCardRequests(report.getAfpayCardRequests().stream()
-            .map(this::toAfpayDto).collect(Collectors.toList()));
-        dto.setQrmisIssues(report.getQrmisIssues().stream()
-            .map(this::toQrmisDto).collect(Collectors.toList()));
+        // Map collections (handle null safely)
+        dto.setChatCommunications(report.getChatCommunications() != null ? 
+            report.getChatCommunications().stream().map(this::toChatDto).collect(Collectors.toList()) : 
+            new java.util.ArrayList<>());
+        dto.setEmailCommunications(report.getEmailCommunications() != null ? 
+            report.getEmailCommunications().stream().map(this::toEmailDto).collect(Collectors.toList()) : 
+            new java.util.ArrayList<>());
+        dto.setProblemEscalations(report.getProblemEscalations() != null ? 
+            report.getProblemEscalations().stream().map(this::toEscalationDto).collect(Collectors.toList()) : 
+            new java.util.ArrayList<>());
+        dto.setTrainingCapacityBuildings(report.getTrainingCapacityBuildings() != null ? 
+            report.getTrainingCapacityBuildings().stream().map(this::toTrainingDto).collect(Collectors.toList()) : 
+            new java.util.ArrayList<>());
+        dto.setProjectProgressUpdates(report.getProjectProgressUpdates() != null ? 
+            report.getProjectProgressUpdates().stream().map(this::toProjectDto).collect(Collectors.toList()) : 
+            new java.util.ArrayList<>());
+        dto.setCbsTeamActivities(report.getCbsTeamActivities() != null ? 
+            report.getCbsTeamActivities().stream().map(this::toActivityDto).collect(Collectors.toList()) : 
+            new java.util.ArrayList<>());
+        dto.setPendingActivities(report.getPendingActivities() != null ? 
+            report.getPendingActivities().stream().map(this::toPendingDto).collect(Collectors.toList()) : 
+            new java.util.ArrayList<>());
+        dto.setMeetings(report.getMeetings() != null ? 
+            report.getMeetings().stream().map(this::toMeetingDto).collect(Collectors.toList()) : 
+            new java.util.ArrayList<>());
+        dto.setAfpayCardRequests(report.getAfpayCardRequests() != null ? 
+            report.getAfpayCardRequests().stream().map(this::toAfpayDto).collect(Collectors.toList()) : 
+            new java.util.ArrayList<>());
+        dto.setQrmisIssues(report.getQrmisIssues() != null ? 
+            report.getQrmisIssues().stream().map(this::toQrmisDto).collect(Collectors.toList()) : 
+            new java.util.ArrayList<>());
         
         return dto;
     }

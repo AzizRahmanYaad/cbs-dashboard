@@ -159,21 +159,28 @@ public class DailyReportService {
     
     @Transactional(readOnly = true)
     public Page<DailyReportDto> getMyReports(Long employeeId, Pageable pageable) {
-        Page<DailyReport> reports = dailyReportRepository.findByEmployeeIdOrderByBusinessDateDesc(employeeId, pageable);
-        // Ensure collections are loaded by accessing them
-        reports.getContent().forEach(report -> {
-            report.getChatCommunications().size();
-            report.getEmailCommunications().size();
-            report.getProblemEscalations().size();
-            report.getTrainingCapacityBuildings().size();
-            report.getProjectProgressUpdates().size();
-            report.getCbsTeamActivities().size();
-            report.getPendingActivities().size();
-            report.getMeetings().size();
-            report.getAfpayCardRequests().size();
-            report.getQrmisIssues().size();
+        // Get paginated reports
+        Page<DailyReport> reportsPage = dailyReportRepository.findByEmployeeIdOrderByBusinessDateDesc(employeeId, pageable);
+        
+        // For each report, initialize collections to avoid lazy loading issues
+        reportsPage.getContent().forEach(report -> {
+            // Initialize all collections by accessing them
+            if (report.getChatCommunications() != null) report.getChatCommunications().size();
+            if (report.getEmailCommunications() != null) report.getEmailCommunications().size();
+            if (report.getProblemEscalations() != null) report.getProblemEscalations().size();
+            if (report.getTrainingCapacityBuildings() != null) report.getTrainingCapacityBuildings().size();
+            if (report.getProjectProgressUpdates() != null) report.getProjectProgressUpdates().size();
+            if (report.getCbsTeamActivities() != null) report.getCbsTeamActivities().size();
+            if (report.getPendingActivities() != null) report.getPendingActivities().size();
+            if (report.getMeetings() != null) report.getMeetings().size();
+            if (report.getAfpayCardRequests() != null) report.getAfpayCardRequests().size();
+            if (report.getQrmisIssues() != null) report.getQrmisIssues().size();
+            // Also initialize employee and reviewedBy
+            if (report.getEmployee() != null) report.getEmployee().getUsername();
+            if (report.getReviewedBy() != null) report.getReviewedBy().getUsername();
         });
-        return reports.map(dailyReportMapper::toDto);
+        
+        return reportsPage.map(dailyReportMapper::toDto);
     }
     
     @Transactional(readOnly = true)
