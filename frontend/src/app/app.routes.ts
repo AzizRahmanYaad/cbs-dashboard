@@ -1,5 +1,6 @@
 import { Routes } from '@angular/router';
 import { authGuard } from './core/guards/auth.guard';
+import { dailyReportGuard } from './core/guards/daily-report.guard';
 import { LoginComponent } from './features/auth/login/login.component';
 import { DashboardShellComponent } from './features/dashboard/dashboard-shell/dashboard-shell.component';
 import { HomeComponent } from './features/dashboard/home/home.component';
@@ -51,7 +52,18 @@ export const routes: Routes = [
       {
         path: 'daily-report',
         component: DailyReportComponent,
-        data: { roles: ['ROLE_DAILY_REPORT'] }
+        canActivate: [dailyReportGuard],
+        data: { 
+          roles: [
+            'ROLE_DAILY_REPORT',
+            'ROLE_DAILY_REPORT_EMPLOYEE',
+            'ROLE_DAILY_REPORT_SUPERVISOR',
+            'ROLE_DAILY_REPORT_DIRECTOR',
+            'ROLE_DAILY_REPORT_MANAGER',
+            'ROLE_DAILY_REPORT_TEAM_LEAD',
+            'ROLE_ADMIN'
+          ] 
+        }
       },
       {
         path: 'admin/users',

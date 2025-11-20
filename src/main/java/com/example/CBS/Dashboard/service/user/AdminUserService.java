@@ -175,6 +175,27 @@ public class AdminUserService {
         if (roleName.equalsIgnoreCase("ROLE_USER")) {
             return "Basic dashboard access";
         }
+        
+        // Daily Report specific roles
+        if (roleName.equalsIgnoreCase("ROLE_DAILY_REPORT_EMPLOYEE")) {
+            return "Can create and submit own daily reports";
+        }
+        if (roleName.equalsIgnoreCase("ROLE_DAILY_REPORT_SUPERVISOR")) {
+            return "Can review, approve, or send back daily reports";
+        }
+        if (roleName.equalsIgnoreCase("ROLE_DAILY_REPORT_DIRECTOR")) {
+            return "View-only or full access to daily reports";
+        }
+        if (roleName.equalsIgnoreCase("ROLE_DAILY_REPORT_MANAGER")) {
+            return "View-only or full access to daily reports";
+        }
+        if (roleName.equalsIgnoreCase("ROLE_DAILY_REPORT_TEAM_LEAD")) {
+            return "View-only or full access to daily reports";
+        }
+        if (roleName.equalsIgnoreCase("ROLE_DAILY_REPORT")) {
+            return "General daily report module access";
+        }
+        
         if (roleName.startsWith("ROLE_")) {
             String module = roleName.replace("ROLE_", "").replace("_", " ").toLowerCase();
             module = Character.toUpperCase(module.charAt(0)) + module.substring(1);

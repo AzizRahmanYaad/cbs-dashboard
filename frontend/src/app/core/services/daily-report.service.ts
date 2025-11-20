@@ -1,0 +1,100 @@
+import { Injectable, inject } from '@angular/core';
+import { HttpClient, HttpParams } from '@angular/common/http';
+import { Observable } from 'rxjs';
+import { environment } from '../../../environments/environment';
+import {
+  DailyReport,
+  CreateDailyReportRequest,
+  ReviewReportRequest,
+  DailyReportDashboard,
+  PageResponse,
+  ReportStatus
+} from '../models/daily-report/daily-report.model';
+
+@Injectable({
+  providedIn: 'root'
+})
+export class DailyReportService {
+  private http = inject(HttpClient);
+  private baseUrl = `${environment.apiUrl}/api/daily-reports`;
+
+  createReport(request: CreateDailyReportRequest): Observable<DailyReport> {
+    return this.http.post<DailyReport>(this.baseUrl, request);
+  }
+
+  updateReport(id: number, request: CreateDailyReportRequest): Observable<DailyReport> {
+    return this.http.put<DailyReport>(`${this.baseUrl}/${id}`, request);
+  }
+
+  submitReport(id: number): Observable<DailyReport> {
+    return this.http.post<DailyReport>(`${this.baseUrl}/${id}/submit`, {});
+  }
+
+  reviewReport(id: number, request: ReviewReportRequest): Observable<DailyReport> {
+    return this.http.post<DailyReport>(`${this.baseUrl}/${id}/review`, request);
+  }
+
+  getReport(id: number): Observable<DailyReport> {
+    return this.http.get<DailyReport>(`${this.baseUrl}/${id}`);
+  }
+
+  getReportByDate(date: string): Observable<DailyReport> {
+    return this.http.get<DailyReport>(`${this.baseUrl}/date/${date}`);
+  }
+
+  getMyReports(
+    page: number = 0,
+    size: number = 10,
+    sortBy: string = 'businessDate',
+    sortDir: string = 'DESC'
+  ): Observable<PageResponse<DailyReport>> {
+    let params = new HttpParams()
+      .set('page', page.toString())
+      .set('size', size.toString())
+      .set('sortBy', sortBy)
+      .set('sortDir', sortDir);
+
+    return this.http.get<PageResponse<DailyReport>>(`${this.baseUrl}/my-reports`, { params });
+  }
+
+  getAllReports(
+    page: number = 0,
+    size: number = 10,
+    sortBy: string = 'businessDate',
+    sortDir: string = 'DESC',
+    startDate?: string,
+    endDate?: string,
+    employeeId?: number,
+    status?: ReportStatus
+  ): Observable<PageResponse<DailyReport>> {
+    let params = new HttpParams()
+      .set('page', page.toString())
+      .set('size', size.toString())
+      .set('sortBy', sortBy)
+      .set('sortDir', sortDir);
+
+    if (startDate) {
+      params = params.set('startDate', startDate);
+    }
+    if (endDate) {
+      params = params.set('endDate', endDate);
+    }
+    if (employeeId) {
+      params = params.set('employeeId', employeeId.toString());
+    }
+    if (status) {
+      params = params.set('status', status);
+    }
+
+    return this.http.get<PageResponse<DailyReport>>(this.baseUrl, { params });
+  }
+
+  getDashboard(): Observable<DailyReportDashboard> {
+    return this.http.get<DailyReportDashboard>(`${this.baseUrl}/dashboard`);
+  }
+
+  deleteReport(id: number): Observable<void> {
+    return this.http.delete<void>(`${this.baseUrl}/${id}`);
+  }
+}
+

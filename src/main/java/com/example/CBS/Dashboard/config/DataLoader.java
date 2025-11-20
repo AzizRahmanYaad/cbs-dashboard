@@ -32,7 +32,12 @@ public class DataLoader implements CommandLineRunner {
                 "ROLE_USER",
                 "ROLE_TRAINING",
                 "ROLE_DRILL_TESTING",
-                "ROLE_DAILY_REPORT"
+                "ROLE_DAILY_REPORT",
+                "ROLE_DAILY_REPORT_EMPLOYEE",
+                "ROLE_DAILY_REPORT_SUPERVISOR",
+                "ROLE_DAILY_REPORT_DIRECTOR",
+                "ROLE_DAILY_REPORT_MANAGER",
+                "ROLE_DAILY_REPORT_TEAM_LEAD"
         );
         defaultRoles.forEach(roleName -> roleRepository.findByName(roleName)
                 .orElseGet(() -> roleRepository.save(new Role(roleName))));
