@@ -92,7 +92,9 @@
                 <label>Reference Number</label>
                 <input type="text" formControlName="referenceNumber" class="form-input">
               </div>
-              <button type="button" class="btn-remove" (click)="removeChatCommunication(i)">Remove</button>
+              <button type="button" class="btn-remove-icon" (click)="removeChatCommunication(i)" title="Remove">
+                <span class="icon-x">×</span>
+              </button>
             </div>
             <div class="form-group">
               <label>Summary *</label>
@@ -134,7 +136,9 @@
                 <label>Receiver *</label>
                 <input type="text" formControlName="receiver" class="form-input">
               </div>
-              <button type="button" class="btn-remove" (click)="removeEmailCommunication(i)">Remove</button>
+              <button type="button" class="btn-remove-icon" (click)="removeEmailCommunication(i)" title="Remove">
+                <span class="icon-x">×</span>
+              </button>
             </div>
             <div class="form-group">
               <label>Subject *</label>
@@ -175,7 +179,9 @@
                 <label>Date/Time *</label>
                 <input type="datetime-local" formControlName="escalationDateTime" class="form-input">
               </div>
-              <button type="button" class="btn-remove" (click)="removeProblemEscalation(i)">Remove</button>
+              <button type="button" class="btn-remove-icon" (click)="removeProblemEscalation(i)" title="Remove">
+                <span class="icon-x">×</span>
+              </button>
             </div>
             <div class="form-group">
               <label>Reason for Escalation *</label>
@@ -216,7 +222,9 @@
                 <label>Duration</label>
                 <input type="text" formControlName="duration" class="form-input" placeholder="e.g., 2 hours">
               </div>
-              <button type="button" class="btn-remove" (click)="removeTrainingCapacityBuilding(i)">Remove</button>
+              <button type="button" class="btn-remove-icon" (click)="removeTrainingCapacityBuilding(i)" title="Remove">
+                <span class="icon-x">×</span>
+              </button>
             </div>
             <div class="form-group">
               <label>Topic *</label>
@@ -257,7 +265,9 @@
                 <label>Estimated Completion Date</label>
                 <input type="date" formControlName="estimatedCompletionDate" class="form-input">
               </div>
-              <button type="button" class="btn-remove" (click)="removeProjectProgressUpdate(i)">Remove</button>
+              <button type="button" class="btn-remove-icon" (click)="removeProjectProgressUpdate(i)" title="Remove">
+                <span class="icon-x">×</span>
+              </button>
             </div>
             <div class="form-group">
               <label>Task or Milestone</label>
@@ -311,7 +321,9 @@
                 <label>Account Number</label>
                 <input type="text" formControlName="accountNumber" class="form-input">
               </div>
-              <button type="button" class="btn-remove" (click)="removeCbsTeamActivity(i)">Remove</button>
+              <button type="button" class="btn-remove-icon" (click)="removeCbsTeamActivity(i)" title="Remove">
+                <span class="icon-x">×</span>
+              </button>
             </div>
             <div class="form-group">
               <label>Description *</label>
@@ -352,7 +364,9 @@
                 <label>Amount</label>
                 <input type="number" formControlName="amount" class="form-input">
               </div>
-              <button type="button" class="btn-remove" (click)="removePendingActivity(i)">Remove</button>
+              <button type="button" class="btn-remove-icon" (click)="removePendingActivity(i)" title="Remove">
+                <span class="icon-x">×</span>
+              </button>
             </div>
             <div class="form-group">
               <label>Description *</label>
@@ -389,7 +403,9 @@
                   <option value="External">External</option>
                 </select>
               </div>
-              <button type="button" class="btn-remove" (click)="removeMeeting(i)">Remove</button>
+              <button type="button" class="btn-remove-icon" (click)="removeMeeting(i)" title="Remove">
+                <span class="icon-x">×</span>
+              </button>
             </div>
             <div class="form-group">
               <label>Topic *</label>
@@ -445,7 +461,9 @@
                 <label>Archived Date</label>
                 <input type="date" formControlName="archivedDate" class="form-input">
               </div>
-              <button type="button" class="btn-remove" (click)="removeAfpayCardRequest(i)">Remove</button>
+              <button type="button" class="btn-remove-icon" (click)="removeAfpayCardRequest(i)" title="Remove">
+                <span class="icon-x">×</span>
+              </button>
             </div>
             <div class="form-row">
               <div class="form-group">
@@ -490,7 +508,9 @@
                 <label>Authorized By</label>
                 <input type="text" formControlName="authorizedBy" class="form-input">
               </div>
-              <button type="button" class="btn-remove" (click)="removeQrmisIssue(i)">Remove</button>
+              <button type="button" class="btn-remove-icon" (click)="removeQrmisIssue(i)" title="Remove">
+                <span class="icon-x">×</span>
+              </button>
             </div>
             <div class="form-group">
               <label>Problem Description *</label>
@@ -550,29 +570,63 @@
     </div>
     
     <div class="reports-list" *ngIf="!loading">
-      <div *ngFor="let report of myReports" class="report-card">
-        <div class="report-header">
-          <h3>{{ report.businessDate | date:'mediumDate' }}</h3>
-          <span [class]="'status-badge ' + getStatusColor(report.status)">
-            {{ report.status }}
-          </span>
-        </div>
-        <div class="report-info">
-          <p><strong>Activities:</strong> {{ report.cbsTeamActivities?.length || 0 }}</p>
-          <p><strong>Created:</strong> {{ report.createdAt | date:'short' }}</p>
-          <p *ngIf="report.reviewedByUsername"><strong>Reviewed by:</strong> {{ report.reviewedByUsername }}</p>
-          <p *ngIf="report.reviewComments"><strong>Review Comments:</strong> {{ report.reviewComments }}</p>
-        </div>
-        <div class="report-actions">
-          <button 
-            class="btn-sm btn-primary" 
-            (click)="loadReportForEdit(report)"
-            *ngIf="canEditReport(report)">
-            Edit
-          </button>
-          <button class="btn-sm btn-secondary" (click)="viewReport(report)">View</button>
+      <!-- Reports organized by date -->
+      <div *ngIf="reportsByDate.size > 0">
+        <div *ngFor="let dateKey of getDateKeys()" class="date-group">
+          <h4 class="date-header">{{ dateKey | date:'fullDate' }}</h4>
+          <div *ngFor="let report of getReportsForDate(dateKey)" class="report-card">
+            <div class="report-header">
+              <h3>{{ report.businessDate | date:'mediumDate' }}</h3>
+              <span [class]="'status-badge ' + getStatusColor(report.status)">
+                {{ report.status }}
+              </span>
+            </div>
+            <div class="report-info">
+              <p><strong>Activities:</strong> {{ report.cbsTeamActivities?.length || 0 }}</p>
+              <p><strong>Created:</strong> {{ report.createdAt | date:'short' }}</p>
+              <p *ngIf="report.reviewedByUsername"><strong>Reviewed by:</strong> {{ report.reviewedByUsername }}</p>
+              <p *ngIf="report.reviewComments"><strong>Review Comments:</strong> {{ report.reviewComments }}</p>
+            </div>
+            <div class="report-actions">
+              <button 
+                class="btn-sm btn-primary" 
+                (click)="loadReportForEdit(report)"
+                *ngIf="canEditReport(report)">
+                Edit
+              </button>
+              <button class="btn-sm btn-secondary" (click)="viewReport(report)">View</button>
+            </div>
+          </div>
         </div>
       </div>
+      
+      <!-- Fallback: show all reports if not organized by date -->
+      <div *ngIf="reportsByDate.size === 0">
+        <div *ngFor="let report of myReports" class="report-card">
+          <div class="report-header">
+            <h3>{{ report.businessDate | date:'mediumDate' }}</h3>
+            <span [class]="'status-badge ' + getStatusColor(report.status)">
+              {{ report.status }}
+            </span>
+          </div>
+          <div class="report-info">
+            <p><strong>Activities:</strong> {{ report.cbsTeamActivities?.length || 0 }}</p>
+            <p><strong>Created:</strong> {{ report.createdAt | date:'short' }}</p>
+            <p *ngIf="report.reviewedByUsername"><strong>Reviewed by:</strong> {{ report.reviewedByUsername }}</p>
+            <p *ngIf="report.reviewComments"><strong>Review Comments:</strong> {{ report.reviewComments }}</p>
+          </div>
+          <div class="report-actions">
+            <button 
+              class="btn-sm btn-primary" 
+              (click)="loadReportForEdit(report)"
+              *ngIf="canEditReport(report)">
+              Edit
+            </button>
+            <button class="btn-sm btn-secondary" (click)="viewReport(report)">View</button>
+          </div>
+        </div>
+      </div>
+      
       <div *ngIf="myReports.length === 0 && !loading" class="no-data">
         <p>No reports found. Create your first report!</p>
       </div>
@@ -581,8 +635,115 @@
 
   <!-- Dashboard Tab -->
   <div class="tab-content" *ngIf="activeTab === 'dashboard'">
-    <div class="dashboard-placeholder">
-      <p>Dashboard coming soon...</p>
+    <!-- Controller Download Section -->
+    <div class="dashboard-section" *ngIf="isController">
+      <h2 class="section-title">Controller - Report Downloads</h2>
+      
+      <div class="download-section">
+        <h3>Download Individual Reports by Employee</h3>
+        <div class="form-group">
+          <label>Select Date</label>
+          <input 
+            type="date" 
+            [(ngModel)]="selectedDateForDownload"
+            class="form-input"
+            (change)="loadReportsByDate(selectedDateForDownload)">
+        </div>
+        
+        <div *ngIf="reportsByDate.size > 0" class="reports-by-date">
+          <div *ngFor="let dateKey of getDateKeys()" class="date-group">
+            <h4>{{ dateKey | date:'fullDate' }}</h4>
+            <div class="employee-list">
+              <div *ngFor="let report of getReportsForDate(dateKey)" class="employee-item">
+                <span>{{ report.employeeUsername || 'Employee ' + report.employeeId }}</span>
+                <button 
+                  class="btn-sm btn-primary" 
+                  (click)="downloadEmployeeReport(report.employeeId!, report.employeeUsername || 'Employee')"
+                  [disabled]="downloading">
+                  {{ downloading ? 'Downloading...' : 'Download' }}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <div class="download-section">
+        <h3>Download Combined Team Report</h3>
+        <div class="form-group">
+          <label>Select Date (optional)</label>
+          <input 
+            type="date" 
+            [(ngModel)]="selectedDateForDownload"
+            class="form-input">
+        </div>
+        <button 
+          class="btn-primary" 
+          (click)="downloadCombinedReport(selectedDateForDownload)"
+          [disabled]="downloading">
+          {{ downloading ? 'Downloading...' : 'Download Combined Report' }}
+        </button>
+      </div>
+    </div>
+    
+    <!-- CFO View Section -->
+    <div class="dashboard-section" *ngIf="isCFO">
+      <h2 class="section-title">CFO - View and Confirm Reports</h2>
+      
+      <div class="form-group">
+        <label>Select Date to View Reports</label>
+        <input 
+          type="date" 
+          [(ngModel)]="selectedDateForDownload"
+          class="form-input"
+          (change)="loadReportsByDate(selectedDateForDownload)">
+      </div>
+      
+      <div *ngIf="reportsByDate.size > 0" class="reports-by-date">
+        <div *ngFor="let dateKey of getDateKeys()" class="date-group">
+          <h4>{{ dateKey | date:'fullDate' }}</h4>
+          <div class="reports-list">
+            <div *ngFor="let report of getReportsForDate(dateKey)" class="report-card">
+              <div class="report-header">
+                <h3>{{ report.employeeUsername || 'Employee ' + report.employeeId }}</h3>
+                <span [class]="'status-badge ' + getStatusColor(report.status)">
+                  {{ report.status }}
+                </span>
+              </div>
+              <div class="report-info">
+                <p><strong>Business Date:</strong> {{ report.businessDate | date:'mediumDate' }}</p>
+                <p><strong>Activities:</strong> {{ report.cbsTeamActivities?.length || 0 }}</p>
+                <p *ngIf="report.reviewedByUsername"><strong>Reviewed by:</strong> {{ report.reviewedByUsername }}</p>
+                <p *ngIf="report.reviewComments"><strong>Comments:</strong> {{ report.reviewComments }}</p>
+              </div>
+              <div class="report-actions">
+                <button class="btn-sm btn-secondary" (click)="viewReport(report)">View Details</button>
+                <button 
+                  *ngIf="report.status !== 'APPROVED'"
+                  class="btn-sm btn-primary" 
+                  (click)="confirmReport(report)"
+                  [disabled]="loading">
+                  Confirm
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <div class="download-section">
+        <h3>Download Combined Team Report</h3>
+        <button 
+          class="btn-primary" 
+          (click)="downloadCombinedReport(selectedDateForDownload)"
+          [disabled]="downloading">
+          {{ downloading ? 'Downloading...' : 'Download Combined Report' }}
+        </button>
+      </div>
+    </div>
+    
+    <div *ngIf="!isController && !isCFO" class="dashboard-placeholder">
+      <p>Dashboard access requires Controller or CFO role.</p>
     </div>
   </div>
 </div>

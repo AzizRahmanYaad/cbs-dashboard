@@ -22,7 +22,9 @@ export class DailyReportPermissionService {
     MANAGER: 'ROLE_DAILY_REPORT_MANAGER',
     TEAM_LEAD: 'ROLE_DAILY_REPORT_TEAM_LEAD',
     ADMIN: 'ROLE_ADMIN',
-    DAILY_REPORT: 'ROLE_DAILY_REPORT' // General daily report access
+    DAILY_REPORT: 'ROLE_DAILY_REPORT', // General daily report access
+    CONTROLLER: 'ROLE_DAILY_REPORT_SUPERVISOR', // Controller maps to Supervisor
+    CFO: 'ROLE_DAILY_REPORT_DIRECTOR' // CFO maps to Director
   };
 
   /**
@@ -123,6 +125,30 @@ export class DailyReportPermissionService {
       this.ROLES.DIRECTOR,
       this.ROLES.MANAGER,
       this.ROLES.TEAM_LEAD,
+      this.ROLES.ADMIN,
+      this.ROLES.CONTROLLER,
+      this.ROLES.CFO
+    ]);
+  }
+
+  /**
+   * Check if user is a Controller (can generate and download reports)
+   */
+  isController(): boolean {
+    return this.hasAnyRole([
+      this.ROLES.CONTROLLER,
+      this.ROLES.SUPERVISOR,
+      this.ROLES.ADMIN
+    ]);
+  }
+
+  /**
+   * Check if user is a CFO (can view and confirm reports)
+   */
+  isCFO(): boolean {
+    return this.hasAnyRole([
+      this.ROLES.CFO,
+      this.ROLES.DIRECTOR,
       this.ROLES.ADMIN
     ]);
   }

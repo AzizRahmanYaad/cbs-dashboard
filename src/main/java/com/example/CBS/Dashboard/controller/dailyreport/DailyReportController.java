@@ -11,13 +11,16 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/daily-reports")
@@ -134,6 +137,51 @@ public class DailyReportController {
         Long userId = getUserIdFromAuthentication(authentication);
         dailyReportService.deleteReport(id, userId);
         return ResponseEntity.noContent().build();
+    }
+    
+    @GetMapping("/download/employee/{employeeId}")
+    @PreAuthorize("hasAnyRole('ROLE_DAILY_REPORT_SUPERVISOR', 'ROLE_ADMIN')")
+    public ResponseEntity<String> downloadEmployeeReport(
+            @PathVariable Long employeeId,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate) {
+        String reportContent = dailyReportService.generateEmployeeReport(employeeId, startDate, endDate);
+        
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.TEXT_PLAIN);
+        headers.setContentDispositionFormData("attachment", "employee_report_" + employeeId + ".txt");
+        
+        return ResponseEntity.ok()
+                .headers(headers)
+                .body(reportContent);
+    }
+    
+    @GetMapping("/download/combined")
+    @PreAuthorize("hasAnyRole('ROLE_DAILY_REPORT_SUPERVISOR', 'ROLE_ADMIN')")
+    public ResponseEntity<String> downloadCombinedReport(
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate,
+            @RequestParam(required = false) LocalDate specificDate) {
+        String reportContent = dailyReportService.generateCombinedReport(startDate, endDate, specificDate);
+        
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.TEXT_PLAIN);
+        String filename = specificDate != null ? 
+            "combined_report_" + specificDate + ".txt" : 
+            "combined_report_" + (startDate != null ? startDate : "all") + ".txt";
+        headers.setContentDispositionFormData("attachment", filename);
+        
+        return ResponseEntity.ok()
+                .headers(headers)
+                .body(reportContent);
+    }
+    
+    @GetMapping("/by-date/{date}")
+    @PreAuthorize("hasAnyRole('ROLE_DAILY_REPORT_SUPERVISOR', 'ROLE_DAILY_REPORT_DIRECTOR', 'ROLE_DAILY_REPORT_MANAGER', 'ROLE_DAILY_REPORT_TEAM_LEAD', 'ROLE_ADMIN')")
+    public ResponseEntity<List<DailyReportDto>> getReportsByDate(
+            @PathVariable @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date) {
+        List<DailyReportDto> reports = dailyReportService.getReportsByDate(date);
+        return ResponseEntity.ok(reports);
     }
     
     private Long getUserIdFromAuthentication(Authentication authentication) {

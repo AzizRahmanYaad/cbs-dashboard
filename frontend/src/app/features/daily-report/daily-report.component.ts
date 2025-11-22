@@ -7,6 +7,7 @@ import { AuthService } from '../../core/services/auth.service';
 import {
   DailyReport,
   CreateDailyReportRequest,
+  ReviewReportRequest,
   ReportStatus,
   ChatCommunication,
   EmailCommunication,
@@ -53,6 +54,15 @@ export class DailyReportComponent implements OnInit {
   canViewAll = false;
   canViewDashboard = false;
   canApprove = false;
+  isController = false;
+  isCFO = false;
+  
+  // Download state
+  downloading = false;
+  
+  // Reports organized by date
+  reportsByDate: Map<string, DailyReport[]> = new Map();
+  selectedDateForDownload = '';
 
   ngOnInit() {
     this.checkPermissions();
@@ -68,6 +78,8 @@ export class DailyReportComponent implements OnInit {
     this.canViewAll = this.permissionService.canViewAllReports();
     this.canViewDashboard = this.permissionService.canViewDashboard();
     this.canApprove = this.permissionService.canApproveReports();
+    this.isController = this.permissionService.isController();
+    this.isCFO = this.permissionService.isCFO();
   }
 
   initializeForm() {
@@ -430,11 +442,24 @@ export class DailyReportComponent implements OnInit {
       this.currentReport = report!;
       this.successMessage = 'Report submitted successfully';
       this.loadMyReports();
+      
+      // Auto-reset form after successful submission
+      setTimeout(() => {
+        this.resetForm();
+      }, 1000);
     } catch (error: any) {
       this.errorMessage = error.error?.message || 'Failed to submit report';
     } finally {
       this.submitting = false;
     }
+  }
+  
+  resetForm() {
+    this.currentReport = null;
+    this.selectedDate = this.today;
+    this.initializeForm();
+    this.successMessage = '';
+    this.errorMessage = '';
   }
 
   async loadMyReports() {
@@ -450,11 +475,13 @@ export class DailyReportComponent implements OnInit {
       if (response) {
         if (response.content && Array.isArray(response.content)) {
           this.myReports = response.content;
+          this.organizeReportsByDate(this.myReports);
           console.log('My reports loaded successfully. Count:', this.myReports.length);
           console.log('First report:', this.myReports[0]);
         } else if (Array.isArray(response)) {
           // Handle case where API returns array directly instead of PageResponse
           this.myReports = response;
+          this.organizeReportsByDate(this.myReports);
           console.log('My reports loaded (array format). Count:', this.myReports.length);
         } else {
           console.warn('Unexpected response format:', response);
@@ -532,6 +559,111 @@ export class DailyReportComponent implements OnInit {
       // Could open a view modal here
     } catch (error: any) {
       this.errorMessage = 'Failed to load report';
+    } finally {
+      this.loading = false;
+    }
+  }
+  
+  async downloadEmployeeReport(employeeId: number, employeeName: string) {
+    this.downloading = true;
+    try {
+      const blob = await this.reportService.downloadEmployeeReport(employeeId).toPromise();
+      if (blob) {
+        const url = window.URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `daily_report_${employeeName}_${new Date().toISOString().split('T')[0]}.txt`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        window.URL.revokeObjectURL(url);
+      }
+    } catch (error: any) {
+      this.errorMessage = 'Failed to download report';
+    } finally {
+      this.downloading = false;
+    }
+  }
+  
+  async downloadCombinedReport(date?: string) {
+    this.downloading = true;
+    try {
+      const blob = await this.reportService.downloadCombinedReport(
+        undefined,
+        undefined,
+        date || this.selectedDateForDownload
+      ).toPromise();
+      if (blob) {
+        const url = window.URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        const filename = date 
+          ? `combined_report_${date}.txt`
+          : `combined_report_${new Date().toISOString().split('T')[0]}.txt`;
+        link.download = filename;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        window.URL.revokeObjectURL(url);
+      }
+    } catch (error: any) {
+      this.errorMessage = 'Failed to download combined report';
+    } finally {
+      this.downloading = false;
+    }
+  }
+  
+  async loadReportsByDate(date: string) {
+    this.loading = true;
+    try {
+      const reports = await this.reportService.getReportsByDate(date).toPromise();
+      if (reports) {
+        this.organizeReportsByDate(reports);
+      }
+    } catch (error: any) {
+      this.errorMessage = 'Failed to load reports by date';
+    } finally {
+      this.loading = false;
+    }
+  }
+  
+  organizeReportsByDate(reports: DailyReport[]) {
+    this.reportsByDate.clear();
+    reports.forEach(report => {
+      const dateKey = report.businessDate;
+      if (!this.reportsByDate.has(dateKey)) {
+        this.reportsByDate.set(dateKey, []);
+      }
+      this.reportsByDate.get(dateKey)!.push(report);
+    });
+  }
+  
+  getDateKeys(): string[] {
+    return Array.from(this.reportsByDate.keys()).sort().reverse();
+  }
+  
+  getReportsForDate(date: string): DailyReport[] {
+    return this.reportsByDate.get(date) || [];
+  }
+  
+  async confirmReport(report: DailyReport) {
+    if (!this.isCFO) return;
+    
+    this.loading = true;
+    try {
+      const reviewRequest = {
+        status: ReportStatus.APPROVED,
+        reviewComments: 'Confirmed by CFO'
+      };
+      const updatedReport = await this.reportService.reviewReport(report.id!, reviewRequest).toPromise();
+      this.successMessage = 'Report confirmed successfully';
+      if (this.activeTab === 'dashboard') {
+        this.loadReportsByDate(this.selectedDateForDownload);
+      } else {
+        this.loadMyReports();
+      }
+    } catch (error: any) {
+      this.errorMessage = 'Failed to confirm report';
     } finally {
       this.loading = false;
     }

@@ -432,6 +432,159 @@ public class DailyReportService {
         }
     }
     
+    @Transactional(readOnly = true)
+    public List<DailyReportDto> getReportsByDate(LocalDate date) {
+        List<DailyReport> reports = dailyReportRepository.findByBusinessDate(date);
+        return reports.stream()
+            .map(dailyReportMapper::toDto)
+            .collect(Collectors.toList());
+    }
+    
+    @Transactional(readOnly = true)
+    public String generateEmployeeReport(Long employeeId, LocalDate startDate, LocalDate endDate) {
+        List<DailyReport> reports;
+        
+        if (startDate != null && endDate != null) {
+            Specification<DailyReport> spec = Specification.where(
+                (root, query, cb) -> cb.equal(root.get("employee").get("id"), employeeId)
+            ).and((root, query, cb) -> 
+                cb.between(root.get("businessDate"), startDate, endDate)
+            );
+            reports = dailyReportRepository.findAll(spec);
+        } else {
+            reports = dailyReportRepository.findByEmployeeIdOrderByBusinessDateDesc(employeeId);
+        }
+        
+        if (reports.isEmpty()) {
+            return "No reports found for this employee.";
+        }
+        
+        StringBuilder sb = new StringBuilder();
+        User employee = reports.get(0).getEmployee();
+        sb.append("=".repeat(80)).append("\n");
+        sb.append("DAILY REPORT - ").append(employee.getUsername()).append("\n");
+        if (employee.getEmail() != null) {
+            sb.append("Email: ").append(employee.getEmail()).append("\n");
+        }
+        sb.append("=".repeat(80)).append("\n\n");
+        
+        for (DailyReport report : reports) {
+            sb.append(formatReport(report));
+            sb.append("\n").append("-".repeat(80)).append("\n\n");
+        }
+        
+        return sb.toString();
+    }
+    
+    @Transactional(readOnly = true)
+    public String generateCombinedReport(LocalDate startDate, LocalDate endDate, LocalDate specificDate) {
+        List<DailyReport> reports;
+        
+        if (specificDate != null) {
+            reports = dailyReportRepository.findByBusinessDate(specificDate);
+        } else if (startDate != null && endDate != null) {
+            reports = dailyReportRepository.findByBusinessDateBetween(startDate, endDate);
+        } else {
+            reports = dailyReportRepository.findAll();
+        }
+        
+        if (reports.isEmpty()) {
+            return "No reports found for the specified date range.";
+        }
+        
+        StringBuilder sb = new StringBuilder();
+        sb.append("=".repeat(80)).append("\n");
+        sb.append("COMBINED TEAM DAILY REPORT\n");
+        if (specificDate != null) {
+            sb.append("Date: ").append(specificDate).append("\n");
+        } else if (startDate != null && endDate != null) {
+            sb.append("Date Range: ").append(startDate).append(" to ").append(endDate).append("\n");
+        }
+        sb.append("Total Reports: ").append(reports.size()).append("\n");
+        sb.append("=".repeat(80)).append("\n\n");
+        
+        // Group by date
+        Map<LocalDate, List<DailyReport>> reportsByDate = reports.stream()
+            .collect(Collectors.groupingBy(DailyReport::getBusinessDate));
+        
+        reportsByDate.entrySet().stream()
+            .sorted(Map.Entry.<LocalDate, List<DailyReport>>comparingByKey().reversed())
+            .forEach(entry -> {
+                sb.append("\n").append("=".repeat(80)).append("\n");
+                sb.append("DATE: ").append(entry.getKey()).append("\n");
+                sb.append("=".repeat(80)).append("\n\n");
+                
+                for (DailyReport report : entry.getValue()) {
+                    sb.append(formatReport(report));
+                    sb.append("\n").append("-".repeat(80)).append("\n\n");
+                }
+            });
+        
+        return sb.toString();
+    }
+    
+    private String formatReport(DailyReport report) {
+        StringBuilder sb = new StringBuilder();
+        sb.append("Business Date: ").append(report.getBusinessDate()).append("\n");
+        sb.append("Employee: ").append(report.getEmployee().getUsername()).append("\n");
+        if (report.getEmployee().getEmail() != null) {
+            sb.append("Email: ").append(report.getEmployee().getEmail()).append("\n");
+        }
+        sb.append("Status: ").append(report.getStatus()).append("\n");
+        if (report.getCbsEndTime() != null) {
+            sb.append("CBS End Time: ").append(report.getCbsEndTime()).append("\n");
+        }
+        if (report.getCbsStartTimeNextDay() != null) {
+            sb.append("CBS Start Time (Next Day): ").append(report.getCbsStartTimeNextDay()).append("\n");
+        }
+        if (report.getReportingLine() != null && !report.getReportingLine().isEmpty()) {
+            sb.append("Reporting Line: ").append(report.getReportingLine()).append("\n");
+        }
+        
+        if (!report.getCbsTeamActivities().isEmpty()) {
+            sb.append("\nCBS Team Activities:\n");
+            for (int i = 0; i < report.getCbsTeamActivities().size(); i++) {
+                CbsTeamActivity activity = report.getCbsTeamActivities().get(i);
+                sb.append("  ").append(i + 1).append(". ").append(activity.getDescription()).append("\n");
+                if (activity.getActivityType() != null) {
+                    sb.append("     Type: ").append(activity.getActivityType()).append("\n");
+                }
+                if (activity.getActionTaken() != null) {
+                    sb.append("     Action Taken: ").append(activity.getActionTaken()).append("\n");
+                }
+            }
+        }
+        
+        if (!report.getChatCommunications().isEmpty()) {
+            sb.append("\nChat Communications: ").append(report.getChatCommunications().size()).append("\n");
+        }
+        if (!report.getEmailCommunications().isEmpty()) {
+            sb.append("Email Communications: ").append(report.getEmailCommunications().size()).append("\n");
+        }
+        if (!report.getProblemEscalations().isEmpty()) {
+            sb.append("Problem Escalations: ").append(report.getProblemEscalations().size()).append("\n");
+        }
+        if (!report.getMeetings().isEmpty()) {
+            sb.append("Meetings: ").append(report.getMeetings().size()).append("\n");
+        }
+        if (!report.getPendingActivities().isEmpty()) {
+            sb.append("Pending Activities: ").append(report.getPendingActivities().size()).append("\n");
+        }
+        
+        if (report.getReviewedBy() != null) {
+            sb.append("\nReviewed by: ").append(report.getReviewedBy().getUsername());
+            if (report.getReviewedAt() != null) {
+                sb.append(" on ").append(report.getReviewedAt());
+            }
+            sb.append("\n");
+        }
+        if (report.getReviewComments() != null && !report.getReviewComments().isEmpty()) {
+            sb.append("Review Comments: ").append(report.getReviewComments()).append("\n");
+        }
+        
+        return sb.toString();
+    }
+    
     private boolean hasSupervisorAccess(Long userId) {
         User user = userRepository.findById(userId).orElse(null);
         if (user == null) return false;

@@ -96,5 +96,50 @@ export class DailyReportService {
   deleteReport(id: number): Observable<void> {
     return this.http.delete<void>(`${this.baseUrl}/${id}`);
   }
+
+  downloadEmployeeReport(
+    employeeId: number,
+    startDate?: string,
+    endDate?: string
+  ): Observable<Blob> {
+    let params = new HttpParams();
+    if (startDate) {
+      params = params.set('startDate', startDate);
+    }
+    if (endDate) {
+      params = params.set('endDate', endDate);
+    }
+
+    return this.http.get(`${this.baseUrl}/download/employee/${employeeId}`, {
+      params,
+      responseType: 'blob'
+    });
+  }
+
+  downloadCombinedReport(
+    startDate?: string,
+    endDate?: string,
+    specificDate?: string
+  ): Observable<Blob> {
+    let params = new HttpParams();
+    if (startDate) {
+      params = params.set('startDate', startDate);
+    }
+    if (endDate) {
+      params = params.set('endDate', endDate);
+    }
+    if (specificDate) {
+      params = params.set('specificDate', specificDate);
+    }
+
+    return this.http.get(`${this.baseUrl}/download/combined`, {
+      params,
+      responseType: 'blob'
+    });
+  }
+
+  getReportsByDate(date: string): Observable<DailyReport[]> {
+    return this.http.get<DailyReport[]>(`${this.baseUrl}/by-date/${date}`);
+  }
 }
 
