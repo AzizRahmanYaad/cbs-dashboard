@@ -181,3 +181,34 @@ export interface PageResponse<T> {
   last: boolean;
 }
 
+// Unified Activity for simplified form
+export interface UnifiedActivity {
+  id?: number;
+  activityType: string; // Selected from dropdown
+  description: string; // Full description of the action
+  branch?: string;
+  accountNumber?: string;
+}
+
+// Activity type options for dropdown
+export const ACTIVITY_TYPES = [
+  'CBS Team Activity',
+  'Chat Communication',
+  'Email Communication',
+  'Problem Escalation',
+  'Training & Capacity Building',
+  'Project Progress Update',
+  'Pending Activity',
+  'Meeting',
+  'AFPay Card Request',
+  'QRMIS Issue',
+  'Allowing without check number',
+  'Reversals',
+  'System enhancements',
+  'Email confirmations',
+  'Ticket submissions',
+  'Branch coordination',
+  'Manual entry work',
+  'Other'
+] as const;
+

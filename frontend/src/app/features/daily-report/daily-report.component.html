@@ -34,518 +34,131 @@
   <!-- Create/Edit Report Tab -->
   <div class="tab-content" *ngIf="activeTab === 'create' && canCreate">
     <form [formGroup]="reportForm" (ngSubmit)="saveDraft()">
-      <!-- Date Selection -->
-      <div class="form-section">
-        <h2 class="section-title">Report Information</h2>
-        <div class="form-row">
+      <!-- Date and Day Selection at Top -->
+      <div class="form-section-header">
+        <div class="date-day-selector">
           <div class="form-group">
-            <label>Business Date *</label>
+            <label class="label-primary">Business Date *</label>
             <input 
               type="date" 
               formControlName="businessDate"
               [max]="today"
-              (change)="loadReportByDate()"
-              class="form-input">
+              (change)="onDateChange()"
+              class="form-input-primary">
           </div>
           <div class="form-group">
-            <label>Reporting Line</label>
-            <input type="text" formControlName="reportingLine" class="form-input">
+            <label class="label-primary">Day of Week *</label>
+            <input 
+              type="text" 
+              formControlName="dayOfWeek"
+              [value]="selectedDay"
+              class="form-input-primary"
+              readonly>
           </div>
         </div>
       </div>
 
       <!-- CBS Time Tracking -->
-      <div class="form-section">
-        <h2 class="section-title">CBS Time Tracking *</h2>
-        <div class="form-row">
+      <div class="form-section-simple">
+        <h3 class="section-title-simple">CBS Time Tracking *</h3>
+        <div class="form-row-simple">
           <div class="form-group">
-            <label>CBS End Time (Current Business Day) *</label>
+            <label>CBS End Time (Current Day) *</label>
             <input type="time" formControlName="cbsEndTime" class="form-input" required>
           </div>
           <div class="form-group">
-            <label>CBS Start Time (Next Business Day) *</label>
+            <label>CBS Start Time (Next Day) *</label>
             <input type="time" formControlName="cbsStartTimeNextDay" class="form-input" required>
           </div>
         </div>
+        <div class="form-group" style="margin-top: 1rem;">
+          <label>Reporting Line (Optional)</label>
+          <input type="text" formControlName="reportingLine" class="form-input" placeholder="Enter reporting line if applicable">
+        </div>
       </div>
 
-      <!-- Chat Communications -->
-      <div class="form-section">
-        <div class="section-header">
-          <h2 class="section-title">Chat / Instant Messaging Communications</h2>
-          <button type="button" class="btn-add" (click)="addChatCommunication()">+ Add</button>
+      <!-- Unified Activities Section - Simplified -->
+      <div class="form-section-unified">
+        <div class="section-header-unified">
+          <h3 class="section-title-unified">Daily Activities *</h3>
+          <button type="button" class="btn-add-unified" (click)="addUnifiedActivity()">
+            <span class="icon-plus">+</span> Add Activity
+          </button>
         </div>
-        <div formArrayName="chatCommunications" class="array-container">
-          <div *ngFor="let item of chatCommunications.controls; let i = index" [formGroupName]="i" class="array-item">
-            <div class="form-row">
-              <div class="form-group">
-                <label>Platform *</label>
-                <select formControlName="platform" class="form-input">
-                  <option value="">Select Platform</option>
-                  <option value="WhatsApp">WhatsApp</option>
-                  <option value="Signal">Signal</option>
-                  <option value="Telegram">Telegram</option>
-                  <option value="Other">Other</option>
+        
+        <div formArrayName="unifiedActivities" class="unified-activities-container">
+          <div *ngFor="let activity of unifiedActivities.controls; let i = index" [formGroupName]="i" class="unified-activity-item">
+            <div class="activity-header">
+              <span class="activity-number">{{ i + 1 }}</span>
+              <button type="button" class="btn-remove-icon-unified" (click)="removeUnifiedActivity(i)" title="Remove">
+                <span class="icon-x">×</span>
+              </button>
+            </div>
+            
+            <div class="activity-content">
+              <div class="form-group-unified">
+                <label class="label-unified">Activity Type *</label>
+                <select formControlName="activityType" class="form-input-unified">
+                  <option value="">Select Activity Type</option>
+                  <option *ngFor="let type of activityTypes" [value]="type">{{ type }}</option>
                 </select>
               </div>
-              <div class="form-group">
-                <label>Reference Number</label>
-                <input type="text" formControlName="referenceNumber" class="form-input">
+              
+              <div class="form-group-unified">
+                <label class="label-unified">Full Description of Action *</label>
+                <textarea 
+                  formControlName="description" 
+                  rows="4" 
+                  class="form-input-unified description-textarea"
+                  placeholder="Write a complete description of the action taken..."></textarea>
               </div>
-              <button type="button" class="btn-remove-icon" (click)="removeChatCommunication(i)" title="Remove">
-                <span class="icon-x">×</span>
-              </button>
-            </div>
-            <div class="form-group">
-              <label>Summary *</label>
-              <textarea formControlName="summary" rows="3" class="form-input"></textarea>
-            </div>
-            <div class="form-group">
-              <label>Action Taken</label>
-              <textarea formControlName="actionTaken" rows="2" class="form-input"></textarea>
-            </div>
-            <div class="form-group">
-              <label>How Action Was Performed</label>
-              <textarea formControlName="actionPerformed" rows="2" class="form-input"></textarea>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Email Communications -->
-      <div class="form-section">
-        <div class="section-header">
-          <h2 class="section-title">Email Communications</h2>
-          <button type="button" class="btn-add" (click)="addEmailCommunication()">+ Add</button>
-        </div>
-        <div formArrayName="emailCommunications" class="array-container">
-          <div *ngFor="let item of emailCommunications.controls; let i = index" [formGroupName]="i" class="array-item">
-            <div class="form-row">
-              <div class="form-group">
-                <label>Type</label>
-                <select formControlName="isInternal" class="form-input">
-                  <option [value]="true">Internal</option>
-                  <option [value]="false">External</option>
-                </select>
-              </div>
-              <div class="form-group">
-                <label>Sender *</label>
-                <input type="text" formControlName="sender" class="form-input">
-              </div>
-              <div class="form-group">
-                <label>Receiver *</label>
-                <input type="text" formControlName="receiver" class="form-input">
-              </div>
-              <button type="button" class="btn-remove-icon" (click)="removeEmailCommunication(i)" title="Remove">
-                <span class="icon-x">×</span>
-              </button>
-            </div>
-            <div class="form-group">
-              <label>Subject *</label>
-              <input type="text" formControlName="subject" class="form-input">
-            </div>
-            <div class="form-group">
-              <label>Summary *</label>
-              <textarea formControlName="summary" rows="3" class="form-input"></textarea>
-            </div>
-            <div class="form-row">
-              <div class="form-group">
-                <label>Action Taken</label>
-                <textarea formControlName="actionTaken" rows="2" class="form-input"></textarea>
-              </div>
-              <div class="form-group">
-                <label>Follow-up Required</label>
-                <input type="checkbox" formControlName="followUpRequired">
+              
+              <div class="form-row-optional">
+                <div class="form-group-unified optional">
+                  <label class="label-unified">Branch (Optional)</label>
+                  <input type="text" formControlName="branch" class="form-input-unified">
+                </div>
+                <div class="form-group-unified optional">
+                  <label class="label-unified">Account Number (Optional)</label>
+                  <input type="text" formControlName="accountNumber" class="form-input-unified">
+                </div>
               </div>
             </div>
           </div>
-        </div>
-      </div>
-
-      <!-- Problem Escalations -->
-      <div class="form-section">
-        <div class="section-header">
-          <h2 class="section-title">Problem Escalation</h2>
-          <button type="button" class="btn-add" (click)="addProblemEscalation()">+ Add</button>
-        </div>
-        <div formArrayName="problemEscalations" class="array-container">
-          <div *ngFor="let item of problemEscalations.controls; let i = index" [formGroupName]="i" class="array-item">
-            <div class="form-row">
-              <div class="form-group">
-                <label>Escalated To *</label>
-                <input type="text" formControlName="escalatedTo" class="form-input">
-              </div>
-              <div class="form-group">
-                <label>Date/Time *</label>
-                <input type="datetime-local" formControlName="escalationDateTime" class="form-input">
-              </div>
-              <button type="button" class="btn-remove-icon" (click)="removeProblemEscalation(i)" title="Remove">
-                <span class="icon-x">×</span>
-              </button>
-            </div>
-            <div class="form-group">
-              <label>Reason for Escalation *</label>
-              <textarea formControlName="reason" rows="3" class="form-input"></textarea>
-            </div>
-            <div class="form-row">
-              <div class="form-group">
-                <label>Follow-up Status</label>
-                <input type="text" formControlName="followUpStatus" class="form-input">
-              </div>
-              <div class="form-group">
-                <label>Comments</label>
-                <textarea formControlName="comments" rows="2" class="form-input"></textarea>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Training & Capacity Building -->
-      <div class="form-section">
-        <div class="section-header">
-          <h2 class="section-title">Training & Capacity Building</h2>
-          <button type="button" class="btn-add" (click)="addTrainingCapacityBuilding()">+ Add</button>
-        </div>
-        <div formArrayName="trainingCapacityBuildings" class="array-container">
-          <div *ngFor="let item of trainingCapacityBuildings.controls; let i = index" [formGroupName]="i" class="array-item">
-            <div class="form-row">
-              <div class="form-group">
-                <label>Training Type *</label>
-                <select formControlName="trainingType" class="form-input">
-                  <option value="">Select Type</option>
-                  <option value="Internal">Internal</option>
-                  <option value="External">External</option>
-                </select>
-              </div>
-              <div class="form-group">
-                <label>Duration</label>
-                <input type="text" formControlName="duration" class="form-input" placeholder="e.g., 2 hours">
-              </div>
-              <button type="button" class="btn-remove-icon" (click)="removeTrainingCapacityBuilding(i)" title="Remove">
-                <span class="icon-x">×</span>
-              </button>
-            </div>
-            <div class="form-group">
-              <label>Topic *</label>
-              <input type="text" formControlName="topic" class="form-input">
-            </div>
-            <div class="form-row">
-              <div class="form-group">
-                <label>Skills Gained</label>
-                <textarea formControlName="skillsGained" rows="2" class="form-input"></textarea>
-              </div>
-              <div class="form-group">
-                <label>Trainer Name</label>
-                <input type="text" formControlName="trainerName" class="form-input">
-              </div>
-            </div>
-            <div class="form-group">
-              <label>Participants</label>
-              <input type="text" formControlName="participants" class="form-input" placeholder="Comma-separated names">
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Project Progress Updates -->
-      <div class="form-section">
-        <div class="section-header">
-          <h2 class="section-title">Project Progress Updates</h2>
-          <button type="button" class="btn-add" (click)="addProjectProgressUpdate()">+ Add</button>
-        </div>
-        <div formArrayName="projectProgressUpdates" class="array-container">
-          <div *ngFor="let item of projectProgressUpdates.controls; let i = index" [formGroupName]="i" class="array-item">
-            <div class="form-row">
-              <div class="form-group">
-                <label>Project Name *</label>
-                <input type="text" formControlName="projectName" class="form-input">
-              </div>
-              <div class="form-group">
-                <label>Estimated Completion Date</label>
-                <input type="date" formControlName="estimatedCompletionDate" class="form-input">
-              </div>
-              <button type="button" class="btn-remove-icon" (click)="removeProjectProgressUpdate(i)" title="Remove">
-                <span class="icon-x">×</span>
-              </button>
-            </div>
-            <div class="form-group">
-              <label>Task or Milestone</label>
-              <input type="text" formControlName="taskOrMilestone" class="form-input">
-            </div>
-            <div class="form-group">
-              <label>Progress Detail *</label>
-              <textarea formControlName="progressDetail" rows="3" class="form-input"></textarea>
-            </div>
-            <div class="form-group">
-              <label>Roadblocks / Issues</label>
-              <textarea formControlName="roadblocksIssues" rows="2" class="form-input"></textarea>
-            </div>
-            <div class="form-group">
-              <label>Comments</label>
-              <textarea formControlName="comments" rows="2" class="form-input"></textarea>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- CBS Team Daily Activities -->
-      <div class="form-section">
-        <div class="section-header">
-          <h2 class="section-title">CBS Team Daily Activities (On-Job Activities) *</h2>
-          <button type="button" class="btn-add" (click)="addCbsTeamActivity()">+ Add</button>
-        </div>
-        <div formArrayName="cbsTeamActivities" class="array-container">
-          <div *ngFor="let item of cbsTeamActivities.controls; let i = index" [formGroupName]="i" class="array-item">
-            <div class="form-row">
-              <div class="form-group">
-                <label>Activity Type</label>
-                <select formControlName="activityType" class="form-input">
-                  <option value="">Select Type</option>
-                  <option value="Allowing without check number">Allowing without check number</option>
-                  <option value="Reversals">Reversals</option>
-                  <option value="System enhancements">System enhancements</option>
-                  <option value="Email confirmations">Email confirmations</option>
-                  <option value="Ticket submissions">Ticket submissions</option>
-                  <option value="Branch coordination">Branch coordination</option>
-                  <option value="Meetings">Meetings</option>
-                  <option value="Manual entry work">Manual entry work</option>
-                  <option value="Other">Other</option>
-                </select>
-              </div>
-              <div class="form-group">
-                <label>Branch</label>
-                <input type="text" formControlName="branch" class="form-input">
-              </div>
-              <div class="form-group">
-                <label>Account Number</label>
-                <input type="text" formControlName="accountNumber" class="form-input">
-              </div>
-              <button type="button" class="btn-remove-icon" (click)="removeCbsTeamActivity(i)" title="Remove">
-                <span class="icon-x">×</span>
-              </button>
-            </div>
-            <div class="form-group">
-              <label>Description *</label>
-              <textarea formControlName="description" rows="3" class="form-input"></textarea>
-            </div>
-            <div class="form-row">
-              <div class="form-group">
-                <label>Action Taken</label>
-                <textarea formControlName="actionTaken" rows="2" class="form-input"></textarea>
-              </div>
-              <div class="form-group">
-                <label>Final Status</label>
-                <input type="text" formControlName="finalStatus" class="form-input">
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Pending Activities -->
-      <div class="form-section">
-        <div class="section-header">
-          <h2 class="section-title">CBS Pending Activities</h2>
-          <button type="button" class="btn-add" (click)="addPendingActivity()">+ Add</button>
-        </div>
-        <div formArrayName="pendingActivities" class="array-container">
-          <div *ngFor="let item of pendingActivities.controls; let i = index" [formGroupName]="i" class="array-item">
-            <div class="form-row">
-              <div class="form-group">
-                <label>Title *</label>
-                <input type="text" formControlName="title" class="form-input">
-              </div>
-              <div class="form-group">
-                <label>Status *</label>
-                <input type="text" formControlName="status" class="form-input">
-              </div>
-              <div class="form-group">
-                <label>Amount</label>
-                <input type="number" formControlName="amount" class="form-input">
-              </div>
-              <button type="button" class="btn-remove-icon" (click)="removePendingActivity(i)" title="Remove">
-                <span class="icon-x">×</span>
-              </button>
-            </div>
-            <div class="form-group">
-              <label>Description *</label>
-              <textarea formControlName="description" rows="3" class="form-input"></textarea>
-            </div>
-            <div class="form-row">
-              <div class="form-group">
-                <label>Responsible Person</label>
-                <input type="text" formControlName="responsiblePerson" class="form-input">
-              </div>
-              <div class="form-group">
-                <label>Follow-up Required</label>
-                <input type="checkbox" formControlName="followUpRequired">
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Meetings -->
-      <div class="form-section">
-        <div class="section-header">
-          <h2 class="section-title">Meetings (Internal & External)</h2>
-          <button type="button" class="btn-add" (click)="addMeeting()">+ Add</button>
-        </div>
-        <div formArrayName="meetings" class="array-container">
-          <div *ngFor="let item of meetings.controls; let i = index" [formGroupName]="i" class="array-item">
-            <div class="form-row">
-              <div class="form-group">
-                <label>Meeting Type *</label>
-                <select formControlName="meetingType" class="form-input">
-                  <option value="">Select Type</option>
-                  <option value="Internal">Internal</option>
-                  <option value="External">External</option>
-                </select>
-              </div>
-              <button type="button" class="btn-remove-icon" (click)="removeMeeting(i)" title="Remove">
-                <span class="icon-x">×</span>
-              </button>
-            </div>
-            <div class="form-group">
-              <label>Topic *</label>
-              <input type="text" formControlName="topic" class="form-input">
-            </div>
-            <div class="form-group">
-              <label>Summary of Discussion *</label>
-              <textarea formControlName="summary" rows="3" class="form-input"></textarea>
-            </div>
-            <div class="form-row">
-              <div class="form-group">
-                <label>Action Taken</label>
-                <textarea formControlName="actionTaken" rows="2" class="form-input"></textarea>
-              </div>
-              <div class="form-group">
-                <label>Next Step</label>
-                <textarea formControlName="nextStep" rows="2" class="form-input"></textarea>
-              </div>
-            </div>
-            <div class="form-group">
-              <label>Participants</label>
-              <input type="text" formControlName="participants" class="form-input" placeholder="Comma-separated names">
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- AFPay Card Requests -->
-      <div class="form-section">
-        <div class="section-header">
-          <h2 class="section-title">AFPay Card Requests</h2>
-          <button type="button" class="btn-add" (click)="addAfpayCardRequest()">+ Add</button>
-        </div>
-        <div formArrayName="afpayCardRequests" class="array-container">
-          <div *ngFor="let item of afpayCardRequests.controls; let i = index" [formGroupName]="i" class="array-item">
-            <div class="form-row">
-              <div class="form-group">
-                <label>Request Type *</label>
-                <select formControlName="requestType" class="form-input">
-                  <option value="">Select Type</option>
-                  <option value="Issue">Issue</option>
-                  <option value="Renew">Renew</option>
-                  <option value="PIN reissue">PIN reissue</option>
-                  <option value="Withdrawal issue">Withdrawal issue</option>
-                  <option value="Registration">Registration</option>
-                </select>
-              </div>
-              <div class="form-group">
-                <label>Request Date *</label>
-                <input type="date" formControlName="requestDate" class="form-input">
-              </div>
-              <div class="form-group">
-                <label>Archived Date</label>
-                <input type="date" formControlName="archivedDate" class="form-input">
-              </div>
-              <button type="button" class="btn-remove-icon" (click)="removeAfpayCardRequest(i)" title="Remove">
-                <span class="icon-x">×</span>
-              </button>
-            </div>
-            <div class="form-row">
-              <div class="form-group">
-                <label>Requested By *</label>
-                <input type="text" formControlName="requestedBy" class="form-input">
-              </div>
-              <div class="form-group">
-                <label>Operator</label>
-                <input type="text" formControlName="operator" class="form-input">
-              </div>
-            </div>
-            <div class="form-group">
-              <label>Resolution Details</label>
-              <textarea formControlName="resolutionDetails" rows="3" class="form-input"></textarea>
-            </div>
-            <div class="form-group">
-              <label>Supporting Document (Path)</label>
-              <input type="text" formControlName="supportingDocumentPath" class="form-input" placeholder="Path to scanned document">
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- QRMIS Issues -->
-      <div class="form-section">
-        <div class="section-header">
-          <h2 class="section-title">QRMIS Issues / Tickets</h2>
-          <button type="button" class="btn-add" (click)="addQrmisIssue()">+ Add</button>
-        </div>
-        <div formArrayName="qrmisIssues" class="array-container">
-          <div *ngFor="let item of qrmisIssues.controls; let i = index" [formGroupName]="i" class="array-item">
-            <div class="form-row">
-              <div class="form-group">
-                <label>Problem Type *</label>
-                <input type="text" formControlName="problemType" class="form-input">
-              </div>
-              <div class="form-group">
-                <label>Posted By</label>
-                <input type="text" formControlName="postedBy" class="form-input">
-              </div>
-              <div class="form-group">
-                <label>Authorized By</label>
-                <input type="text" formControlName="authorizedBy" class="form-input">
-              </div>
-              <button type="button" class="btn-remove-icon" (click)="removeQrmisIssue(i)" title="Remove">
-                <span class="icon-x">×</span>
-              </button>
-            </div>
-            <div class="form-group">
-              <label>Problem Description *</label>
-              <textarea formControlName="problemDescription" rows="3" class="form-input"></textarea>
-            </div>
-            <div class="form-group">
-              <label>Solution Provided</label>
-              <textarea formControlName="solutionProvided" rows="3" class="form-input"></textarea>
-            </div>
-            <div class="form-row">
-              <div class="form-group">
-                <label>Operator</label>
-                <input type="text" formControlName="operator" class="form-input">
-              </div>
-              <div class="form-group">
-                <label>Supporting Documents Archived</label>
-                <input type="text" formControlName="supportingDocumentsArchived" class="form-input">
-              </div>
-            </div>
+          
+          <div *ngIf="unifiedActivities.length === 0" class="empty-activities">
+            <p>No activities added yet. Click "Add Activity" to get started.</p>
           </div>
         </div>
       </div>
 
       <!-- Action Buttons -->
-      <div class="form-actions">
+      <div class="form-actions-unified">
         <div class="messages" *ngIf="errorMessage || successMessage">
           <div class="error-message" *ngIf="errorMessage">{{ errorMessage }}</div>
           <div class="success-message" *ngIf="successMessage">{{ successMessage }}</div>
         </div>
-        <div class="buttons">
-          <button type="button" class="btn-secondary" (click)="saveDraft()" [disabled]="saving">
+        <div class="buttons-unified">
+          <button type="button" class="btn-secondary-unified" (click)="saveDraft()" [disabled]="saving">
             {{ saving ? 'Saving...' : 'Save Draft' }}
           </button>
-          <button type="button" class="btn-primary" (click)="submitReport()" [disabled]="submitting || reportForm.invalid">
-            {{ submitting ? 'Submitting...' : 'Submit for Review' }}
+          <button type="button" class="btn-primary-unified" (click)="submitReport()" [disabled]="submitting || reportForm.invalid">
+            {{ submitting ? 'Submitting...' : 'Submit Report' }}
+          </button>
+        </div>
+      </div>
+      
+      <!-- Post-Submission Actions -->
+      <div class="post-submission-actions" *ngIf="currentReport && currentReport.id && currentReport.status !== 'DRAFT'">
+        <div class="action-buttons-group">
+          <button type="button" class="btn-action" (click)="viewReport(currentReport)">
+            <span class="icon">👁️</span> Review Report
+          </button>
+          <button type="button" class="btn-action" (click)="viewReport(currentReport)">
+            <span class="icon">📄</span> View Report
+          </button>
+          <button type="button" class="btn-action" (click)="downloadMyReport(currentReport)" [disabled]="downloading">
+            <span class="icon">📥</span> {{ downloading ? 'Downloading...' : 'Download Report' }}
           </button>
         </div>
       </div>

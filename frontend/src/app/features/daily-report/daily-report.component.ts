@@ -18,7 +18,9 @@ import {
   PendingActivity,
   Meeting,
   AfpayCardRequest,
-  QrmisIssue
+  QrmisIssue,
+  UnifiedActivity,
+  ACTIVITY_TYPES
 } from '../../core/models/daily-report/daily-report.model';
 
 @Component({
@@ -50,6 +52,13 @@ export class DailyReportComponent implements OnInit {
   
   today = new Date().toISOString().split('T')[0];
   selectedDate = this.today;
+  selectedDay = '';
+  
+  // Activity types for dropdown
+  activityTypes = ACTIVITY_TYPES;
+  
+  // Days of week
+  daysOfWeek = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
   
   // Permission flags
   canCreate = false;
@@ -85,234 +94,161 @@ export class DailyReportComponent implements OnInit {
   }
 
   initializeForm() {
+    const todayDate = new Date();
+    const dayName = this.daysOfWeek[todayDate.getDay() === 0 ? 6 : todayDate.getDay() - 1];
+    
     this.reportForm = this.fb.group({
       businessDate: [this.today, Validators.required],
+      dayOfWeek: [dayName, Validators.required],
       cbsEndTime: ['', Validators.required],
       cbsStartTimeNextDay: ['', Validators.required],
       reportingLine: [''],
-      chatCommunications: this.fb.array([]),
-      emailCommunications: this.fb.array([]),
-      problemEscalations: this.fb.array([]),
-      trainingCapacityBuildings: this.fb.array([]),
-      projectProgressUpdates: this.fb.array([]),
-      cbsTeamActivities: this.fb.array([], Validators.required),
-      pendingActivities: this.fb.array([]),
-      meetings: this.fb.array([]),
-      afpayCardRequests: this.fb.array([]),
-      qrmisIssues: this.fb.array([])
+      unifiedActivities: this.fb.array([], Validators.required) // Simplified unified activities
     });
+    
+    this.selectedDay = dayName;
   }
-
-  // Chat Communications
-  get chatCommunications(): FormArray {
-    return this.reportForm.get('chatCommunications') as FormArray;
+  
+  // Unified Activities
+  get unifiedActivities(): FormArray {
+    return this.reportForm.get('unifiedActivities') as FormArray;
   }
-
-  addChatCommunication() {
+  
+  addUnifiedActivity() {
     const group = this.fb.group({
-      platform: ['', Validators.required],
-      summary: ['', Validators.required],
-      actionTaken: [''],
-      actionPerformed: [''],
-      referenceNumber: ['']
-    });
-    this.chatCommunications.push(group);
-  }
-
-  removeChatCommunication(index: number) {
-    this.chatCommunications.removeAt(index);
-  }
-
-  // Email Communications
-  get emailCommunications(): FormArray {
-    return this.reportForm.get('emailCommunications') as FormArray;
-  }
-
-  addEmailCommunication() {
-    const group = this.fb.group({
-      isInternal: [true],
-      sender: ['', Validators.required],
-      receiver: ['', Validators.required],
-      subject: ['', Validators.required],
-      summary: ['', Validators.required],
-      actionTaken: [''],
-      followUpRequired: [false]
-    });
-    this.emailCommunications.push(group);
-  }
-
-  removeEmailCommunication(index: number) {
-    this.emailCommunications.removeAt(index);
-  }
-
-  // Problem Escalations
-  get problemEscalations(): FormArray {
-    return this.reportForm.get('problemEscalations') as FormArray;
-  }
-
-  addProblemEscalation() {
-    const group = this.fb.group({
-      escalatedTo: ['', Validators.required],
-      reason: ['', Validators.required],
-      escalationDateTime: [new Date().toISOString(), Validators.required],
-      followUpStatus: [''],
-      comments: ['']
-    });
-    this.problemEscalations.push(group);
-  }
-
-  removeProblemEscalation(index: number) {
-    this.problemEscalations.removeAt(index);
-  }
-
-  // Training & Capacity Building
-  get trainingCapacityBuildings(): FormArray {
-    return this.reportForm.get('trainingCapacityBuildings') as FormArray;
-  }
-
-  addTrainingCapacityBuilding() {
-    const group = this.fb.group({
-      trainingType: ['', Validators.required],
-      topic: ['', Validators.required],
-      duration: [''],
-      skillsGained: [''],
-      trainerName: [''],
-      participants: ['']
-    });
-    this.trainingCapacityBuildings.push(group);
-  }
-
-  removeTrainingCapacityBuilding(index: number) {
-    this.trainingCapacityBuildings.removeAt(index);
-  }
-
-  // Project Progress Updates
-  get projectProgressUpdates(): FormArray {
-    return this.reportForm.get('projectProgressUpdates') as FormArray;
-  }
-
-  addProjectProgressUpdate() {
-    const group = this.fb.group({
-      projectName: ['', Validators.required],
-      taskOrMilestone: [''],
-      progressDetail: ['', Validators.required],
-      roadblocksIssues: [''],
-      estimatedCompletionDate: [''],
-      comments: ['']
-    });
-    this.projectProgressUpdates.push(group);
-  }
-
-  removeProjectProgressUpdate(index: number) {
-    this.projectProgressUpdates.removeAt(index);
-  }
-
-  // CBS Team Activities
-  get cbsTeamActivities(): FormArray {
-    return this.reportForm.get('cbsTeamActivities') as FormArray;
-  }
-
-  addCbsTeamActivity() {
-    const group = this.fb.group({
+      activityType: ['', Validators.required],
       description: ['', Validators.required],
       branch: [''],
-      accountNumber: [''],
-      actionTaken: [''],
-      finalStatus: [''],
-      activityType: ['']
+      accountNumber: ['']
     });
-    this.cbsTeamActivities.push(group);
+    this.unifiedActivities.push(group);
+  }
+  
+  removeUnifiedActivity(index: number) {
+    this.unifiedActivities.removeAt(index);
+  }
+  
+  onDateChange() {
+    if (this.reportForm.get('businessDate')?.value) {
+      const date = new Date(this.reportForm.get('businessDate')?.value);
+      const dayName = this.daysOfWeek[date.getDay() === 0 ? 6 : date.getDay() - 1];
+      this.selectedDay = dayName;
+      this.reportForm.patchValue({ dayOfWeek: dayName });
+      this.loadReportByDate();
+    }
   }
 
-  removeCbsTeamActivity(index: number) {
-    this.cbsTeamActivities.removeAt(index);
-  }
-
-  // Pending Activities
-  get pendingActivities(): FormArray {
-    return this.reportForm.get('pendingActivities') as FormArray;
-  }
-
-  addPendingActivity() {
-    const group = this.fb.group({
-      title: ['', Validators.required],
-      description: ['', Validators.required],
-      status: ['', Validators.required],
-      amount: [null],
-      followUpRequired: [false],
-      responsiblePerson: ['']
+  // Convert unified activities to backend format
+  convertUnifiedActivitiesToBackendFormat(unifiedActivities: UnifiedActivity[]): CreateDailyReportRequest {
+    const request: CreateDailyReportRequest = {
+      businessDate: this.reportForm.get('businessDate')?.value,
+      cbsEndTime: this.reportForm.get('cbsEndTime')?.value,
+      cbsStartTimeNextDay: this.reportForm.get('cbsStartTimeNextDay')?.value,
+      reportingLine: this.reportForm.get('reportingLine')?.value,
+      chatCommunications: [],
+      emailCommunications: [],
+      problemEscalations: [],
+      trainingCapacityBuildings: [],
+      projectProgressUpdates: [],
+      cbsTeamActivities: [],
+      pendingActivities: [],
+      meetings: [],
+      afpayCardRequests: [],
+      qrmisIssues: []
+    };
+    
+    unifiedActivities.forEach(activity => {
+      const desc = activity.description;
+      const branch = activity.branch || '';
+      const account = activity.accountNumber || '';
+      
+      switch(activity.activityType) {
+        case 'CBS Team Activity':
+        case 'Allowing without check number':
+        case 'Reversals':
+        case 'System enhancements':
+        case 'Email confirmations':
+        case 'Ticket submissions':
+        case 'Branch coordination':
+        case 'Manual entry work':
+        case 'Other':
+          request.cbsTeamActivities!.push({
+            description: desc,
+            activityType: activity.activityType,
+            branch: branch,
+            accountNumber: account
+          });
+          break;
+        case 'Chat Communication':
+          request.chatCommunications!.push({
+            platform: 'General',
+            summary: desc,
+            actionTaken: ''
+          });
+          break;
+        case 'Email Communication':
+          request.emailCommunications!.push({
+            isInternal: true,
+            sender: '',
+            receiver: '',
+            subject: desc,
+            summary: desc,
+            followUpRequired: false
+          });
+          break;
+        case 'Problem Escalation':
+          request.problemEscalations!.push({
+            escalatedTo: '',
+            reason: desc,
+            escalationDateTime: new Date().toISOString()
+          });
+          break;
+        case 'Training & Capacity Building':
+          request.trainingCapacityBuildings!.push({
+            trainingType: 'Internal',
+            topic: desc
+          });
+          break;
+        case 'Project Progress Update':
+          request.projectProgressUpdates!.push({
+            projectName: '',
+            progressDetail: desc
+          });
+          break;
+        case 'Pending Activity':
+          request.pendingActivities!.push({
+            title: desc,
+            description: desc,
+            status: 'Pending',
+            followUpRequired: false
+          });
+          break;
+        case 'Meeting':
+          request.meetings!.push({
+            meetingType: 'Internal',
+            topic: desc,
+            summary: desc
+          });
+          break;
+        case 'AFPay Card Request':
+          request.afpayCardRequests!.push({
+            requestType: 'Issue',
+            requestedBy: '',
+            requestDate: this.today
+          });
+          break;
+        case 'QRMIS Issue':
+          request.qrmisIssues!.push({
+            problemType: '',
+            problemDescription: desc
+          });
+          break;
+      }
     });
-    this.pendingActivities.push(group);
+    
+    return request;
   }
 
-  removePendingActivity(index: number) {
-    this.pendingActivities.removeAt(index);
-  }
-
-  // Meetings
-  get meetings(): FormArray {
-    return this.reportForm.get('meetings') as FormArray;
-  }
-
-  addMeeting() {
-    const group = this.fb.group({
-      meetingType: ['', Validators.required],
-      topic: ['', Validators.required],
-      summary: ['', Validators.required],
-      actionTaken: [''],
-      nextStep: [''],
-      participants: ['']
-    });
-    this.meetings.push(group);
-  }
-
-  removeMeeting(index: number) {
-    this.meetings.removeAt(index);
-  }
-
-  // AFPay Card Requests
-  get afpayCardRequests(): FormArray {
-    return this.reportForm.get('afpayCardRequests') as FormArray;
-  }
-
-  addAfpayCardRequest() {
-    const group = this.fb.group({
-      requestType: ['', Validators.required],
-      requestedBy: ['', Validators.required],
-      requestDate: [this.today, Validators.required],
-      resolutionDetails: [''],
-      supportingDocumentPath: [''],
-      archivedDate: [''],
-      operator: ['']
-    });
-    this.afpayCardRequests.push(group);
-  }
-
-  removeAfpayCardRequest(index: number) {
-    this.afpayCardRequests.removeAt(index);
-  }
-
-  // QRMIS Issues
-  get qrmisIssues(): FormArray {
-    return this.reportForm.get('qrmisIssues') as FormArray;
-  }
-
-  addQrmisIssue() {
-    const group = this.fb.group({
-      problemType: ['', Validators.required],
-      problemDescription: ['', Validators.required],
-      solutionProvided: [''],
-      postedBy: [''],
-      authorizedBy: [''],
-      supportingDocumentsArchived: [''],
-      operator: ['']
-    });
-    this.qrmisIssues.push(group);
-  }
-
-  removeQrmisIssue(index: number) {
-    this.qrmisIssues.removeAt(index);
-  }
 
   async loadReportByDate() {
     if (!this.selectedDate) return;
@@ -339,31 +275,76 @@ export class DailyReportComponent implements OnInit {
   }
 
   loadFormFromReport(report: DailyReport) {
+    const date = new Date(report.businessDate);
+    const dayName = this.daysOfWeek[date.getDay() === 0 ? 6 : date.getDay() - 1];
+    
     this.reportForm.patchValue({
       businessDate: report.businessDate,
+      dayOfWeek: dayName,
       cbsEndTime: report.cbsEndTime,
       cbsStartTimeNextDay: report.cbsStartTimeNextDay,
       reportingLine: report.reportingLine
     });
+    
+    this.selectedDay = dayName;
 
-    // Load arrays
-    this.loadArrayToFormArray(this.chatCommunications, report.chatCommunications);
-    this.loadArrayToFormArray(this.emailCommunications, report.emailCommunications);
-    this.loadArrayToFormArray(this.problemEscalations, report.problemEscalations);
-    this.loadArrayToFormArray(this.trainingCapacityBuildings, report.trainingCapacityBuildings);
-    this.loadArrayToFormArray(this.projectProgressUpdates, report.projectProgressUpdates);
-    this.loadArrayToFormArray(this.cbsTeamActivities, report.cbsTeamActivities);
-    this.loadArrayToFormArray(this.pendingActivities, report.pendingActivities);
-    this.loadArrayToFormArray(this.meetings, report.meetings);
-    this.loadArrayToFormArray(this.afpayCardRequests, report.afpayCardRequests);
-    this.loadArrayToFormArray(this.qrmisIssues, report.qrmisIssues);
-  }
-
-  loadArrayToFormArray(formArray: FormArray, data: any[]) {
-    formArray.clear();
-    data.forEach(item => {
-      const group = this.fb.group(item);
-      formArray.push(group);
+    // Convert all activities to unified format
+    this.unifiedActivities.clear();
+    
+    // Convert CBS Team Activities
+    report.cbsTeamActivities.forEach(activity => {
+      this.unifiedActivities.push(this.fb.group({
+        activityType: [activity.activityType || 'CBS Team Activity', Validators.required],
+        description: [activity.description, Validators.required],
+        branch: [activity.branch || ''],
+        accountNumber: [activity.accountNumber || '']
+      }));
+    });
+    
+    // Convert other activities
+    report.chatCommunications.forEach(chat => {
+      this.unifiedActivities.push(this.fb.group({
+        activityType: ['Chat Communication', Validators.required],
+        description: [chat.summary, Validators.required],
+        branch: [''],
+        accountNumber: ['']
+      }));
+    });
+    
+    report.emailCommunications.forEach(email => {
+      this.unifiedActivities.push(this.fb.group({
+        activityType: ['Email Communication', Validators.required],
+        description: [email.summary, Validators.required],
+        branch: [''],
+        accountNumber: ['']
+      }));
+    });
+    
+    report.problemEscalations.forEach(escalation => {
+      this.unifiedActivities.push(this.fb.group({
+        activityType: ['Problem Escalation', Validators.required],
+        description: [escalation.reason, Validators.required],
+        branch: [''],
+        accountNumber: ['']
+      }));
+    });
+    
+    report.pendingActivities.forEach(pending => {
+      this.unifiedActivities.push(this.fb.group({
+        activityType: ['Pending Activity', Validators.required],
+        description: [pending.description, Validators.required],
+        branch: [''],
+        accountNumber: ['']
+      }));
+    });
+    
+    report.meetings.forEach(meeting => {
+      this.unifiedActivities.push(this.fb.group({
+        activityType: ['Meeting', Validators.required],
+        description: [meeting.summary, Validators.required],
+        branch: [''],
+        accountNumber: ['']
+      }));
     });
   }
 
@@ -373,40 +354,34 @@ export class DailyReportComponent implements OnInit {
       return;
     }
 
+    if (this.unifiedActivities.length === 0) {
+      this.errorMessage = 'Please add at least one activity';
+      return;
+    }
+
     this.saving = true;
     this.errorMessage = '';
     this.successMessage = '';
 
     try {
       const formValue = this.reportForm.value;
-      const request: CreateDailyReportRequest = {
-        businessDate: formValue.businessDate,
-        cbsEndTime: formValue.cbsEndTime,
-        cbsStartTimeNextDay: formValue.cbsStartTimeNextDay,
-        reportingLine: formValue.reportingLine,
-        chatCommunications: formValue.chatCommunications || [],
-        emailCommunications: formValue.emailCommunications || [],
-        problemEscalations: formValue.problemEscalations || [],
-        trainingCapacityBuildings: formValue.trainingCapacityBuildings || [],
-        projectProgressUpdates: formValue.projectProgressUpdates || [],
-        cbsTeamActivities: formValue.cbsTeamActivities || [],
-        pendingActivities: formValue.pendingActivities || [],
-        meetings: formValue.meetings || [],
-        afpayCardRequests: formValue.afpayCardRequests || [],
-        qrmisIssues: formValue.qrmisIssues || []
-      };
+      const request = this.convertUnifiedActivitiesToBackendFormat(formValue.unifiedActivities);
+      
+      // Set basic fields
+      request.businessDate = formValue.businessDate;
+      request.cbsEndTime = formValue.cbsEndTime;
+      request.cbsStartTimeNextDay = formValue.cbsStartTimeNextDay;
+      request.reportingLine = formValue.reportingLine;
 
       if (this.currentReport?.id) {
         const updatedReport = await this.reportService.updateReport(this.currentReport.id, request).toPromise();
         this.currentReport = updatedReport!;
         this.successMessage = 'Report saved successfully';
-        // Reload reports list
         this.loadMyReports();
       } else {
         const report = await this.reportService.createReport(request).toPromise();
         this.currentReport = report!;
         this.successMessage = 'Report created successfully';
-        // Reload reports list
         this.loadMyReports();
       }
     } catch (error: any) {
@@ -422,8 +397,8 @@ export class DailyReportComponent implements OnInit {
       return;
     }
 
-    if (this.cbsTeamActivities.length === 0) {
-      this.errorMessage = 'At least one CBS Team Activity is required';
+    if (this.unifiedActivities.length === 0) {
+      this.errorMessage = 'Please add at least one activity before submitting';
       return;
     }
 
@@ -459,9 +434,35 @@ export class DailyReportComponent implements OnInit {
   resetForm() {
     this.currentReport = null;
     this.selectedDate = this.today;
+    const todayDate = new Date();
+    this.selectedDay = this.daysOfWeek[todayDate.getDay() === 0 ? 6 : todayDate.getDay() - 1];
     this.initializeForm();
     this.successMessage = '';
     this.errorMessage = '';
+  }
+  
+  async downloadMyReport(report: DailyReport) {
+    if (!report.id || !report.employeeId) return;
+    
+    this.downloading = true;
+    try {
+      const blob = await this.reportService.downloadEmployeeReport(report.employeeId).toPromise();
+      if (blob) {
+        const url = window.URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        const dateStr = report.businessDate.split('T')[0];
+        link.download = `daily_report_${dateStr}.pdf`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        window.URL.revokeObjectURL(url);
+      }
+    } catch (error: any) {
+      this.errorMessage = 'Failed to download report';
+    } finally {
+      this.downloading = false;
+    }
   }
 
   async loadMyReports() {
