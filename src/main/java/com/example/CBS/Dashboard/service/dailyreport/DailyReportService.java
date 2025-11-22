@@ -187,21 +187,29 @@ public class DailyReportService {
     @PreAuthorize("hasAnyRole('ROLE_DAILY_REPORT_SUPERVISOR', 'ROLE_DAILY_REPORT_DIRECTOR', 'ROLE_DAILY_REPORT_MANAGER', 'ROLE_DAILY_REPORT_TEAM_LEAD', 'ROLE_ADMIN')")
     public Page<DailyReportDto> getAllReports(Pageable pageable, LocalDate startDate, LocalDate endDate, 
                                                Long employeeId, DailyReport.ReportStatus status) {
-        Specification<DailyReport> spec = Specification.where(null);
+        Specification<DailyReport> spec = null;
         
         if (startDate != null && endDate != null) {
-            spec = spec.and((root, query, cb) -> 
-                cb.between(root.get("businessDate"), startDate, endDate));
+            Specification<DailyReport> dateSpec = (root, query, cb) -> 
+                cb.between(root.get("businessDate"), startDate, endDate);
+            spec = spec == null ? dateSpec : spec.and(dateSpec);
         }
         
         if (employeeId != null) {
-            spec = spec.and((root, query, cb) -> 
-                cb.equal(root.get("employee").get("id"), employeeId));
+            Specification<DailyReport> employeeSpec = (root, query, cb) -> 
+                cb.equal(root.get("employee").get("id"), employeeId);
+            spec = spec == null ? employeeSpec : spec.and(employeeSpec);
         }
         
         if (status != null) {
-            spec = spec.and((root, query, cb) -> 
-                cb.equal(root.get("status"), status));
+            Specification<DailyReport> statusSpec = (root, query, cb) -> 
+                cb.equal(root.get("status"), status);
+            spec = spec == null ? statusSpec : spec.and(statusSpec);
+        }
+        
+        if (spec == null) {
+            return dailyReportRepository.findAll(pageable)
+                .map(dailyReportMapper::toDto);
         }
         
         return dailyReportRepository.findAll(spec, pageable)
@@ -445,9 +453,9 @@ public class DailyReportService {
         List<DailyReport> reports;
         
         if (startDate != null && endDate != null) {
-            Specification<DailyReport> spec = Specification.where(
-                (root, query, cb) -> cb.equal(root.get("employee").get("id"), employeeId)
-            ).and((root, query, cb) -> 
+            Specification<DailyReport> spec = (root, query, cb) -> 
+                cb.equal(root.get("employee").get("id"), employeeId);
+            spec = spec.and((root, query, cb) -> 
                 cb.between(root.get("businessDate"), startDate, endDate)
             );
             reports = dailyReportRepository.findAll(spec);
