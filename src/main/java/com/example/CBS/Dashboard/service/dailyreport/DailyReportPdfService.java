@@ -91,35 +91,37 @@ public class DailyReportPdfService {
     }
     
     private void addCombinedHeader(Document document, DailyReport sampleReport, java.time.LocalDate businessDate) {
-        // Main Title
+        // Main Title with brown/gold accent
         Paragraph mainTitle = new Paragraph("Da Afghanistan Bank")
             .setBold()
-            .setFontSize(18)
+            .setFontSize(20)
             .setTextAlignment(TextAlignment.CENTER)
             .setMarginBottom(5)
-            .setFontColor(new DeviceRgb(0, 51, 102));
+            .setFontColor(new DeviceRgb(139, 69, 19)); // Brown color
         document.add(mainTitle);
 
         Paragraph subtitle = new Paragraph("CBS TEAM DAILY STATUS REPORT")
             .setBold()
-            .setFontSize(16)
+            .setFontSize(17)
             .setTextAlignment(TextAlignment.CENTER)
             .setMarginBottom(8)
-            .setFontColor(new DeviceRgb(0, 51, 102));
+            .setFontColor(new DeviceRgb(101, 67, 33)); // Darker brown
         document.add(subtitle);
 
         Paragraph businessDay = new Paragraph("BUSINESS DAY: " + businessDate.format(DATE_FORMATTER))
             .setBold()
-            .setFontSize(12)
+            .setFontSize(13)
             .setTextAlignment(TextAlignment.CENTER)
             .setMarginBottom(15)
-            .setFontColor(new DeviceRgb(0, 51, 102));
+            .setFontColor(new DeviceRgb(139, 69, 19)) // Brown
+            .setBackgroundColor(new DeviceRgb(245, 222, 179)) // Light brown background
+            .setPadding(8);
         document.add(businessDay);
 
-        // Report Info Table with better styling
+        // Report Info Table with better styling (brown theme)
         Table infoTable = new Table(2).useAllAvailableWidth();
         infoTable.setMarginBottom(15);
-        infoTable.setBorder(new SolidBorder(new DeviceRgb(0, 51, 102), 1));
+        infoTable.setBorder(new SolidBorder(new DeviceRgb(139, 69, 19), 2));
 
         addStyledInfoRow(infoTable, "Prepared By:", getEmployeeNames(sampleReport));
         if (sampleReport.getReportingLine() != null && !sampleReport.getReportingLine().isEmpty()) {
@@ -145,12 +147,14 @@ public class DailyReportPdfService {
         Cell labelCell = new Cell()
             .add(new Paragraph(label).setBold().setFontSize(10))
             .setPadding(8)
-            .setBackgroundColor(new DeviceRgb(240, 240, 240))
-            .setBorder(new SolidBorder(new DeviceRgb(200, 200, 200), 0.5f));
+            .setBackgroundColor(new DeviceRgb(222, 184, 135)) // Burlywood brown
+            .setFontColor(new DeviceRgb(101, 67, 33)) // Dark brown text
+            .setBorder(new SolidBorder(new DeviceRgb(139, 69, 19), 0.5f));
         Cell valueCell = new Cell()
             .add(new Paragraph(value != null ? value : "").setFontSize(10))
             .setPadding(8)
-            .setBorder(new SolidBorder(new DeviceRgb(200, 200, 200), 0.5f));
+            .setBackgroundColor(new DeviceRgb(255, 248, 220)) // Cornsilk
+            .setBorder(new SolidBorder(new DeviceRgb(139, 69, 19), 0.5f));
         table.addCell(labelCell);
         table.addCell(valueCell);
     }
@@ -158,6 +162,7 @@ public class DailyReportPdfService {
     private void addCombinedReportContent(Document document, List<DailyReport> reports) {
         // Collect all activities from all employees
         List<ActivityWithEmployee> allActivities = new ArrayList<>();
+        List<ActivityWithEmployee> withoutCheckNumberActivities = new ArrayList<>();
         List<EmailCommunication> allEmails = new ArrayList<>();
         List<ChatCommunication> allChats = new ArrayList<>();
         List<PendingActivity> allPending = new ArrayList<>();
@@ -172,7 +177,14 @@ public class DailyReportPdfService {
             // Collect CBS Team Activities with employee name
             if (report.getCbsTeamActivities() != null) {
                 for (CbsTeamActivity activity : report.getCbsTeamActivities()) {
-                    allActivities.add(new ActivityWithEmployee(activity, employeeName));
+                    // Separate "without check number" activities
+                    if (activity.getActivityType() != null && 
+                        (activity.getActivityType().toLowerCase().contains("without check number") ||
+                         activity.getActivityType().toLowerCase().contains("allowing without check number"))) {
+                        withoutCheckNumberActivities.add(new ActivityWithEmployee(activity, employeeName));
+                    } else {
+                        allActivities.add(new ActivityWithEmployee(activity, employeeName));
+                    }
                 }
             }
             
@@ -200,7 +212,12 @@ public class DailyReportPdfService {
             }
         }
         
-        // Add merged CBS Team Activities section
+        // Add "Without Check Number" section first (as a separate table)
+        if (!withoutCheckNumberActivities.isEmpty()) {
+            addWithoutCheckNumberSection(document, withoutCheckNumberActivities);
+        }
+        
+        // Add merged CBS Team Activities section (excluding without check number)
         if (!allActivities.isEmpty()) {
             addMergedCbsActivitiesSection(document, allActivities);
         }
@@ -235,14 +252,54 @@ public class DailyReportPdfService {
         }
     }
     
+    private void addWithoutCheckNumberSection(Document document, List<ActivityWithEmployee> activities) {
+        Paragraph sectionTitle = new Paragraph("Allowing Without Check Number")
+            .setBold()
+            .setFontSize(14)
+            .setMarginTop(15)
+            .setMarginBottom(12)
+            .setFontColor(new DeviceRgb(139, 69, 19)) // Brown
+            .setBackgroundColor(new DeviceRgb(245, 222, 179)) // Light brown background
+            .setPadding(10)
+            .setBorderBottom(new SolidBorder(new DeviceRgb(139, 69, 19), 3));
+        document.add(sectionTitle);
+        
+        // Create a professional table
+        Table withoutCheckTable = new Table(5).useAllAvailableWidth();
+        withoutCheckTable.setMarginBottom(15);
+        withoutCheckTable.setBorder(new SolidBorder(new DeviceRgb(139, 69, 19), 2));
+        
+        // Table headers with brown styling
+        addStyledTableHeaderBrown(withoutCheckTable, "No.");
+        addStyledTableHeaderBrown(withoutCheckTable, "Branch");
+        addStyledTableHeaderBrown(withoutCheckTable, "Account Number");
+        addStyledTableHeaderBrown(withoutCheckTable, "Description");
+        addStyledTableHeaderBrown(withoutCheckTable, "Employee");
+        
+        int index = 1;
+        for (ActivityWithEmployee item : activities) {
+            addStyledTableCellBrown(withoutCheckTable, String.valueOf(index));
+            addStyledTableCellBrown(withoutCheckTable, item.activity.getBranch() != null ? item.activity.getBranch() : "");
+            addStyledTableCellBrown(withoutCheckTable, item.activity.getAccountNumber() != null ? item.activity.getAccountNumber() : "");
+            addStyledTableCellBrown(withoutCheckTable, item.activity.getDescription());
+            addStyledTableCellBrown(withoutCheckTable, item.employeeName);
+            index++;
+        }
+        
+        document.add(withoutCheckTable);
+        document.add(new Paragraph("\n"));
+    }
+    
     private void addMergedCbsActivitiesSection(Document document, List<ActivityWithEmployee> activities) {
         Paragraph sectionTitle = new Paragraph("CBS Team Daily Activities (On-Job Activities)")
             .setBold()
-            .setFontSize(13)
+            .setFontSize(14)
             .setMarginTop(15)
             .setMarginBottom(10)
-            .setFontColor(new DeviceRgb(0, 51, 102))
-            .setBorderBottom(new SolidBorder(new DeviceRgb(0, 51, 102), 2));
+            .setFontColor(new DeviceRgb(139, 69, 19)) // Brown
+            .setBackgroundColor(new DeviceRgb(245, 222, 179)) // Light brown background
+            .setPadding(10)
+            .setBorderBottom(new SolidBorder(new DeviceRgb(139, 69, 19), 3));
         document.add(sectionTitle);
         
         String currentEmployee = null;
@@ -290,13 +347,13 @@ public class DailyReportPdfService {
                 !item.employeeName.equals(activities.get(activities.indexOf(item) + 1).employeeName);
             
             if (isLast || nextIsDifferent) {
-                // Add employee name in bold
+                // Add employee name in bold with brown color
                 document.add(new Paragraph("   — " + item.employeeName)
                     .setBold()
                     .setFontSize(10)
                     .setMarginLeft(15)
                     .setMarginBottom(8)
-                    .setFontColor(new DeviceRgb(0, 51, 102)));
+                    .setFontColor(new DeviceRgb(139, 69, 19))); // Brown
             }
             
             currentEmployee = item.employeeName;
@@ -309,11 +366,13 @@ public class DailyReportPdfService {
     private void addMergedEmailSection(Document document, List<EmailCommunication> emails) {
         Paragraph sectionTitle = new Paragraph("Email Communication")
             .setBold()
-            .setFontSize(13)
+            .setFontSize(14)
             .setMarginTop(15)
             .setMarginBottom(10)
-            .setFontColor(new DeviceRgb(0, 51, 102))
-            .setBorderBottom(new SolidBorder(new DeviceRgb(0, 51, 102), 2));
+            .setFontColor(new DeviceRgb(101, 67, 33)) // Dark brown
+            .setBackgroundColor(new DeviceRgb(255, 228, 181)) // Moccasin
+            .setPadding(10)
+            .setBorderBottom(new SolidBorder(new DeviceRgb(139, 69, 19), 3));
         document.add(sectionTitle);
 
         Table emailTable = new Table(6).useAllAvailableWidth();
@@ -343,16 +402,18 @@ public class DailyReportPdfService {
     private void addMergedChatSection(Document document, List<ChatCommunication> chats) {
         Paragraph sectionTitle = new Paragraph("Chat/Instant Messaging Communications")
             .setBold()
-            .setFontSize(13)
+            .setFontSize(14)
             .setMarginTop(15)
             .setMarginBottom(10)
-            .setFontColor(new DeviceRgb(0, 51, 102))
-            .setBorderBottom(new SolidBorder(new DeviceRgb(0, 51, 102), 2));
+            .setFontColor(new DeviceRgb(101, 67, 33)) // Dark brown
+            .setBackgroundColor(new DeviceRgb(255, 228, 181)) // Moccasin
+            .setPadding(10)
+            .setBorderBottom(new SolidBorder(new DeviceRgb(139, 69, 19), 3));
         document.add(sectionTitle);
 
-        Table chatTable = new Table(4).useAllAvailableWidth();
-        chatTable.setMarginBottom(10);
-        chatTable.setBorder(new SolidBorder(new DeviceRgb(0, 51, 102), 1));
+            Table chatTable = new Table(4).useAllAvailableWidth();
+            chatTable.setMarginBottom(10);
+            chatTable.setBorder(new SolidBorder(new DeviceRgb(139, 69, 19), 2));
 
         addStyledTableHeader(chatTable, "Platform");
         addStyledTableHeader(chatTable, "Summary");
@@ -373,16 +434,18 @@ public class DailyReportPdfService {
     private void addMergedPendingSection(Document document, List<PendingActivity> pending) {
         Paragraph sectionTitle = new Paragraph("CBS Pending Activities")
             .setBold()
-            .setFontSize(13)
+            .setFontSize(14)
             .setMarginTop(15)
             .setMarginBottom(10)
-            .setFontColor(new DeviceRgb(0, 51, 102))
-            .setBorderBottom(new SolidBorder(new DeviceRgb(0, 51, 102), 2));
+            .setFontColor(new DeviceRgb(101, 67, 33)) // Dark brown
+            .setBackgroundColor(new DeviceRgb(255, 228, 181)) // Moccasin
+            .setPadding(10)
+            .setBorderBottom(new SolidBorder(new DeviceRgb(139, 69, 19), 3));
         document.add(sectionTitle);
 
-        Table pendingTable = new Table(4).useAllAvailableWidth();
-        pendingTable.setMarginBottom(10);
-        pendingTable.setBorder(new SolidBorder(new DeviceRgb(0, 51, 102), 1));
+            Table pendingTable = new Table(4).useAllAvailableWidth();
+            pendingTable.setMarginBottom(10);
+            pendingTable.setBorder(new SolidBorder(new DeviceRgb(139, 69, 19), 2));
 
         addStyledTableHeader(pendingTable, "Title");
         addStyledTableHeader(pendingTable, "Description");
@@ -403,11 +466,13 @@ public class DailyReportPdfService {
     private void addMergedEscalationSection(Document document, List<ProblemEscalation> escalations) {
         Paragraph sectionTitle = new Paragraph("Problem Escalation")
             .setBold()
-            .setFontSize(13)
+            .setFontSize(14)
             .setMarginTop(15)
             .setMarginBottom(10)
-            .setFontColor(new DeviceRgb(0, 51, 102))
-            .setBorderBottom(new SolidBorder(new DeviceRgb(0, 51, 102), 2));
+            .setFontColor(new DeviceRgb(101, 67, 33)) // Dark brown
+            .setBackgroundColor(new DeviceRgb(255, 228, 181)) // Moccasin
+            .setPadding(10)
+            .setBorderBottom(new SolidBorder(new DeviceRgb(139, 69, 19), 3));
         document.add(sectionTitle);
 
         for (ProblemEscalation escalation : escalations) {
@@ -432,16 +497,18 @@ public class DailyReportPdfService {
     private void addMergedMeetingSection(Document document, List<Meeting> meetings) {
         Paragraph sectionTitle = new Paragraph("Meetings (Team Collaboration and External)")
             .setBold()
-            .setFontSize(13)
+            .setFontSize(14)
             .setMarginTop(15)
             .setMarginBottom(10)
-            .setFontColor(new DeviceRgb(0, 51, 102))
-            .setBorderBottom(new SolidBorder(new DeviceRgb(0, 51, 102), 2));
+            .setFontColor(new DeviceRgb(101, 67, 33)) // Dark brown
+            .setBackgroundColor(new DeviceRgb(255, 228, 181)) // Moccasin
+            .setPadding(10)
+            .setBorderBottom(new SolidBorder(new DeviceRgb(139, 69, 19), 3));
         document.add(sectionTitle);
 
-        Table meetingTable = new Table(6).useAllAvailableWidth();
-        meetingTable.setMarginBottom(10);
-        meetingTable.setBorder(new SolidBorder(new DeviceRgb(0, 51, 102), 1));
+            Table meetingTable = new Table(6).useAllAvailableWidth();
+            meetingTable.setMarginBottom(10);
+            meetingTable.setBorder(new SolidBorder(new DeviceRgb(139, 69, 19), 2));
 
         addStyledTableHeader(meetingTable, "Type");
         addStyledTableHeader(meetingTable, "Topic");
@@ -466,16 +533,18 @@ public class DailyReportPdfService {
     private void addMergedAfpaySection(Document document, List<AfpayCardRequest> afpay) {
         Paragraph sectionTitle = new Paragraph("AFPay Card")
             .setBold()
-            .setFontSize(13)
+            .setFontSize(14)
             .setMarginTop(15)
             .setMarginBottom(10)
-            .setFontColor(new DeviceRgb(0, 51, 102))
-            .setBorderBottom(new SolidBorder(new DeviceRgb(0, 51, 102), 2));
+            .setFontColor(new DeviceRgb(101, 67, 33)) // Dark brown
+            .setBackgroundColor(new DeviceRgb(255, 228, 181)) // Moccasin
+            .setPadding(10)
+            .setBorderBottom(new SolidBorder(new DeviceRgb(139, 69, 19), 3));
         document.add(sectionTitle);
 
-        Table afpayTable = new Table(6).useAllAvailableWidth();
-        afpayTable.setMarginBottom(10);
-        afpayTable.setBorder(new SolidBorder(new DeviceRgb(0, 51, 102), 1));
+            Table afpayTable = new Table(6).useAllAvailableWidth();
+            afpayTable.setMarginBottom(10);
+            afpayTable.setBorder(new SolidBorder(new DeviceRgb(139, 69, 19), 2));
 
         addStyledTableHeader(afpayTable, "Type");
         addStyledTableHeader(afpayTable, "Requested By");
@@ -500,16 +569,18 @@ public class DailyReportPdfService {
     private void addMergedQrmisSection(Document document, List<QrmisIssue> qrmis) {
         Paragraph sectionTitle = new Paragraph("QRMIS Issues / Tickets")
             .setBold()
-            .setFontSize(13)
+            .setFontSize(14)
             .setMarginTop(15)
             .setMarginBottom(10)
-            .setFontColor(new DeviceRgb(0, 51, 102))
-            .setBorderBottom(new SolidBorder(new DeviceRgb(0, 51, 102), 2));
+            .setFontColor(new DeviceRgb(101, 67, 33)) // Dark brown
+            .setBackgroundColor(new DeviceRgb(255, 228, 181)) // Moccasin
+            .setPadding(10)
+            .setBorderBottom(new SolidBorder(new DeviceRgb(139, 69, 19), 3));
         document.add(sectionTitle);
 
-        Table qrmisTable = new Table(7).useAllAvailableWidth();
-        qrmisTable.setMarginBottom(10);
-        qrmisTable.setBorder(new SolidBorder(new DeviceRgb(0, 51, 102), 1));
+            Table qrmisTable = new Table(7).useAllAvailableWidth();
+            qrmisTable.setMarginBottom(10);
+            qrmisTable.setBorder(new SolidBorder(new DeviceRgb(139, 69, 19), 2));
 
         addStyledTableHeader(qrmisTable, "Problem Type");
         addStyledTableHeader(qrmisTable, "Problem Description");
@@ -535,11 +606,22 @@ public class DailyReportPdfService {
     private void addStyledTableHeader(Table table, String text) {
         Cell cell = new Cell()
             .add(new Paragraph(text).setBold().setFontSize(10))
-            .setBackgroundColor(new DeviceRgb(0, 51, 102))
+            .setBackgroundColor(new DeviceRgb(139, 69, 19)) // Brown
             .setFontColor(ColorConstants.WHITE)
             .setPadding(8)
             .setTextAlignment(TextAlignment.CENTER)
-            .setBorder(new SolidBorder(ColorConstants.WHITE, 0.5f));
+            .setBorder(new SolidBorder(new DeviceRgb(101, 67, 33), 0.5f));
+        table.addHeaderCell(cell);
+    }
+    
+    private void addStyledTableHeaderBrown(Table table, String text) {
+        Cell cell = new Cell()
+            .add(new Paragraph(text).setBold().setFontSize(11))
+            .setBackgroundColor(new DeviceRgb(101, 67, 33)) // Dark brown
+            .setFontColor(ColorConstants.WHITE)
+            .setPadding(10)
+            .setTextAlignment(TextAlignment.CENTER)
+            .setBorder(new SolidBorder(new DeviceRgb(139, 69, 19), 1));
         table.addHeaderCell(cell);
     }
 
@@ -547,7 +629,17 @@ public class DailyReportPdfService {
         Cell cell = new Cell()
             .add(new Paragraph(text != null ? text : "").setFontSize(9))
             .setPadding(6)
-            .setBorder(new SolidBorder(new DeviceRgb(200, 200, 200), 0.5f));
+            .setBackgroundColor(new DeviceRgb(255, 248, 220)) // Cornsilk
+            .setBorder(new SolidBorder(new DeviceRgb(222, 184, 135), 0.5f));
+        table.addCell(cell);
+    }
+    
+    private void addStyledTableCellBrown(Table table, String text) {
+        Cell cell = new Cell()
+            .add(new Paragraph(text != null ? text : "").setFontSize(10))
+            .setPadding(8)
+            .setBackgroundColor(new DeviceRgb(255, 250, 240)) // Floral white
+            .setBorder(new SolidBorder(new DeviceRgb(222, 184, 135), 0.5f));
         table.addCell(cell);
     }
     
@@ -563,35 +655,37 @@ public class DailyReportPdfService {
     }
 
     private void addHeader(Document document, DailyReport report) throws IOException {
-        // Title with professional styling
+        // Title with professional brown styling
         Paragraph title = new Paragraph("Da Afghanistan Bank")
             .setBold()
-            .setFontSize(18)
+            .setFontSize(20)
             .setTextAlignment(TextAlignment.CENTER)
             .setMarginBottom(5)
-            .setFontColor(new DeviceRgb(0, 51, 102));
+            .setFontColor(new DeviceRgb(139, 69, 19)); // Brown
         document.add(title);
 
         Paragraph subtitle = new Paragraph("CBS TEAM DAILY STATUS REPORT")
             .setBold()
-            .setFontSize(16)
+            .setFontSize(17)
             .setTextAlignment(TextAlignment.CENTER)
             .setMarginBottom(8)
-            .setFontColor(new DeviceRgb(0, 51, 102));
+            .setFontColor(new DeviceRgb(101, 67, 33)); // Darker brown
         document.add(subtitle);
 
         Paragraph businessDay = new Paragraph("BUSINESS DAY: " + report.getBusinessDate().format(DATE_FORMATTER))
             .setBold()
-            .setFontSize(12)
+            .setFontSize(13)
             .setTextAlignment(TextAlignment.CENTER)
             .setMarginBottom(15)
-            .setFontColor(new DeviceRgb(0, 51, 102));
+            .setFontColor(new DeviceRgb(139, 69, 19)) // Brown
+            .setBackgroundColor(new DeviceRgb(245, 222, 179)) // Light brown background
+            .setPadding(8);
         document.add(businessDay);
 
-        // Report Info Table with professional styling
+        // Report Info Table with professional brown styling
         Table infoTable = new Table(2).useAllAvailableWidth();
         infoTable.setMarginBottom(15);
-        infoTable.setBorder(new SolidBorder(new DeviceRgb(0, 51, 102), 1));
+        infoTable.setBorder(new SolidBorder(new DeviceRgb(139, 69, 19), 2));
 
         addStyledInfoRow(infoTable, "Prepared By:", report.getEmployee().getUsername());
         if (report.getReviewedBy() != null) {
@@ -612,19 +706,72 @@ public class DailyReportPdfService {
     }
 
     private void addReportContent(Document document, DailyReport report) throws IOException {
-        // CBS Team Activities
+        // Separate "without check number" activities first
+        List<CbsTeamActivity> withoutCheckNumber = new ArrayList<>();
+        List<CbsTeamActivity> otherActivities = new ArrayList<>();
+        
         if (report.getCbsTeamActivities() != null && !report.getCbsTeamActivities().isEmpty()) {
+            for (CbsTeamActivity activity : report.getCbsTeamActivities()) {
+                if (activity.getActivityType() != null && 
+                    (activity.getActivityType().toLowerCase().contains("without check number") ||
+                     activity.getActivityType().toLowerCase().contains("allowing without check number"))) {
+                    withoutCheckNumber.add(activity);
+                } else {
+                    otherActivities.add(activity);
+                }
+            }
+        }
+        
+        // Add "Without Check Number" section first
+        if (!withoutCheckNumber.isEmpty()) {
+            Paragraph sectionTitle = new Paragraph("Allowing Without Check Number")
+                .setBold()
+                .setFontSize(14)
+                .setMarginTop(15)
+                .setMarginBottom(12)
+                .setFontColor(new DeviceRgb(139, 69, 19)) // Brown
+                .setBackgroundColor(new DeviceRgb(245, 222, 179)) // Light brown background
+                .setPadding(10)
+                .setBorderBottom(new SolidBorder(new DeviceRgb(139, 69, 19), 3));
+            document.add(sectionTitle);
+            
+            Table withoutCheckTable = new Table(4).useAllAvailableWidth();
+            withoutCheckTable.setMarginBottom(15);
+            withoutCheckTable.setBorder(new SolidBorder(new DeviceRgb(139, 69, 19), 2));
+            
+            addStyledTableHeaderBrown(withoutCheckTable, "No.");
+            addStyledTableHeaderBrown(withoutCheckTable, "Branch");
+            addStyledTableHeaderBrown(withoutCheckTable, "Account Number");
+            addStyledTableHeaderBrown(withoutCheckTable, "Description");
+            
+            int index = 1;
+            for (CbsTeamActivity activity : withoutCheckNumber) {
+                addStyledTableCellBrown(withoutCheckTable, String.valueOf(index));
+                addStyledTableCellBrown(withoutCheckTable, activity.getBranch() != null ? activity.getBranch() : "");
+                addStyledTableCellBrown(withoutCheckTable, activity.getAccountNumber() != null ? activity.getAccountNumber() : "");
+                addStyledTableCellBrown(withoutCheckTable, activity.getDescription());
+                index++;
+            }
+            
+            document.add(withoutCheckTable);
+            document.add(new Paragraph("\n"));
+        }
+        
+        // CBS Team Activities (excluding without check number)
+        if (!otherActivities.isEmpty()) {
             Paragraph sectionTitle = new Paragraph("CBS Team Daily Activities (On-Job Activities)")
                 .setBold()
-                .setFontSize(13)
+                .setFontSize(14)
                 .setMarginTop(15)
                 .setMarginBottom(10)
-                .setFontColor(new DeviceRgb(0, 51, 102))
-                .setBorderBottom(new SolidBorder(new DeviceRgb(0, 51, 102), 2));
+                .setFontColor(new DeviceRgb(139, 69, 19)) // Brown
+                .setBackgroundColor(new DeviceRgb(245, 222, 179)) // Light brown background
+                .setPadding(10)
+                .setBorderBottom(new SolidBorder(new DeviceRgb(139, 69, 19), 3));
             document.add(sectionTitle);
 
             int index = 1;
-            for (var activity : report.getCbsTeamActivities()) {
+            for (var activity : otherActivities) {
                 Paragraph activityPara = new Paragraph(index + ". " + activity.getDescription())
                     .setFontSize(11)
                     .setMarginBottom(3)
@@ -635,21 +782,21 @@ public class DailyReportPdfService {
                         .setFontSize(10)
                         .setMarginLeft(15)
                         .setMarginBottom(2)
-                        .setFontColor(new DeviceRgb(80, 80, 80)));
+                        .setFontColor(new DeviceRgb(101, 67, 33))); // Brown
                 }
                 if (activity.getActionTaken() != null && !activity.getActionTaken().isEmpty()) {
                     document.add(new Paragraph("   Action Taken: " + activity.getActionTaken())
                         .setFontSize(10)
                         .setMarginLeft(15)
                         .setMarginBottom(2)
-                        .setFontColor(new DeviceRgb(80, 80, 80)));
+                        .setFontColor(new DeviceRgb(101, 67, 33))); // Brown
                 }
                 if (activity.getFinalStatus() != null && !activity.getFinalStatus().isEmpty()) {
                     document.add(new Paragraph("   Final Status: " + activity.getFinalStatus())
                         .setFontSize(10)
                         .setMarginLeft(15)
                         .setMarginBottom(2)
-                        .setFontColor(new DeviceRgb(80, 80, 80)));
+                        .setFontColor(new DeviceRgb(101, 67, 33))); // Brown
                 }
                 index++;
             }
@@ -660,16 +807,18 @@ public class DailyReportPdfService {
         if (report.getEmailCommunications() != null && !report.getEmailCommunications().isEmpty()) {
             Paragraph sectionTitle = new Paragraph("Email Communication")
                 .setBold()
-                .setFontSize(13)
+                .setFontSize(14)
                 .setMarginTop(15)
                 .setMarginBottom(10)
-                .setFontColor(new DeviceRgb(0, 51, 102))
-                .setBorderBottom(new SolidBorder(new DeviceRgb(0, 51, 102), 2));
+                .setFontColor(new DeviceRgb(101, 67, 33)) // Dark brown
+                .setBackgroundColor(new DeviceRgb(255, 228, 181)) // Moccasin
+                .setPadding(10)
+                .setBorderBottom(new SolidBorder(new DeviceRgb(139, 69, 19), 3));
             document.add(sectionTitle);
 
             Table emailTable = new Table(6).useAllAvailableWidth();
             emailTable.setMarginBottom(10);
-            emailTable.setBorder(new SolidBorder(new DeviceRgb(0, 51, 102), 1));
+            emailTable.setBorder(new SolidBorder(new DeviceRgb(139, 69, 19), 2));
 
             // Header
             addStyledTableHeader(emailTable, "Internal/External");
@@ -697,16 +846,18 @@ public class DailyReportPdfService {
         if (report.getPendingActivities() != null && !report.getPendingActivities().isEmpty()) {
             Paragraph sectionTitle = new Paragraph("CBS Pending Activities")
                 .setBold()
-                .setFontSize(13)
+                .setFontSize(14)
                 .setMarginTop(15)
                 .setMarginBottom(10)
-                .setFontColor(new DeviceRgb(0, 51, 102))
-                .setBorderBottom(new SolidBorder(new DeviceRgb(0, 51, 102), 2));
+                .setFontColor(new DeviceRgb(101, 67, 33)) // Dark brown
+                .setBackgroundColor(new DeviceRgb(255, 228, 181)) // Moccasin
+                .setPadding(10)
+                .setBorderBottom(new SolidBorder(new DeviceRgb(139, 69, 19), 3));
             document.add(sectionTitle);
 
             Table pendingTable = new Table(4).useAllAvailableWidth();
             pendingTable.setMarginBottom(10);
-            pendingTable.setBorder(new SolidBorder(new DeviceRgb(0, 51, 102), 1));
+            pendingTable.setBorder(new SolidBorder(new DeviceRgb(139, 69, 19), 2));
 
             addStyledTableHeader(pendingTable, "Title");
             addStyledTableHeader(pendingTable, "Description");
@@ -728,16 +879,18 @@ public class DailyReportPdfService {
         if (report.getChatCommunications() != null && !report.getChatCommunications().isEmpty()) {
             Paragraph sectionTitle = new Paragraph("Chat/Instant Messaging Communications")
                 .setBold()
-                .setFontSize(13)
+                .setFontSize(14)
                 .setMarginTop(15)
                 .setMarginBottom(10)
-                .setFontColor(new DeviceRgb(0, 51, 102))
-                .setBorderBottom(new SolidBorder(new DeviceRgb(0, 51, 102), 2));
+                .setFontColor(new DeviceRgb(101, 67, 33)) // Dark brown
+                .setBackgroundColor(new DeviceRgb(255, 228, 181)) // Moccasin
+                .setPadding(10)
+                .setBorderBottom(new SolidBorder(new DeviceRgb(139, 69, 19), 3));
             document.add(sectionTitle);
 
             Table chatTable = new Table(4).useAllAvailableWidth();
             chatTable.setMarginBottom(10);
-            chatTable.setBorder(new SolidBorder(new DeviceRgb(0, 51, 102), 1));
+            chatTable.setBorder(new SolidBorder(new DeviceRgb(139, 69, 19), 2));
 
             addStyledTableHeader(chatTable, "Platform");
             addStyledTableHeader(chatTable, "Summary");
@@ -759,11 +912,13 @@ public class DailyReportPdfService {
         if (report.getProblemEscalations() != null && !report.getProblemEscalations().isEmpty()) {
             Paragraph sectionTitle = new Paragraph("Problem Escalation")
                 .setBold()
-                .setFontSize(13)
+                .setFontSize(14)
                 .setMarginTop(15)
                 .setMarginBottom(10)
-                .setFontColor(new DeviceRgb(0, 51, 102))
-                .setBorderBottom(new SolidBorder(new DeviceRgb(0, 51, 102), 2));
+                .setFontColor(new DeviceRgb(101, 67, 33)) // Dark brown
+                .setBackgroundColor(new DeviceRgb(255, 228, 181)) // Moccasin
+                .setPadding(10)
+                .setBorderBottom(new SolidBorder(new DeviceRgb(139, 69, 19), 3));
             document.add(sectionTitle);
 
             for (var escalation : report.getProblemEscalations()) {
@@ -789,16 +944,18 @@ public class DailyReportPdfService {
         if (report.getMeetings() != null && !report.getMeetings().isEmpty()) {
             Paragraph sectionTitle = new Paragraph("Meetings (Team Collaboration and External)")
                 .setBold()
-                .setFontSize(13)
+                .setFontSize(14)
                 .setMarginTop(15)
                 .setMarginBottom(10)
-                .setFontColor(new DeviceRgb(0, 51, 102))
-                .setBorderBottom(new SolidBorder(new DeviceRgb(0, 51, 102), 2));
+                .setFontColor(new DeviceRgb(101, 67, 33)) // Dark brown
+                .setBackgroundColor(new DeviceRgb(255, 228, 181)) // Moccasin
+                .setPadding(10)
+                .setBorderBottom(new SolidBorder(new DeviceRgb(139, 69, 19), 3));
             document.add(sectionTitle);
 
             Table meetingTable = new Table(6).useAllAvailableWidth();
             meetingTable.setMarginBottom(10);
-            meetingTable.setBorder(new SolidBorder(new DeviceRgb(0, 51, 102), 1));
+            meetingTable.setBorder(new SolidBorder(new DeviceRgb(139, 69, 19), 2));
 
             addStyledTableHeader(meetingTable, "Type");
             addStyledTableHeader(meetingTable, "Topic");
@@ -824,16 +981,18 @@ public class DailyReportPdfService {
         if (report.getAfpayCardRequests() != null && !report.getAfpayCardRequests().isEmpty()) {
             Paragraph sectionTitle = new Paragraph("AFPay Card")
                 .setBold()
-                .setFontSize(13)
+                .setFontSize(14)
                 .setMarginTop(15)
                 .setMarginBottom(10)
-                .setFontColor(new DeviceRgb(0, 51, 102))
-                .setBorderBottom(new SolidBorder(new DeviceRgb(0, 51, 102), 2));
+                .setFontColor(new DeviceRgb(101, 67, 33)) // Dark brown
+                .setBackgroundColor(new DeviceRgb(255, 228, 181)) // Moccasin
+                .setPadding(10)
+                .setBorderBottom(new SolidBorder(new DeviceRgb(139, 69, 19), 3));
             document.add(sectionTitle);
 
             Table afpayTable = new Table(6).useAllAvailableWidth();
             afpayTable.setMarginBottom(10);
-            afpayTable.setBorder(new SolidBorder(new DeviceRgb(0, 51, 102), 1));
+            afpayTable.setBorder(new SolidBorder(new DeviceRgb(139, 69, 19), 2));
 
             addStyledTableHeader(afpayTable, "Type");
             addStyledTableHeader(afpayTable, "Requested By");
@@ -859,16 +1018,18 @@ public class DailyReportPdfService {
         if (report.getQrmisIssues() != null && !report.getQrmisIssues().isEmpty()) {
             Paragraph sectionTitle = new Paragraph("QRMIS Issues / Tickets")
                 .setBold()
-                .setFontSize(13)
+                .setFontSize(14)
                 .setMarginTop(15)
                 .setMarginBottom(10)
-                .setFontColor(new DeviceRgb(0, 51, 102))
-                .setBorderBottom(new SolidBorder(new DeviceRgb(0, 51, 102), 2));
+                .setFontColor(new DeviceRgb(101, 67, 33)) // Dark brown
+                .setBackgroundColor(new DeviceRgb(255, 228, 181)) // Moccasin
+                .setPadding(10)
+                .setBorderBottom(new SolidBorder(new DeviceRgb(139, 69, 19), 3));
             document.add(sectionTitle);
 
             Table qrmisTable = new Table(7).useAllAvailableWidth();
             qrmisTable.setMarginBottom(10);
-            qrmisTable.setBorder(new SolidBorder(new DeviceRgb(0, 51, 102), 1));
+            qrmisTable.setBorder(new SolidBorder(new DeviceRgb(139, 69, 19), 2));
 
             addStyledTableHeader(qrmisTable, "Problem Type");
             addStyledTableHeader(qrmisTable, "Problem Description");
