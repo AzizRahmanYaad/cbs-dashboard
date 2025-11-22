@@ -582,7 +582,7 @@
               </span>
             </div>
             <div class="report-info">
-              <p><strong>Activities:</strong> {{ report.cbsTeamActivities?.length || 0 }}</p>
+              <p><strong>Activities:</strong> {{ report.cbsTeamActivities.length || 0 }}</p>
               <p><strong>Created:</strong> {{ report.createdAt | date:'short' }}</p>
               <p *ngIf="report.reviewedByUsername"><strong>Reviewed by:</strong> {{ report.reviewedByUsername }}</p>
               <p *ngIf="report.reviewComments"><strong>Review Comments:</strong> {{ report.reviewComments }}</p>
@@ -610,7 +610,7 @@
             </span>
           </div>
           <div class="report-info">
-            <p><strong>Activities:</strong> {{ report.cbsTeamActivities?.length || 0 }}</p>
+            <p><strong>Activities:</strong> {{ report.cbsTeamActivities.length || 0 }}</p>
             <p><strong>Created:</strong> {{ report.createdAt | date:'short' }}</p>
             <p *ngIf="report.reviewedByUsername"><strong>Reviewed by:</strong> {{ report.reviewedByUsername }}</p>
             <p *ngIf="report.reviewComments"><strong>Review Comments:</strong> {{ report.reviewComments }}</p>
@@ -714,7 +714,7 @@
               </div>
               <div class="report-info">
                 <p><strong>Business Date:</strong> {{ report.businessDate | date:'mediumDate' }}</p>
-                <p><strong>Activities:</strong> {{ report.cbsTeamActivities?.length || 0 }}</p>
+                <p><strong>Activities:</strong> {{ report.cbsTeamActivities.length || 0 }}</p>
                 <p *ngIf="report.reviewedByUsername"><strong>Reviewed by:</strong> {{ report.reviewedByUsername }}</p>
                 <p *ngIf="report.reviewComments"><strong>Comments:</strong> {{ report.reviewComments }}</p>
               </div>
