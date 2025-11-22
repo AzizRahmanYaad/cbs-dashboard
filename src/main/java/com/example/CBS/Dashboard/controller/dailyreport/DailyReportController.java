@@ -163,12 +163,24 @@ public class DailyReportController {
     @GetMapping("/download/combined")
     @PreAuthorize("hasAnyRole('ROLE_DAILY_REPORT_SUPERVISOR', 'ROLE_ADMIN')")
     public ResponseEntity<Resource> downloadCombinedReport(
-            @RequestParam(required = true) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date) throws IOException {
+            @RequestParam(required = true) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date,
+            @RequestParam(required = false) String cbsEndTime,
+            @RequestParam(required = false) String cbsStartTimeNextDay) throws IOException {
         if (date == null) {
             return ResponseEntity.badRequest().build();
         }
         
-        byte[] pdfBytes = dailyReportService.generateCombinedReportPdf(date);
+        java.time.LocalTime endTime = null;
+        java.time.LocalTime startTimeNextDay = null;
+        
+        if (cbsEndTime != null && !cbsEndTime.isEmpty()) {
+            endTime = java.time.LocalTime.parse(cbsEndTime);
+        }
+        if (cbsStartTimeNextDay != null && !cbsStartTimeNextDay.isEmpty()) {
+            startTimeNextDay = java.time.LocalTime.parse(cbsStartTimeNextDay);
+        }
+        
+        byte[] pdfBytes = dailyReportService.generateCombinedReportPdf(date, endTime, startTimeNextDay);
         ByteArrayResource resource = new ByteArrayResource(pdfBytes);
         
         HttpHeaders headers = new HttpHeaders();

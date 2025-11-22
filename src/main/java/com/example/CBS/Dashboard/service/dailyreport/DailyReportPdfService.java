@@ -65,7 +65,7 @@ public class DailyReportPdfService {
         return baos.toByteArray();
     }
 
-    public byte[] generateCombinedReportPdf(List<DailyReport> reports) throws IOException {
+    public byte[] generateCombinedReportPdf(List<DailyReport> reports, java.time.LocalTime cbsEndTime, java.time.LocalTime cbsStartTimeNextDay) throws IOException {
         if (reports == null || reports.isEmpty()) {
             throw new IllegalArgumentException("No reports provided");
         }
@@ -80,8 +80,8 @@ public class DailyReportPdfService {
         // All reports should be for the same date (enforced by service)
         java.time.LocalDate businessDate = reports.get(0).getBusinessDate();
         
-        // Add main header once
-        addCombinedHeader(document, reports.get(0), businessDate);
+        // Add main header once with CBS time tracking
+        addCombinedHeader(document, reports.get(0), businessDate, cbsEndTime, cbsStartTimeNextDay);
         
         // Merge all activities from all employees for this single date
         addCombinedReportContent(document, reports);
@@ -90,7 +90,8 @@ public class DailyReportPdfService {
         return baos.toByteArray();
     }
     
-    private void addCombinedHeader(Document document, DailyReport sampleReport, java.time.LocalDate businessDate) {
+    private void addCombinedHeader(Document document, DailyReport sampleReport, java.time.LocalDate businessDate, 
+                                   java.time.LocalTime cbsEndTime, java.time.LocalTime cbsStartTimeNextDay) {
         // Main Title with brown/gold accent
         Paragraph mainTitle = new Paragraph("Da Afghanistan Bank")
             .setBold()
@@ -127,11 +128,12 @@ public class DailyReportPdfService {
         if (sampleReport.getReportingLine() != null && !sampleReport.getReportingLine().isEmpty()) {
             addStyledInfoRow(infoTable, "Reporting Line:", sampleReport.getReportingLine());
         }
-        if (sampleReport.getCbsEndTime() != null) {
-            addStyledInfoRow(infoTable, "CBS End Time:", sampleReport.getCbsEndTime().toString());
+        // Add CBS Time Tracking from Controller input
+        if (cbsEndTime != null) {
+            addStyledInfoRow(infoTable, "CBS End Time (Current Business Day):", cbsEndTime.toString());
         }
-        if (sampleReport.getCbsStartTimeNextDay() != null) {
-            addStyledInfoRow(infoTable, "CBS Start Time (Next Day):", sampleReport.getCbsStartTimeNextDay().toString());
+        if (cbsStartTimeNextDay != null) {
+            addStyledInfoRow(infoTable, "CBS Start Time (Next Business Day):", cbsStartTimeNextDay.toString());
         }
 
         document.add(infoTable);

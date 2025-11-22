@@ -491,7 +491,7 @@ public class DailyReportService {
     }
     
     @Transactional(readOnly = true)
-    public byte[] generateCombinedReportPdf(LocalDate specificDate) throws IOException {
+    public byte[] generateCombinedReportPdf(LocalDate specificDate, LocalTime cbsEndTime, LocalTime cbsStartTimeNextDay) throws IOException {
         if (specificDate == null) {
             throw new IllegalArgumentException("Date is required for combined report. Each day must be downloaded separately.");
         }
@@ -518,7 +518,7 @@ public class DailyReportService {
             if (report.getReviewedBy() != null) report.getReviewedBy().getUsername();
         });
         
-        return pdfService.generateCombinedReportPdf(reports);
+        return pdfService.generateCombinedReportPdf(reports, cbsEndTime, cbsStartTimeNextDay);
     }
     
     private boolean hasSupervisorAccess(Long userId) {

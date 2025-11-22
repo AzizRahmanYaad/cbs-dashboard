@@ -78,6 +78,9 @@ export class DailyReportComponent implements OnInit {
   ngOnInit() {
     this.checkPermissions();
     this.initializeForm();
+    if (this.isController) {
+      this.initializeCombinedReportForm();
+    }
     this.loadMyReports();
     if (this.canViewDashboard) {
       this.loadDashboard();
@@ -100,13 +103,24 @@ export class DailyReportComponent implements OnInit {
     this.reportForm = this.fb.group({
       businessDate: [this.today, Validators.required],
       dayOfWeek: [dayName, Validators.required],
-      cbsEndTime: ['', Validators.required],
-      cbsStartTimeNextDay: ['', Validators.required],
       reportingLine: [''],
       unifiedActivities: this.fb.array([], Validators.required) // Simplified unified activities
     });
     
     this.selectedDay = dayName;
+  }
+  
+  // Controller combined report form
+  combinedReportForm!: FormGroup;
+  cbsEndTime = '';
+  cbsStartTimeNextDay = '';
+  
+  initializeCombinedReportForm() {
+    this.combinedReportForm = this.fb.group({
+      date: [this.selectedDateForDownload || this.today, Validators.required],
+      cbsEndTime: ['', Validators.required],
+      cbsStartTimeNextDay: ['', Validators.required]
+    });
   }
   
   // Unified Activities
@@ -142,8 +156,6 @@ export class DailyReportComponent implements OnInit {
   convertUnifiedActivitiesToBackendFormat(unifiedActivities: UnifiedActivity[]): CreateDailyReportRequest {
     const request: CreateDailyReportRequest = {
       businessDate: this.reportForm.get('businessDate')?.value,
-      cbsEndTime: this.reportForm.get('cbsEndTime')?.value,
-      cbsStartTimeNextDay: this.reportForm.get('cbsStartTimeNextDay')?.value,
       reportingLine: this.reportForm.get('reportingLine')?.value,
       chatCommunications: [],
       emailCommunications: [],
@@ -281,8 +293,6 @@ export class DailyReportComponent implements OnInit {
     this.reportForm.patchValue({
       businessDate: report.businessDate,
       dayOfWeek: dayName,
-      cbsEndTime: report.cbsEndTime,
-      cbsStartTimeNextDay: report.cbsStartTimeNextDay,
       reportingLine: report.reportingLine
     });
     
@@ -593,7 +603,7 @@ export class DailyReportComponent implements OnInit {
     }
   }
   
-  async downloadCombinedReport(date?: string) {
+  async downloadCombinedReport(date?: string, cbsEndTime?: string, cbsStartTimeNextDay?: string) {
     const downloadDate = date || this.selectedDateForDownload;
     
     if (!downloadDate) {
@@ -601,10 +611,15 @@ export class DailyReportComponent implements OnInit {
       return;
     }
     
+    if (!cbsEndTime || !cbsStartTimeNextDay) {
+      this.errorMessage = 'Please provide CBS End Time and CBS Start Time (Next Day)';
+      return;
+    }
+    
     this.downloading = true;
     this.errorMessage = '';
     try {
-      const blob = await this.reportService.downloadCombinedReport(downloadDate).toPromise();
+      const blob = await this.reportService.downloadCombinedReport(downloadDate, cbsEndTime, cbsStartTimeNextDay).toPromise();
       if (blob) {
         const url = window.URL.createObjectURL(blob);
         const link = document.createElement('a');

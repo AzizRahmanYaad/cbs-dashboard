@@ -117,13 +117,20 @@ export class DailyReportService {
     });
   }
 
-  downloadCombinedReport(date: string): Observable<Blob> {
+  downloadCombinedReport(date: string, cbsEndTime?: string, cbsStartTimeNextDay?: string): Observable<Blob> {
     if (!date) {
       throw new Error('Date is required for combined report download');
     }
     
     let params = new HttpParams();
     params = params.set('date', date);
+    
+    if (cbsEndTime) {
+      params = params.set('cbsEndTime', cbsEndTime);
+    }
+    if (cbsStartTimeNextDay) {
+      params = params.set('cbsStartTimeNextDay', cbsStartTimeNextDay);
+    }
 
     return this.http.get(`${this.baseUrl}/download/combined`, {
       params,
