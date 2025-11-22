@@ -670,17 +670,19 @@
       
       <div class="download-section">
         <h3>Download Combined Team Report</h3>
+        <p class="info-text">Each day must be downloaded separately. Please select a specific date.</p>
         <div class="form-group">
-          <label>Select Date (optional)</label>
+          <label>Select Date *</label>
           <input 
             type="date" 
             [(ngModel)]="selectedDateForDownload"
-            class="form-input">
+            class="form-input"
+            required>
         </div>
         <button 
           class="btn-primary" 
-          (click)="downloadCombinedReport(selectedDateForDownload)"
-          [disabled]="downloading">
+          (click)="downloadCombinedReport()"
+          [disabled]="downloading || !selectedDateForDownload">
           {{ downloading ? 'Downloading...' : 'Download Combined Report' }}
         </button>
       </div>
@@ -733,10 +735,19 @@
       
       <div class="download-section">
         <h3>Download Combined Team Report</h3>
+        <p class="info-text">Each day must be downloaded separately. Please select a specific date.</p>
+        <div class="form-group">
+          <label>Select Date *</label>
+          <input 
+            type="date" 
+            [(ngModel)]="selectedDateForDownload"
+            class="form-input"
+            required>
+        </div>
         <button 
           class="btn-primary" 
-          (click)="downloadCombinedReport(selectedDateForDownload)"
-          [disabled]="downloading">
+          (click)="downloadCombinedReport()"
+          [disabled]="downloading || !selectedDateForDownload">
           {{ downloading ? 'Downloading...' : 'Download Combined Report' }}
         </button>
       </div>

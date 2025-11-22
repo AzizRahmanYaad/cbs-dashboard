@@ -77,17 +77,14 @@ public class DailyReportPdfService {
 
         document.setMargins(40, 40, 40, 40);
 
-        // Group by date
-        java.util.Map<java.time.LocalDate, List<DailyReport>> reportsByDate = reports.stream()
-            .collect(java.util.stream.Collectors.groupingBy(DailyReport::getBusinessDate));
-
-        for (java.util.Map.Entry<java.time.LocalDate, List<DailyReport>> entry : reportsByDate.entrySet()) {
-            // Add main header once per date
-            addCombinedHeader(document, entry.getValue().get(0), entry.getKey());
-            
-            // Merge all activities from all employees
-            addCombinedReportContent(document, entry.getValue());
-        }
+        // All reports should be for the same date (enforced by service)
+        java.time.LocalDate businessDate = reports.get(0).getBusinessDate();
+        
+        // Add main header once
+        addCombinedHeader(document, reports.get(0), businessDate);
+        
+        // Merge all activities from all employees for this single date
+        addCombinedReportContent(document, reports);
 
         document.close();
         return baos.toByteArray();

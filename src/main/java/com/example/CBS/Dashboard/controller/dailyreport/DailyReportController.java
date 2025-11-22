@@ -163,17 +163,19 @@ public class DailyReportController {
     @GetMapping("/download/combined")
     @PreAuthorize("hasAnyRole('ROLE_DAILY_REPORT_SUPERVISOR', 'ROLE_ADMIN')")
     public ResponseEntity<Resource> downloadCombinedReport(
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate,
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate specificDate) throws IOException {
-        byte[] pdfBytes = dailyReportService.generateCombinedReportPdf(startDate, endDate, specificDate);
+            @RequestParam(required = true) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date) throws IOException {
+        if (date == null) {
+            return ResponseEntity.badRequest().build();
+        }
+        
+        byte[] pdfBytes = dailyReportService.generateCombinedReportPdf(date);
         ByteArrayResource resource = new ByteArrayResource(pdfBytes);
         
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_PDF);
-        String filename = specificDate != null ? 
-            "combined_report_" + specificDate + ".pdf" : 
-            "combined_report_" + (startDate != null ? startDate : "all") + ".pdf";
+        // Format date as YYYY-MM-DD for filename
+        String dateStr = date.format(java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd"));
+        String filename = "CBS_Daily_Report_" + dateStr + ".pdf";
         headers.setContentDispositionFormData("attachment", filename);
         
         return ResponseEntity.ok()

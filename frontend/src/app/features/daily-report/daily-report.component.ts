@@ -593,28 +593,33 @@ export class DailyReportComponent implements OnInit {
   }
   
   async downloadCombinedReport(date?: string) {
+    const downloadDate = date || this.selectedDateForDownload;
+    
+    if (!downloadDate) {
+      this.errorMessage = 'Please select a date to download the combined report';
+      return;
+    }
+    
     this.downloading = true;
+    this.errorMessage = '';
     try {
-      const blob = await this.reportService.downloadCombinedReport(
-        undefined,
-        undefined,
-        date || this.selectedDateForDownload
-      ).toPromise();
+      const blob = await this.reportService.downloadCombinedReport(downloadDate).toPromise();
       if (blob) {
         const url = window.URL.createObjectURL(blob);
         const link = document.createElement('a');
         link.href = url;
-        const filename = date 
-          ? `combined_report_${date}.pdf`
-          : `combined_report_${new Date().toISOString().split('T')[0]}.pdf`;
+        // Format date for filename (YYYY-MM-DD)
+        const dateStr = downloadDate.split('T')[0]; // Remove time if present
+        const filename = `CBS_Daily_Report_${dateStr}.pdf`;
         link.download = filename;
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
         window.URL.revokeObjectURL(url);
+        this.successMessage = `Report downloaded successfully for ${dateStr}`;
       }
     } catch (error: any) {
-      this.errorMessage = 'Failed to download combined report';
+      this.errorMessage = error.error?.message || 'Failed to download combined report. Please ensure a date is selected and reports exist for that date.';
     } finally {
       this.downloading = false;
     }

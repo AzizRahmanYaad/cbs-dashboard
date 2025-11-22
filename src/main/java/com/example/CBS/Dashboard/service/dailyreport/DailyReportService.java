@@ -491,19 +491,15 @@ public class DailyReportService {
     }
     
     @Transactional(readOnly = true)
-    public byte[] generateCombinedReportPdf(LocalDate startDate, LocalDate endDate, LocalDate specificDate) throws IOException {
-        List<DailyReport> reports;
-        
-        if (specificDate != null) {
-            reports = dailyReportRepository.findByBusinessDate(specificDate);
-        } else if (startDate != null && endDate != null) {
-            reports = dailyReportRepository.findByBusinessDateBetween(startDate, endDate);
-        } else {
-            reports = dailyReportRepository.findAll();
+    public byte[] generateCombinedReportPdf(LocalDate specificDate) throws IOException {
+        if (specificDate == null) {
+            throw new IllegalArgumentException("Date is required for combined report. Each day must be downloaded separately.");
         }
         
+        List<DailyReport> reports = dailyReportRepository.findByBusinessDate(specificDate);
+        
         if (reports.isEmpty()) {
-            throw new IllegalArgumentException("No reports found for the specified date range.");
+            throw new IllegalArgumentException("No reports found for the specified date: " + specificDate);
         }
         
         // Initialize collections to avoid lazy loading issues
