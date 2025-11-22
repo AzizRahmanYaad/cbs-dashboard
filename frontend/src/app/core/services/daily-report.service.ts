@@ -112,7 +112,8 @@ export class DailyReportService {
 
     return this.http.get(`${this.baseUrl}/download/employee/${employeeId}`, {
       params,
-      responseType: 'blob'
+      responseType: 'blob',
+      headers: { 'Accept': 'application/pdf' }
     });
   }
 
@@ -134,7 +135,8 @@ export class DailyReportService {
 
     return this.http.get(`${this.baseUrl}/download/combined`, {
       params,
-      responseType: 'blob'
+      responseType: 'blob',
+      headers: { 'Accept': 'application/pdf' }
     });
   }
 

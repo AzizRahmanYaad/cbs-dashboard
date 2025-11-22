@@ -435,6 +435,120 @@ textarea.form-input {
   font-weight: 600;
 }
 
+// Modal Styles
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 2rem;
+}
+
+.modal-content {
+  background: white;
+  border-radius: 8px;
+  max-width: 900px;
+  width: 100%;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.5rem;
+  border-bottom: 2px solid #e5e7eb;
+
+  h2 {
+    margin: 0;
+    color: #1f2937;
+    font-size: 1.5rem;
+  }
+}
+
+.modal-close {
+  background: none;
+  border: none;
+  font-size: 2rem;
+  color: #6b7280;
+  cursor: pointer;
+  padding: 0;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  transition: all 0.2s;
+
+  &:hover {
+    background: #f3f4f6;
+    color: #1f2937;
+  }
+}
+
+.modal-body {
+  padding: 1.5rem;
+}
+
+.report-view-section {
+  margin-bottom: 2rem;
+  padding-bottom: 1.5rem;
+  border-bottom: 1px solid #e5e7eb;
+
+  &:last-child {
+    border-bottom: none;
+  }
+
+  h3 {
+    margin-top: 0;
+    margin-bottom: 1rem;
+    color: #7c3aed;
+    font-size: 1.25rem;
+    font-weight: 600;
+  }
+
+  p {
+    margin: 0.5rem 0;
+    color: #374151;
+    line-height: 1.6;
+  }
+}
+
+.activity-item {
+  padding: 1rem;
+  margin-bottom: 1rem;
+  background: #f9fafb;
+  border-radius: 6px;
+  border-left: 3px solid #7c3aed;
+
+  p {
+    margin: 0.25rem 0;
+  }
+}
+
+.activity-detail {
+  margin-left: 1.5rem;
+  color: #6b7280;
+  font-size: 0.9rem;
+}
+
+.modal-footer {
+  padding: 1.5rem;
+  border-top: 2px solid #e5e7eb;
+  display: flex;
+  justify-content: flex-end;
+  gap: 1rem;
+}
+
 // Status badge colors
 .status-badge {
   &.bg-gray-100 {

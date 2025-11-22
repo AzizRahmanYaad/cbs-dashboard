@@ -746,5 +746,74 @@
       <p>Dashboard access requires Controller or CFO role.</p>
     </div>
   </div>
+
+  <!-- View Report Modal -->
+  <div class="modal-overlay" *ngIf="showViewModal" (click)="closeViewModal()">
+    <div class="modal-content" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h2>Daily Report Details</h2>
+        <button class="modal-close" (click)="closeViewModal()">×</button>
+      </div>
+      <div class="modal-body" *ngIf="viewReportModal">
+        <div class="report-view-section">
+          <h3>Report Information</h3>
+          <p><strong>Business Date:</strong> {{ viewReportModal.businessDate | date:'mediumDate' }}</p>
+          <p><strong>Employee:</strong> {{ viewReportModal.employeeUsername }}</p>
+          <p><strong>Status:</strong> <span [class]="'status-badge ' + getStatusColor(viewReportModal.status)">{{ viewReportModal.status }}</span></p>
+          <p *ngIf="viewReportModal.cbsEndTime"><strong>CBS End Time:</strong> {{ viewReportModal.cbsEndTime }}</p>
+          <p *ngIf="viewReportModal.cbsStartTimeNextDay"><strong>CBS Start Time (Next Day):</strong> {{ viewReportModal.cbsStartTimeNextDay }}</p>
+          <p *ngIf="viewReportModal.reportingLine"><strong>Reporting Line:</strong> {{ viewReportModal.reportingLine }}</p>
+        </div>
+
+        <div class="report-view-section" *ngIf="viewReportModal.cbsTeamActivities && viewReportModal.cbsTeamActivities.length > 0">
+          <h3>CBS Team Activities ({{ viewReportModal.cbsTeamActivities.length }})</h3>
+          <div *ngFor="let activity of viewReportModal.cbsTeamActivities; let i = index" class="activity-item">
+            <p><strong>{{ i + 1 }}.</strong> {{ activity.description }}</p>
+            <p *ngIf="activity.activityType" class="activity-detail">Type: {{ activity.activityType }}</p>
+            <p *ngIf="activity.actionTaken" class="activity-detail">Action Taken: {{ activity.actionTaken }}</p>
+            <p *ngIf="activity.finalStatus" class="activity-detail">Final Status: {{ activity.finalStatus }}</p>
+          </div>
+        </div>
+
+        <div class="report-view-section" *ngIf="viewReportModal.chatCommunications && viewReportModal.chatCommunications.length > 0">
+          <h3>Chat Communications ({{ viewReportModal.chatCommunications.length }})</h3>
+          <div *ngFor="let comm of viewReportModal.chatCommunications" class="activity-item">
+            <p><strong>Platform:</strong> {{ comm.platform }}</p>
+            <p><strong>Summary:</strong> {{ comm.summary }}</p>
+            <p *ngIf="comm.actionTaken"><strong>Action Taken:</strong> {{ comm.actionTaken }}</p>
+          </div>
+        </div>
+
+        <div class="report-view-section" *ngIf="viewReportModal.emailCommunications && viewReportModal.emailCommunications.length > 0">
+          <h3>Email Communications ({{ viewReportModal.emailCommunications.length }})</h3>
+          <div *ngFor="let email of viewReportModal.emailCommunications" class="activity-item">
+            <p><strong>Type:</strong> {{ email.isInternal ? 'Internal' : 'External' }}</p>
+            <p><strong>From:</strong> {{ email.sender }} <strong>To:</strong> {{ email.receiver }}</p>
+            <p><strong>Subject:</strong> {{ email.subject }}</p>
+            <p><strong>Summary:</strong> {{ email.summary }}</p>
+          </div>
+        </div>
+
+        <div class="report-view-section" *ngIf="viewReportModal.pendingActivities && viewReportModal.pendingActivities.length > 0">
+          <h3>Pending Activities ({{ viewReportModal.pendingActivities.length }})</h3>
+          <div *ngFor="let pending of viewReportModal.pendingActivities" class="activity-item">
+            <p><strong>{{ pending.title }}</strong> - Status: {{ pending.status }}</p>
+            <p>{{ pending.description }}</p>
+            <p *ngIf="pending.amount">Amount: {{ pending.amount }}</p>
+          </div>
+        </div>
+
+        <div class="report-view-section" *ngIf="viewReportModal.reviewedByUsername">
+          <h3>Review Information</h3>
+          <p><strong>Reviewed By:</strong> {{ viewReportModal.reviewedByUsername }}</p>
+          <p *ngIf="viewReportModal.reviewedAt"><strong>Reviewed At:</strong> {{ viewReportModal.reviewedAt | date:'short' }}</p>
+          <p *ngIf="viewReportModal.reviewComments"><strong>Comments:</strong> {{ viewReportModal.reviewComments }}</p>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-secondary" (click)="closeViewModal()">Close</button>
+      </div>
+    </div>
+  </div>
 </div>
 

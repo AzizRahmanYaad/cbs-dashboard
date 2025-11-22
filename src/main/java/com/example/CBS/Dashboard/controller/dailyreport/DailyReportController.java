@@ -11,6 +11,8 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.core.io.ByteArrayResource;
+import org.springframework.core.io.Resource;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -19,6 +21,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
+import java.io.IOException;
 import java.time.LocalDate;
 import java.util.List;
 
@@ -141,39 +144,41 @@ public class DailyReportController {
     
     @GetMapping("/download/employee/{employeeId}")
     @PreAuthorize("hasAnyRole('ROLE_DAILY_REPORT_SUPERVISOR', 'ROLE_ADMIN')")
-    public ResponseEntity<String> downloadEmployeeReport(
+    public ResponseEntity<Resource> downloadEmployeeReport(
             @PathVariable Long employeeId,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate) {
-        String reportContent = dailyReportService.generateEmployeeReport(employeeId, startDate, endDate);
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate) throws IOException {
+        byte[] pdfBytes = dailyReportService.generateEmployeeReportPdf(employeeId, startDate, endDate);
+        ByteArrayResource resource = new ByteArrayResource(pdfBytes);
         
         HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.TEXT_PLAIN);
-        headers.setContentDispositionFormData("attachment", "employee_report_" + employeeId + ".txt");
+        headers.setContentType(MediaType.APPLICATION_PDF);
+        headers.setContentDispositionFormData("attachment", "employee_report_" + employeeId + ".pdf");
         
         return ResponseEntity.ok()
                 .headers(headers)
-                .body(reportContent);
+                .body(resource);
     }
     
     @GetMapping("/download/combined")
     @PreAuthorize("hasAnyRole('ROLE_DAILY_REPORT_SUPERVISOR', 'ROLE_ADMIN')")
-    public ResponseEntity<String> downloadCombinedReport(
+    public ResponseEntity<Resource> downloadCombinedReport(
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate,
-            @RequestParam(required = false) LocalDate specificDate) {
-        String reportContent = dailyReportService.generateCombinedReport(startDate, endDate, specificDate);
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate specificDate) throws IOException {
+        byte[] pdfBytes = dailyReportService.generateCombinedReportPdf(startDate, endDate, specificDate);
+        ByteArrayResource resource = new ByteArrayResource(pdfBytes);
         
         HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.TEXT_PLAIN);
+        headers.setContentType(MediaType.APPLICATION_PDF);
         String filename = specificDate != null ? 
-            "combined_report_" + specificDate + ".txt" : 
-            "combined_report_" + (startDate != null ? startDate : "all") + ".txt";
+            "combined_report_" + specificDate + ".pdf" : 
+            "combined_report_" + (startDate != null ? startDate : "all") + ".pdf";
         headers.setContentDispositionFormData("attachment", filename);
         
         return ResponseEntity.ok()
                 .headers(headers)
-                .body(reportContent);
+                .body(resource);
     }
     
     @GetMapping("/by-date/{date}")

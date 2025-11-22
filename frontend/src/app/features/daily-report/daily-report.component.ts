@@ -39,6 +39,8 @@ export class DailyReportComponent implements OnInit {
   reportForm!: FormGroup;
   currentReport: DailyReport | null = null;
   myReports: DailyReport[] = [];
+  viewReportModal: DailyReport | null = null;
+  showViewModal = false;
   
   loading = false;
   saving = false;
@@ -555,13 +557,18 @@ export class DailyReportComponent implements OnInit {
     this.loading = true;
     try {
       const fullReport = await this.reportService.getReport(report.id!).toPromise();
-      this.currentReport = fullReport!;
-      // Could open a view modal here
+      this.viewReportModal = fullReport!;
+      this.showViewModal = true;
     } catch (error: any) {
       this.errorMessage = 'Failed to load report';
     } finally {
       this.loading = false;
     }
+  }
+  
+  closeViewModal() {
+    this.showViewModal = false;
+    this.viewReportModal = null;
   }
   
   async downloadEmployeeReport(employeeId: number, employeeName: string) {
@@ -572,7 +579,7 @@ export class DailyReportComponent implements OnInit {
         const url = window.URL.createObjectURL(blob);
         const link = document.createElement('a');
         link.href = url;
-        link.download = `daily_report_${employeeName}_${new Date().toISOString().split('T')[0]}.txt`;
+        link.download = `daily_report_${employeeName}_${new Date().toISOString().split('T')[0]}.pdf`;
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
@@ -598,8 +605,8 @@ export class DailyReportComponent implements OnInit {
         const link = document.createElement('a');
         link.href = url;
         const filename = date 
-          ? `combined_report_${date}.txt`
-          : `combined_report_${new Date().toISOString().split('T')[0]}.txt`;
+          ? `combined_report_${date}.pdf`
+          : `combined_report_${new Date().toISOString().split('T')[0]}.pdf`;
         link.download = filename;
         document.body.appendChild(link);
         link.click();
