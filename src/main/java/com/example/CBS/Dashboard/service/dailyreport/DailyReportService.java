@@ -147,8 +147,13 @@ public class DailyReportService {
             .orElseThrow(() -> new EntityNotFoundException("Report not found"));
         
         // Check access: owner or supervisor
+        // Individual Report Access users can view their own reports
+        if (report.getEmployee() == null) {
+            throw new RuntimeException("Report has no associated employee");
+        }
+        
         if (!report.getEmployee().getId().equals(userId) && !hasSupervisorAccess(userId)) {
-            throw new SecurityException("You don't have permission to view this report");
+            throw new RuntimeException("You don't have permission to view this report");
         }
         
         return dailyReportMapper.toDto(report);
@@ -492,8 +497,16 @@ public class DailyReportService {
     
     @Transactional(readOnly = true)
     public DailyReport getReportEntity(Long reportId) {
-        return dailyReportRepository.findById(reportId)
+        DailyReport report = dailyReportRepository.findById(reportId)
             .orElseThrow(() -> new EntityNotFoundException("Report not found with id: " + reportId));
+        
+        // Ensure employee is loaded
+        if (report.getEmployee() != null) {
+            report.getEmployee().getId();
+            report.getEmployee().getUsername();
+        }
+        
+        return report;
     }
     
     @Transactional(readOnly = true)
@@ -501,8 +514,15 @@ public class DailyReportService {
         DailyReport report = dailyReportRepository.findById(reportId)
             .orElseThrow(() -> new EntityNotFoundException("Report not found with id: " + reportId));
         
-        // Ownership is verified in controller, but double-check here for security
-        if (report.getEmployee() == null || !report.getEmployee().getId().equals(userId)) {
+        // Verify ownership - Individual Report Access users can only download their own reports
+        // Ownership is already verified in controller, but double-check here for security
+        if (report.getEmployee() == null) {
+            throw new RuntimeException("Report has no associated employee");
+        }
+        
+        Long reportEmployeeId = report.getEmployee().getId();
+        if (!reportEmployeeId.equals(userId)) {
+            System.out.println("PDF Generation - Permission denied. Report employee ID: " + reportEmployeeId + ", User ID: " + userId);
             throw new RuntimeException("You can only download your own reports");
         }
         

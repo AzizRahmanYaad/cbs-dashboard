@@ -170,9 +170,20 @@ public class DailyReportController {
             // Get report first to verify ownership and get filename info
             DailyReport report = dailyReportService.getReportEntity(reportId);
             
-            // Verify ownership
-            if (report.getEmployee() == null || !report.getEmployee().getId().equals(userId)) {
-                return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+            // Verify ownership - Individual Report Access users can only download their own reports
+            if (report.getEmployee() == null) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .header("X-Error-Message", "Report has no associated employee")
+                    .build();
+            }
+            
+            Long reportEmployeeId = report.getEmployee().getId();
+            System.out.println("Download ownership check - Report Employee ID: " + reportEmployeeId + ", Current User ID: " + userId + ", Match: " + reportEmployeeId.equals(userId));
+            
+            if (!reportEmployeeId.equals(userId)) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .header("X-Error-Message", "You can only download your own reports. Report belongs to employee ID: " + reportEmployeeId + ", but you are user ID: " + userId)
+                    .build();
             }
             
             // Generate PDF
@@ -194,14 +205,22 @@ public class DailyReportController {
                     .headers(headers)
                     .body(resource);
         } catch (jakarta.persistence.EntityNotFoundException e) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                .header("X-Error-Message", "Report not found")
+                .build();
         } catch (RuntimeException e) {
             if (e.getMessage() != null && e.getMessage().contains("own reports")) {
-                return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+                return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .header("X-Error-Message", "You can only download your own reports")
+                    .build();
             }
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .header("X-Error-Message", "Failed to generate PDF: " + e.getMessage())
+                .build();
         } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .header("X-Error-Message", "Internal server error")
+                .build();
         }
     }
     

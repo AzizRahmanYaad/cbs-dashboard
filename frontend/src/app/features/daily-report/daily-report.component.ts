@@ -600,15 +600,19 @@ export class DailyReportComponent implements OnInit {
         status: error.status,
         statusText: error.statusText,
         message: error.message,
-        error: error.error
+        error: error.error,
+        headers: error.headers
       });
       
+      // Check for error message in response headers
+      const errorHeader = error.headers?.get('X-Error-Message');
+      
       if (error.status === 404) {
-        this.errorMessage = 'Report not found. Please refresh and try again.';
+        this.errorMessage = errorHeader || 'Report not found. Please refresh and try again.';
       } else if (error.status === 403) {
-        this.errorMessage = 'You do not have permission to download this report.';
+        this.errorMessage = errorHeader || 'You can only download your own reports. Please ensure you are logged in with the correct account.';
       } else if (error.status === 500) {
-        this.errorMessage = 'Server error occurred. Please contact support.';
+        this.errorMessage = errorHeader || 'Server error occurred. Please contact support.';
       } else if (error.error instanceof Blob) {
         // Try to read error message from blob
         const reader = new FileReader();
@@ -618,16 +622,18 @@ export class DailyReportComponent implements OnInit {
             const errorJson = JSON.parse(errorText);
             this.errorMessage = errorJson.message || 'Failed to download report.';
           } catch {
-            this.errorMessage = 'Failed to download report. Please try again.';
+            this.errorMessage = errorHeader || 'Failed to download report. Please try again.';
           }
+          this.downloading = false;
         };
         reader.onerror = () => {
-          this.errorMessage = 'Failed to download report. Please try again.';
+          this.errorMessage = errorHeader || 'Failed to download report. Please try again.';
+          this.downloading = false;
         };
         reader.readAsText(error.error);
         return; // Don't set downloading to false yet, wait for reader
       } else {
-        this.errorMessage = error.error?.message || error.message || 'Failed to download report. Please try again.';
+        this.errorMessage = errorHeader || error.error?.message || error.message || 'Failed to download report. Please try again.';
       }
     } finally {
       this.downloading = false;

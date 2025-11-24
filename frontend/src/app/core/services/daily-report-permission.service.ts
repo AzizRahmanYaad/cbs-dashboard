@@ -37,15 +37,16 @@ export class DailyReportPermissionService {
       return false;
     }
 
+    // Primary role for daily report module
     return this.hasAnyRole([
+      this.ROLES.INDIVIDUAL_REPORT_ACCESS,
       this.ROLES.EMPLOYEE,
       this.ROLES.SUPERVISOR,
       this.ROLES.DIRECTOR,
       this.ROLES.MANAGER,
       this.ROLES.TEAM_LEAD,
       this.ROLES.ADMIN,
-      this.ROLES.DAILY_REPORT,
-      this.ROLES.INDIVIDUAL_REPORT_ACCESS
+      this.ROLES.DAILY_REPORT
     ]);
   }
 
@@ -53,15 +54,16 @@ export class DailyReportPermissionService {
    * Check if user can create and submit their own daily reports
    */
   canCreateReport(): boolean {
+    // Individual Report Access role has full access to create reports
     return this.hasAnyRole([
+      this.ROLES.INDIVIDUAL_REPORT_ACCESS,
       this.ROLES.EMPLOYEE,
       this.ROLES.SUPERVISOR,
       this.ROLES.DIRECTOR,
       this.ROLES.MANAGER,
       this.ROLES.TEAM_LEAD,
       this.ROLES.ADMIN,
-      this.ROLES.DAILY_REPORT,
-      this.ROLES.INDIVIDUAL_REPORT_ACCESS
+      this.ROLES.DAILY_REPORT
     ]);
   }
 
@@ -69,15 +71,16 @@ export class DailyReportPermissionService {
    * Check if user can edit their own reports (before approval)
    */
   canEditOwnReport(): boolean {
+    // Individual Report Access role has full access to edit own reports
     return this.hasAnyRole([
+      this.ROLES.INDIVIDUAL_REPORT_ACCESS,
       this.ROLES.EMPLOYEE,
       this.ROLES.SUPERVISOR,
       this.ROLES.DIRECTOR,
       this.ROLES.MANAGER,
       this.ROLES.TEAM_LEAD,
       this.ROLES.ADMIN,
-      this.ROLES.DAILY_REPORT,
-      this.ROLES.INDIVIDUAL_REPORT_ACCESS
+      this.ROLES.DAILY_REPORT
     ]);
   }
   
@@ -90,17 +93,18 @@ export class DailyReportPermissionService {
   
   /**
    * Check if user can download their own reports
+   * Individual Report Access role has full download access
    */
   canDownloadOwnReport(): boolean {
     return this.hasAnyRole([
+      this.ROLES.INDIVIDUAL_REPORT_ACCESS,
       this.ROLES.EMPLOYEE,
       this.ROLES.SUPERVISOR,
       this.ROLES.DIRECTOR,
       this.ROLES.MANAGER,
       this.ROLES.TEAM_LEAD,
       this.ROLES.ADMIN,
-      this.ROLES.DAILY_REPORT,
-      this.ROLES.INDIVIDUAL_REPORT_ACCESS
+      this.ROLES.DAILY_REPORT
     ]);
   }
 
