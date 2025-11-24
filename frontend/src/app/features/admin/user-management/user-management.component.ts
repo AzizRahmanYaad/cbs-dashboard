@@ -105,11 +105,26 @@ export class UserManagementComponent implements OnInit, OnDestroy {
   loadModuleRoles(): void {
     this.adminUserService.getRolesByModule().subscribe({
       next: (moduleRoles) => {
+        console.log('=== FRONTEND DEBUG: Module roles received ===', moduleRoles);
         this.moduleRoles = moduleRoles;
+        
+        // Check for DAILY module
+        const dailyModule = moduleRoles.find(mr => mr.moduleName === 'DAILY');
+        if (dailyModule) {
+          console.log('=== FRONTEND DEBUG: DAILY module found ===', dailyModule);
+          console.log('DAILY module roles:', dailyModule.roles);
+        } else {
+          console.warn('=== FRONTEND DEBUG: DAILY module NOT found ===');
+          console.log('Available modules:', moduleRoles.map(mr => mr.moduleName));
+        }
+        
         // Expand all modules by default
         moduleRoles.forEach(mr => this.expandedModules.add(mr.moduleName));
       },
-      error: () => this.toastr.error('Failed to load roles', 'Error')
+      error: (err) => {
+        console.error('=== FRONTEND DEBUG: Error loading roles ===', err);
+        this.toastr.error('Failed to load roles', 'Error');
+      }
     });
   }
 

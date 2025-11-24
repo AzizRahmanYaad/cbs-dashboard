@@ -79,6 +79,11 @@ public class AdminUserService {
         System.out.println("=== DEBUG: All roles from database ===");
         allRoles.forEach(role -> System.out.println("Role: " + role.getName() + " (ID: " + role.getId() + ")"));
         
+        // Check specifically for ROLE_INDIVIDUAL_REPORT
+        boolean foundIndividualReport = allRoles.stream()
+            .anyMatch(role -> role.getName().equalsIgnoreCase("ROLE_INDIVIDUAL_REPORT"));
+        System.out.println("=== DEBUG: ROLE_INDIVIDUAL_REPORT found: " + foundIndividualReport);
+        
         allRoles.forEach(role -> {
             String module = extractModuleFromRole(role.getName());
             String moduleDisplayName = getModuleDisplayName(module);
@@ -86,6 +91,7 @@ public class AdminUserService {
             // Debug: Log role mapping
             System.out.println("Role: " + role.getName() + " -> Module: " + module + " (" + moduleDisplayName + ")");
             
+            // Ensure module exists in map
             moduleMap.computeIfAbsent(module, k -> new ArrayList<>())
                     .add(new RoleDto(role.getName(), buildRoleDescription(role.getName()), module));
         });
@@ -96,6 +102,13 @@ public class AdminUserService {
             System.out.println("Module: " + module + " has " + roles.size() + " roles:");
             roles.forEach(r -> System.out.println("  - " + r.getName()));
         });
+        
+        // Check if DAILY module exists
+        boolean dailyModuleExists = moduleMap.containsKey("DAILY");
+        System.out.println("=== DEBUG: DAILY module exists in map: " + dailyModuleExists);
+        if (dailyModuleExists) {
+            System.out.println("=== DEBUG: DAILY module roles: " + moduleMap.get("DAILY").size());
+        }
         
         // Sort modules according to predefined order
         List<ModuleRoleDto> result = moduleOrder.stream()
@@ -111,6 +124,10 @@ public class AdminUserService {
         System.out.println("=== DEBUG: Final result ===");
         result.forEach(mr -> {
             System.out.println("Module: " + mr.getModuleName() + " (" + mr.getModuleDisplayName() + ") - " + mr.getRoles().size() + " roles");
+            if ("DAILY".equals(mr.getModuleName())) {
+                System.out.println("  DAILY module roles:");
+                mr.getRoles().forEach(r -> System.out.println("    - " + r.getName()));
+            }
         });
         
         return result;
@@ -215,17 +232,25 @@ public class AdminUserService {
     }
 
     private String extractModuleFromRole(String roleName) {
-        if (roleName.equalsIgnoreCase("ROLE_ADMIN")) {
+        if (roleName == null || roleName.trim().isEmpty()) {
+            return "OTHER";
+        }
+        
+        // Normalize role name
+        String normalizedRoleName = roleName.trim();
+        
+        if (normalizedRoleName.equalsIgnoreCase("ROLE_ADMIN")) {
             return "ADMIN";
         }
-        if (roleName.equalsIgnoreCase("ROLE_USER")) {
+        if (normalizedRoleName.equalsIgnoreCase("ROLE_USER")) {
             return "GENERAL";
         }
-        if (roleName.startsWith("ROLE_")) {
-            String rolePart = roleName.replace("ROLE_", "").toUpperCase();
+        if (normalizedRoleName.startsWith("ROLE_")) {
+            String rolePart = normalizedRoleName.replace("ROLE_", "").toUpperCase().trim();
             
-            // Handle specific role mappings - check exact matches first
+            // Handle specific role mappings - check exact matches first (most specific first)
             if (rolePart.equals("INDIVIDUAL_REPORT")) {
+                System.out.println("DEBUG: Matched INDIVIDUAL_REPORT -> DAILY");
                 return "DAILY";
             }
             if (rolePart.equals("DRILL_TESTING") || rolePart.startsWith("DRILL")) {
