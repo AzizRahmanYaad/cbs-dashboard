@@ -64,46 +64,57 @@
         <div class="section-header-activities">
           <h3 class="section-title-activities">Daily Activities *</h3>
           <p class="section-subtitle">Enter each activity as a short point. Activities are saved temporarily and displayed below.</p>
-        </div>
-        
-        <!-- Single-row Activity Input -->
+      </div>
+
+        <!-- Activity Input Form -->
         <div class="activity-input-container">
-          <div class="activity-input-row">
-            <input 
-              type="text" 
-              [(ngModel)]="newActivityDescription"
-              (keyup.enter)="addActivity()"
-              class="activity-input"
-              placeholder="Enter activity description (e.g., 'Reviewed branch transactions', 'Handled customer inquiry', etc.)"
-              [ngModelOptions]="{standalone: true}">
-            <button 
-              type="button" 
-              class="btn-add-activity"
-              (click)="addActivity()"
-              [disabled]="!newActivityDescription?.trim()">
-              {{ editingActivityIndex !== null ? 'Update' : 'Add' }}
-            </button>
-            <button 
-              type="button" 
-              class="btn-cancel-edit"
-              (click)="cancelEdit()"
-              *ngIf="editingActivityIndex !== null">
-              Cancel
-            </button>
-          </div>
-          <div class="activity-branch-row">
-            <select 
-              [(ngModel)]="newActivityBranch"
-              class="activity-branch-select"
-              [ngModelOptions]="{standalone: true}">
-              <option value="">Select Branch (Optional)</option>
-              <optgroup *ngFor="let zoneGroup of branchZones" [label]="zoneGroup.zone">
-                <option *ngFor="let branch of zoneGroup.branches" [value]="branch">{{ branch }}</option>
-              </optgroup>
-            </select>
+          <div class="activity-input-form">
+            <div class="activity-input-row">
+              <select 
+                [(ngModel)]="newActivityType"
+                class="activity-type-select"
+                [ngModelOptions]="{standalone: true}">
+                <option value="">Select Activity Type *</option>
+                <option *ngFor="let type of activityTypes" [value]="type">{{ type }}</option>
+                </select>
+              <button 
+                type="button" 
+                class="btn-add-activity"
+                (click)="addActivity()"
+                [disabled]="!newActivityType?.trim() || !newActivityDescription?.trim()">
+                {{ editingActivityIndex !== null ? 'Update' : 'Add' }}
+              </button>
+              <button 
+                type="button" 
+                class="btn-cancel-edit"
+                (click)="cancelEdit()"
+                *ngIf="editingActivityIndex !== null">
+                Cancel
+              </button>
+            </div>
+            <div class="activity-description-row">
+              <textarea 
+                [(ngModel)]="newActivityDescription"
+                (keyup.enter)="addActivity()"
+                class="activity-description-input"
+                rows="3"
+                placeholder="Enter full description of the action taken..."
+                [ngModelOptions]="{standalone: true}"></textarea>
+            </div>
+            <div class="activity-branch-row">
+              <select 
+                [(ngModel)]="newActivityBranch"
+                class="activity-branch-select"
+                [ngModelOptions]="{standalone: true}">
+                <option value="">Select Branch (Optional)</option>
+                <optgroup *ngFor="let zoneGroup of branchZones" [label]="zoneGroup.zone">
+                  <option *ngFor="let branch of zoneGroup.branches" [value]="branch">{{ branch }}</option>
+                </optgroup>
+                </select>
           </div>
         </div>
-        
+      </div>
+
         <!-- Activities List -->
         <div class="activities-list" *ngIf="tempActivities.length > 0">
           <div *ngFor="let activity of tempActivities; let i = index" class="activity-row-item">
@@ -111,8 +122,8 @@
               <span class="activity-number-small">{{ i + 1 }}</span>
               <div class="activity-details">
                 <div class="activity-description-line">
+                  <span class="activity-type-badge">{{ activity.activityType }}</span>
                   <span class="activity-description">{{ activity.description }}</span>
-                  <span class="activity-status-badge">Activity</span>
                 </div>
                 <span class="activity-branch-badge" *ngIf="activity.branch">
                   🏢 {{ activity.branch }}
@@ -134,10 +145,10 @@
                 title="Remove">
                 ×
               </button>
-            </div>
           </div>
         </div>
-        
+      </div>
+
         <div *ngIf="tempActivities.length === 0" class="empty-activities">
           <p>No activities added yet. Enter an activity above and click "Add" to get started.</p>
         </div>
@@ -229,27 +240,27 @@
       
       <!-- Fallback: show all reports if not organized by date -->
       <div *ngIf="reportsByDate.size === 0">
-        <div *ngFor="let report of myReports" class="report-card">
-          <div class="report-header">
-            <h3>{{ report.businessDate | date:'mediumDate' }}</h3>
-            <span [class]="'status-badge ' + getStatusColor(report.status)">
-              {{ report.status }}
-            </span>
-          </div>
-          <div class="report-info">
+      <div *ngFor="let report of myReports" class="report-card">
+        <div class="report-header">
+          <h3>{{ report.businessDate | date:'mediumDate' }}</h3>
+          <span [class]="'status-badge ' + getStatusColor(report.status)">
+            {{ report.status }}
+          </span>
+        </div>
+        <div class="report-info">
             <p><strong>Activities:</strong> {{ report.cbsTeamActivities.length || 0 }}</p>
-            <p><strong>Created:</strong> {{ report.createdAt | date:'short' }}</p>
-            <p *ngIf="report.reviewedByUsername"><strong>Reviewed by:</strong> {{ report.reviewedByUsername }}</p>
-            <p *ngIf="report.reviewComments"><strong>Review Comments:</strong> {{ report.reviewComments }}</p>
-          </div>
-          <div class="report-actions">
-            <button 
-              class="btn-sm btn-primary" 
-              (click)="loadReportForEdit(report)"
-              *ngIf="canEditReport(report)">
-              Edit
-            </button>
-            <button class="btn-sm btn-secondary" (click)="viewReport(report)">View</button>
+          <p><strong>Created:</strong> {{ report.createdAt | date:'short' }}</p>
+          <p *ngIf="report.reviewedByUsername"><strong>Reviewed by:</strong> {{ report.reviewedByUsername }}</p>
+          <p *ngIf="report.reviewComments"><strong>Review Comments:</strong> {{ report.reviewComments }}</p>
+        </div>
+        <div class="report-actions">
+          <button 
+            class="btn-sm btn-primary" 
+            (click)="loadReportForEdit(report)"
+            *ngIf="canEditReport(report)">
+            Edit
+          </button>
+          <button class="btn-sm btn-secondary" (click)="viewReport(report)">View</button>
             <button 
               class="btn-sm btn-download" 
               (click)="downloadMyReport(report)"

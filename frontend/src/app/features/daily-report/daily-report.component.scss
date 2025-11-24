@@ -169,11 +169,65 @@
   margin-bottom: 1.5rem;
 }
 
+.activity-input-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
 .activity-input-row {
   display: flex;
   gap: 0.75rem;
-  margin-bottom: 0.75rem;
   align-items: center;
+}
+
+.activity-description-row {
+  display: flex;
+  width: 100%;
+}
+
+.activity-description-input {
+  width: 100%;
+  padding: 0.875rem 1.25rem;
+  border: 2px solid #d1d5db;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  transition: all 0.3s;
+  font-family: inherit;
+  resize: vertical;
+  min-height: 80px;
+  
+  &:focus {
+    outline: none;
+    border-color: #8b4513;
+    box-shadow: 0 0 0 4px rgba(139, 69, 19, 0.1);
+  }
+  
+  &::placeholder {
+    color: #9ca3af;
+  }
+}
+
+.activity-type-select {
+  flex: 1;
+  padding: 0.875rem 1.25rem;
+  border: 2px solid #d1d5db;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  transition: all 0.3s;
+  font-family: inherit;
+  background: white;
+  color: #374151;
+  
+  &:focus {
+    outline: none;
+    border-color: #8b4513;
+    box-shadow: 0 0 0 4px rgba(139, 69, 19, 0.1);
+  }
+  
+  option {
+    padding: 0.5rem;
+  }
 }
 
 .activity-branch-row {
@@ -312,7 +366,7 @@
   min-width: 200px;
 }
 
-.activity-status-badge {
+.activity-type-badge {
   display: inline-flex;
   align-items: center;
   padding: 0.35rem 0.85rem;
@@ -325,6 +379,7 @@
   letter-spacing: 0.5px;
   box-shadow: 0 2px 4px rgba(16, 185, 129, 0.3);
   white-space: nowrap;
+  flex-shrink: 0;
 }
 
 .activity-branch-select {
@@ -662,13 +717,11 @@
   justify-content: center;
 }
 
-.btn-action-view,
-.btn-action-edit,
-.btn-action-download {
+.btn-action-view {
   padding: 0.875rem 1.75rem;
-  background: white;
-  color: #8b4513;
-  border: 2px solid #d4a574;
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+  color: white;
+  border: none;
   border-radius: 8px;
   cursor: pointer;
   font-weight: 600;
@@ -677,13 +730,74 @@
   display: flex;
   align-items: center;
   gap: 0.5rem;
+  box-shadow: 0 2px 4px rgba(59, 130, 246, 0.3);
   
   &:hover:not(:disabled) {
-    background: linear-gradient(135deg, #8b4513 0%, #a0522d 100%);
-    color: white;
-    border-color: #8b4513;
     transform: translateY(-2px);
-    box-shadow: 0 4px 8px rgba(139, 69, 19, 0.2);
+    box-shadow: 0 4px 8px rgba(59, 130, 246, 0.4);
+    background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+  }
+  
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+  
+  .icon {
+    font-size: 1.1rem;
+  }
+}
+
+.btn-action-edit {
+  padding: 0.875rem 1.75rem;
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 0.95rem;
+  transition: all 0.3s;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  box-shadow: 0 2px 4px rgba(16, 185, 129, 0.3);
+  
+  &:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(16, 185, 129, 0.4);
+    background: linear-gradient(135deg, #059669 0%, #047857 100%);
+  }
+  
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+  
+  .icon {
+    font-size: 1.1rem;
+  }
+}
+
+.btn-action-download {
+  padding: 0.875rem 1.75rem;
+  background: linear-gradient(135deg, #8b4513 0%, #a0522d 100%);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 0.95rem;
+  transition: all 0.3s;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  box-shadow: 0 2px 4px rgba(139, 69, 19, 0.3);
+  
+  &:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(139, 69, 19, 0.4);
+    background: linear-gradient(135deg, #a0522d 0%, #8b4513 100%);
   }
   
   &:disabled {
@@ -1023,12 +1137,15 @@ textarea.form-input {
 }
 
 .btn-download {
-  background: #10b981;
+  background: linear-gradient(135deg, #8b4513 0%, #a0522d 100%);
   color: white;
   border: none;
+  box-shadow: 0 2px 4px rgba(139, 69, 19, 0.3);
   
   &:hover:not(:disabled) {
-    background: #059669;
+    background: linear-gradient(135deg, #a0522d 0%, #8b4513 100%);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 6px rgba(139, 69, 19, 0.4);
   }
 }
 

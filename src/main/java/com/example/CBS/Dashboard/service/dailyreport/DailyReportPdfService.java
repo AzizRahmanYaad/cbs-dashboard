@@ -28,6 +28,7 @@ import java.io.IOException;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @Service
@@ -293,76 +294,99 @@ public class DailyReportPdfService {
     }
     
     private void addMergedCbsActivitiesSection(Document document, List<ActivityWithEmployee> activities) {
-        Paragraph sectionTitle = new Paragraph("CBS Team Daily Activities (On-Job Activities)")
-            .setBold()
-            .setFontSize(14)
-            .setMarginTop(15)
-            .setMarginBottom(10)
-            .setFontColor(new DeviceRgb(139, 69, 19)) // Brown
-            .setBackgroundColor(new DeviceRgb(245, 222, 179)) // Light brown background
-            .setPadding(10)
-            .setBorderBottom(new SolidBorder(new DeviceRgb(139, 69, 19), 3));
-        document.add(sectionTitle);
+        // Group activities by type
+        Map<String, List<ActivityWithEmployee>> activitiesByType = activities.stream()
+            .collect(Collectors.groupingBy(
+                item -> item.activity.getActivityType() != null && !item.activity.getActivityType().isEmpty() 
+                    ? item.activity.getActivityType() 
+                    : "CBS Team Activity"
+            ));
         
-        String currentEmployee = null;
-        int index = 1;
-        
-        for (ActivityWithEmployee item : activities) {
-            // If employee changed, add separator
-            if (currentEmployee != null && !currentEmployee.equals(item.employeeName)) {
-                document.add(new Paragraph("")
-                    .setMarginBottom(5));
+        // Display each activity type as a separate section
+        for (Map.Entry<String, List<ActivityWithEmployee>> entry : activitiesByType.entrySet()) {
+            String activityType = entry.getKey();
+            List<ActivityWithEmployee> typeActivities = entry.getValue();
+            
+            Paragraph sectionTitle = new Paragraph(activityType)
+                .setBold()
+                .setFontSize(14)
+                .setMarginTop(15)
+                .setMarginBottom(10)
+                .setFontColor(new DeviceRgb(139, 69, 19)) // Brown
+                .setBackgroundColor(new DeviceRgb(245, 222, 179)) // Light brown background
+                .setPadding(10)
+                .setBorderBottom(new SolidBorder(new DeviceRgb(139, 69, 19), 3));
+            document.add(sectionTitle);
+            
+            String currentEmployee = null;
+            int index = 1;
+            boolean showNumbers = typeActivities.size() > 1;
+            
+            for (ActivityWithEmployee item : typeActivities) {
+                // If employee changed, add separator
+                if (currentEmployee != null && !currentEmployee.equals(item.employeeName)) {
+                    document.add(new Paragraph("")
+                        .setMarginBottom(5));
+                }
+                
+                // Add activity with numbering if multiple
+                String prefix = showNumbers ? index + ". " : "";
+                Paragraph activityPara = new Paragraph(prefix + item.activity.getDescription())
+                    .setFontSize(11)
+                    .setMarginBottom(3)
+                    .setMarginLeft(10);
+                document.add(activityPara);
+                
+                if (item.activity.getBranch() != null && !item.activity.getBranch().isEmpty()) {
+                    document.add(new Paragraph("   Branch: " + item.activity.getBranch())
+                        .setFontSize(10)
+                        .setMarginLeft(15)
+                        .setMarginBottom(2)
+                        .setFontColor(new DeviceRgb(101, 67, 33))); // Brown
+                }
+                if (item.activity.getAccountNumber() != null && !item.activity.getAccountNumber().isEmpty()) {
+                    document.add(new Paragraph("   Account Number: " + item.activity.getAccountNumber())
+                        .setFontSize(10)
+                        .setMarginLeft(15)
+                        .setMarginBottom(2)
+                        .setFontColor(new DeviceRgb(101, 67, 33))); // Brown
+                }
+                if (item.activity.getActionTaken() != null && !item.activity.getActionTaken().isEmpty()) {
+                    document.add(new Paragraph("   Action Taken: " + item.activity.getActionTaken())
+                        .setFontSize(10)
+                        .setMarginLeft(15)
+                        .setMarginBottom(2)
+                        .setFontColor(new DeviceRgb(101, 67, 33))); // Brown
+                }
+                if (item.activity.getFinalStatus() != null && !item.activity.getFinalStatus().isEmpty()) {
+                    document.add(new Paragraph("   Final Status: " + item.activity.getFinalStatus())
+                        .setFontSize(10)
+                        .setMarginLeft(15)
+                        .setMarginBottom(2)
+                        .setFontColor(new DeviceRgb(101, 67, 33))); // Brown
+                }
+                
+                // Check if next activity is from different employee
+                boolean isLast = typeActivities.indexOf(item) == typeActivities.size() - 1;
+                boolean nextIsDifferent = !isLast && 
+                    !item.employeeName.equals(typeActivities.get(typeActivities.indexOf(item) + 1).employeeName);
+                
+                if (isLast || nextIsDifferent) {
+                    // Add employee name in bold with brown color
+                    document.add(new Paragraph("   — " + item.employeeName)
+                        .setBold()
+                        .setFontSize(10)
+                        .setMarginLeft(15)
+                        .setMarginBottom(8)
+                        .setFontColor(new DeviceRgb(139, 69, 19))); // Brown
+                }
+                
+                currentEmployee = item.employeeName;
+                index++;
             }
             
-            // Add activity
-            Paragraph activityPara = new Paragraph(index + ". " + item.activity.getDescription())
-                .setFontSize(11)
-                .setMarginBottom(3)
-                .setMarginLeft(10);
-            document.add(activityPara);
-            
-            if (item.activity.getActivityType() != null && !item.activity.getActivityType().isEmpty()) {
-                document.add(new Paragraph("   Type: " + item.activity.getActivityType())
-                    .setFontSize(10)
-                    .setMarginLeft(15)
-                    .setMarginBottom(2)
-                    .setFontColor(new DeviceRgb(80, 80, 80)));
-            }
-            if (item.activity.getActionTaken() != null && !item.activity.getActionTaken().isEmpty()) {
-                document.add(new Paragraph("   Action Taken: " + item.activity.getActionTaken())
-                    .setFontSize(10)
-                    .setMarginLeft(15)
-                    .setMarginBottom(2)
-                    .setFontColor(new DeviceRgb(80, 80, 80)));
-            }
-            if (item.activity.getFinalStatus() != null && !item.activity.getFinalStatus().isEmpty()) {
-                document.add(new Paragraph("   Final Status: " + item.activity.getFinalStatus())
-                    .setFontSize(10)
-                    .setMarginLeft(15)
-                    .setMarginBottom(2)
-                    .setFontColor(new DeviceRgb(80, 80, 80)));
-            }
-            
-            // Check if next activity is from different employee
-            boolean isLast = activities.indexOf(item) == activities.size() - 1;
-            boolean nextIsDifferent = !isLast && 
-                !item.employeeName.equals(activities.get(activities.indexOf(item) + 1).employeeName);
-            
-            if (isLast || nextIsDifferent) {
-                // Add employee name in bold with brown color
-                document.add(new Paragraph("   — " + item.employeeName)
-                    .setBold()
-                    .setFontSize(10)
-                    .setMarginLeft(15)
-                    .setMarginBottom(8)
-                    .setFontColor(new DeviceRgb(139, 69, 19))); // Brown
-            }
-            
-            currentEmployee = item.employeeName;
-            index++;
+            document.add(new Paragraph("\n"));
         }
-        
-        document.add(new Paragraph("\n"));
     }
     
     private void addMergedEmailSection(Document document, List<EmailCommunication> emails) {
@@ -759,9 +783,20 @@ public class DailyReportPdfService {
             document.add(new Paragraph("\n"));
         }
         
-        // CBS Team Activities (excluding without check number)
-        if (!otherActivities.isEmpty()) {
-            Paragraph sectionTitle = new Paragraph("CBS Team Daily Activities (On-Job Activities)")
+        // Group CBS Team Activities by type
+        Map<String, List<CbsTeamActivity>> activitiesByType = otherActivities.stream()
+            .collect(Collectors.groupingBy(
+                activity -> activity.getActivityType() != null && !activity.getActivityType().isEmpty() 
+                    ? activity.getActivityType() 
+                    : "CBS Team Activity"
+            ));
+        
+        // Display each activity type as a separate section
+        for (Map.Entry<String, List<CbsTeamActivity>> entry : activitiesByType.entrySet()) {
+            String activityType = entry.getKey();
+            List<CbsTeamActivity> typeActivities = entry.getValue();
+            
+            Paragraph sectionTitle = new Paragraph(activityType)
                 .setBold()
                 .setFontSize(14)
                 .setMarginTop(15)
@@ -772,15 +807,27 @@ public class DailyReportPdfService {
                 .setBorderBottom(new SolidBorder(new DeviceRgb(139, 69, 19), 3));
             document.add(sectionTitle);
 
+            // If multiple activities of same type, number them
             int index = 1;
-            for (var activity : otherActivities) {
-                Paragraph activityPara = new Paragraph(index + ". " + activity.getDescription())
+            boolean showNumbers = typeActivities.size() > 1;
+            
+            for (var activity : typeActivities) {
+                String prefix = showNumbers ? index + ". " : "";
+                Paragraph activityPara = new Paragraph(prefix + activity.getDescription())
                     .setFontSize(11)
                     .setMarginBottom(3)
                     .setMarginLeft(10);
                 document.add(activityPara);
-                if (activity.getActivityType() != null && !activity.getActivityType().isEmpty()) {
-                    document.add(new Paragraph("   Type: " + activity.getActivityType())
+                
+                if (activity.getBranch() != null && !activity.getBranch().isEmpty()) {
+                    document.add(new Paragraph("   Branch: " + activity.getBranch())
+                        .setFontSize(10)
+                        .setMarginLeft(15)
+                        .setMarginBottom(2)
+                        .setFontColor(new DeviceRgb(101, 67, 33))); // Brown
+                }
+                if (activity.getAccountNumber() != null && !activity.getAccountNumber().isEmpty()) {
+                    document.add(new Paragraph("   Account Number: " + activity.getAccountNumber())
                         .setFontSize(10)
                         .setMarginLeft(15)
                         .setMarginBottom(2)

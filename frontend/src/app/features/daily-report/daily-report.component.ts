@@ -108,9 +108,11 @@ export class DailyReportComponent implements OnInit {
     
     this.selectedDay = dayName;
     this.tempActivities = [];
+    this.newActivityType = '';
     this.newActivityDescription = '';
     this.newActivityBranch = '';
     this.editingActivityIndex = null;
+    this.editingActivityType = '';
     this.editingActivityBranch = '';
   }
   
@@ -128,10 +130,12 @@ export class DailyReportComponent implements OnInit {
   }
   
   // Simplified Activity Input
+  newActivityType = '';
   newActivityDescription = '';
   newActivityBranch = '';
-  tempActivities: { id: number; description: string; branch?: string }[] = [];
+  tempActivities: { id: number; activityType: string; description: string; branch?: string }[] = [];
   editingActivityIndex: number | null = null;
+  editingActivityType = '';
   editingActivityText = '';
   editingActivityBranch = '';
   private activityIdCounter = 1;
@@ -236,7 +240,14 @@ export class DailyReportComponent implements OnInit {
   }
   
   addActivity() {
+    const activityType = this.newActivityType.trim();
     const description = this.newActivityDescription.trim();
+    
+    if (!activityType) {
+      this.errorMessage = 'Please select an activity type';
+      return;
+    }
+    
     if (!description) {
       this.errorMessage = 'Please enter an activity description';
       return;
@@ -244,20 +255,24 @@ export class DailyReportComponent implements OnInit {
     
     if (this.editingActivityIndex !== null) {
       // Update existing activity
+      this.tempActivities[this.editingActivityIndex].activityType = activityType;
       this.tempActivities[this.editingActivityIndex].description = description;
       this.tempActivities[this.editingActivityIndex].branch = this.newActivityBranch || undefined;
       this.editingActivityIndex = null;
+      this.editingActivityType = '';
       this.editingActivityText = '';
       this.editingActivityBranch = '';
     } else {
       // Add new activity
       this.tempActivities.push({
         id: this.activityIdCounter++,
+        activityType: activityType,
         description: description,
         branch: this.newActivityBranch || undefined
       });
     }
     
+    this.newActivityType = '';
     this.newActivityDescription = '';
     this.newActivityBranch = '';
     this.errorMessage = '';
@@ -265,16 +280,20 @@ export class DailyReportComponent implements OnInit {
   
   editActivity(index: number) {
     this.editingActivityIndex = index;
+    this.editingActivityType = this.tempActivities[index].activityType;
     this.editingActivityText = this.tempActivities[index].description;
     this.editingActivityBranch = this.tempActivities[index].branch || '';
+    this.newActivityType = this.tempActivities[index].activityType;
     this.newActivityDescription = this.tempActivities[index].description;
     this.newActivityBranch = this.tempActivities[index].branch || '';
   }
   
   cancelEdit() {
     this.editingActivityIndex = null;
+    this.editingActivityType = '';
     this.editingActivityText = '';
     this.editingActivityBranch = '';
+    this.newActivityType = '';
     this.newActivityDescription = '';
     this.newActivityBranch = '';
   }
@@ -314,13 +333,92 @@ export class DailyReportComponent implements OnInit {
       qrmisIssues: []
     };
     
-    // All activities are saved as CBS Team Activities by default
+    // Convert activities based on their type
     this.tempActivities.forEach(activity => {
-      request.cbsTeamActivities!.push({
-        description: activity.description,
-        activityType: 'CBS Team Activity',
-        branch: activity.branch
-      });
+      const desc = activity.description;
+      const branch = activity.branch || '';
+      
+      switch(activity.activityType) {
+        case 'CBS Team Activity':
+        case 'Allowing without check number':
+        case 'Reversals':
+        case 'System enhancements':
+        case 'Email confirmations':
+        case 'Ticket submissions':
+        case 'Branch coordination':
+        case 'Manual entry work':
+        case 'Other':
+          request.cbsTeamActivities!.push({
+            description: desc,
+            activityType: activity.activityType,
+            branch: branch
+          });
+          break;
+        case 'Chat Communication':
+          request.chatCommunications!.push({
+            platform: 'General',
+            summary: desc,
+            actionTaken: ''
+          });
+          break;
+        case 'Email Communication':
+          request.emailCommunications!.push({
+            isInternal: true,
+            sender: '',
+            receiver: '',
+            subject: desc,
+            summary: desc,
+            followUpRequired: false
+          });
+          break;
+        case 'Problem Escalation':
+          request.problemEscalations!.push({
+            escalatedTo: '',
+            reason: desc,
+            escalationDateTime: new Date().toISOString()
+          });
+          break;
+        case 'Training & Capacity Building':
+          request.trainingCapacityBuildings!.push({
+            trainingType: 'Internal',
+            topic: desc
+          });
+          break;
+        case 'Project Progress Update':
+          request.projectProgressUpdates!.push({
+            projectName: '',
+            progressDetail: desc
+          });
+          break;
+        case 'Pending Activity':
+          request.pendingActivities!.push({
+            title: desc,
+            description: desc,
+            status: 'Pending',
+            followUpRequired: false
+          });
+          break;
+        case 'Meeting':
+          request.meetings!.push({
+            meetingType: 'Internal',
+            topic: desc,
+            summary: desc
+          });
+          break;
+        case 'AFPay Card Request':
+          request.afpayCardRequests!.push({
+            requestType: 'Issue',
+            requestedBy: '',
+            requestDate: this.today
+          });
+          break;
+        case 'QRMIS Issue':
+          request.qrmisIssues!.push({
+            problemType: '',
+            problemDescription: desc
+          });
+          break;
+      }
     });
     
     return request;
@@ -370,6 +468,7 @@ export class DailyReportComponent implements OnInit {
     report.cbsTeamActivities.forEach(activity => {
       this.tempActivities.push({
         id: this.activityIdCounter++,
+        activityType: activity.activityType || 'CBS Team Activity',
         description: activity.description,
         branch: activity.branch
       });
@@ -379,35 +478,40 @@ export class DailyReportComponent implements OnInit {
     report.chatCommunications.forEach(chat => {
       this.tempActivities.push({
         id: this.activityIdCounter++,
-        description: `Chat: ${chat.summary}`
+        activityType: 'Chat Communication',
+        description: chat.summary
       });
     });
     
     report.emailCommunications.forEach(email => {
       this.tempActivities.push({
         id: this.activityIdCounter++,
-        description: `Email: ${email.summary}`
+        activityType: 'Email Communication',
+        description: email.summary
       });
     });
     
     report.problemEscalations.forEach(escalation => {
       this.tempActivities.push({
         id: this.activityIdCounter++,
-        description: `Escalation: ${escalation.reason}`
+        activityType: 'Problem Escalation',
+        description: escalation.reason
       });
     });
     
     report.pendingActivities.forEach(pending => {
       this.tempActivities.push({
         id: this.activityIdCounter++,
-        description: `Pending: ${pending.description}`
+        activityType: 'Pending Activity',
+        description: pending.description
       });
     });
     
     report.meetings.forEach(meeting => {
       this.tempActivities.push({
         id: this.activityIdCounter++,
-        description: `Meeting: ${meeting.summary}`
+        activityType: 'Meeting',
+        description: meeting.summary
       });
     });
   }
@@ -459,9 +563,11 @@ export class DailyReportComponent implements OnInit {
     this.successMessage = '';
     this.errorMessage = '';
     this.tempActivities = [];
+    this.newActivityType = '';
     this.newActivityDescription = '';
     this.newActivityBranch = '';
     this.editingActivityIndex = null;
+    this.editingActivityType = '';
     this.editingActivityBranch = '';
   }
   
