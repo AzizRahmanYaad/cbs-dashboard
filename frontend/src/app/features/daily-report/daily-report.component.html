@@ -66,88 +66,109 @@
         </div>
       </div>
 
-      <!-- Unified Activities Section - Simplified -->
-      <div class="form-section-unified">
-        <div class="section-header-unified">
-          <h3 class="section-title-unified">Daily Activities *</h3>
-          <button type="button" class="btn-add-unified" (click)="addUnifiedActivity()">
-            <span class="icon-plus">+</span> Add Activity
-          </button>
+      <!-- Simplified Activity Input Section -->
+      <div class="form-section-activities">
+        <div class="section-header-activities">
+          <h3 class="section-title-activities">Daily Activities *</h3>
+          <p class="section-subtitle">Enter each activity as a short point. Activities are saved temporarily and displayed below.</p>
         </div>
         
-        <div formArrayName="unifiedActivities" class="unified-activities-container">
-          <div *ngFor="let activity of unifiedActivities.controls; let i = index" [formGroupName]="i" class="unified-activity-item">
-            <div class="activity-header">
-              <span class="activity-number">{{ i + 1 }}</span>
-              <button type="button" class="btn-remove-icon-unified" (click)="removeUnifiedActivity(i)" title="Remove">
-                <span class="icon-x">×</span>
+        <!-- Single-row Activity Input -->
+        <div class="activity-input-container">
+          <div class="activity-input-row">
+            <input 
+              type="text" 
+              [(ngModel)]="newActivityDescription"
+              (keyup.enter)="addActivity()"
+              class="activity-input"
+              placeholder="Enter activity description (e.g., 'Reviewed branch transactions', 'Handled customer inquiry', etc.)"
+              [ngModelOptions]="{standalone: true}">
+            <button 
+              type="button" 
+              class="btn-add-activity"
+              (click)="addActivity()"
+              [disabled]="!newActivityDescription?.trim()">
+              {{ editingActivityIndex !== null ? 'Update' : 'Add' }}
+            </button>
+            <button 
+              type="button" 
+              class="btn-cancel-edit"
+              (click)="cancelEdit()"
+              *ngIf="editingActivityIndex !== null">
+              Cancel
+            </button>
+          </div>
+          <div class="activity-branch-row">
+            <select 
+              [(ngModel)]="newActivityBranch"
+              class="activity-branch-select"
+              [ngModelOptions]="{standalone: true}">
+              <option value="">Select Branch (Optional)</option>
+              <option *ngFor="let branch of branches" [value]="branch">{{ branch }}</option>
+            </select>
+          </div>
+        </div>
+        
+        <!-- Activities List -->
+        <div class="activities-list" *ngIf="tempActivities.length > 0">
+          <div *ngFor="let activity of tempActivities; let i = index" class="activity-row-item">
+            <div class="activity-row-content">
+              <span class="activity-number-small">{{ i + 1 }}</span>
+              <div class="activity-details">
+                <span class="activity-description">{{ activity.description }}</span>
+                <span class="activity-branch-badge" *ngIf="activity.branch">
+                  🏢 {{ activity.branch }}
+                </span>
+              </div>
+            </div>
+            <div class="activity-row-actions">
+              <button 
+                type="button" 
+                class="btn-edit-row"
+                (click)="editActivity(i)"
+                title="Edit">
+                ✏️
+              </button>
+              <button 
+                type="button" 
+                class="btn-remove-row"
+                (click)="removeActivity(i)"
+                title="Remove">
+                ×
               </button>
             </div>
-            
-            <div class="activity-content">
-              <div class="form-group-unified">
-                <label class="label-unified">Activity Type *</label>
-                <select formControlName="activityType" class="form-input-unified">
-                  <option value="">Select Activity Type</option>
-                  <option *ngFor="let type of activityTypes" [value]="type">{{ type }}</option>
-                </select>
-              </div>
-              
-              <div class="form-group-unified">
-                <label class="label-unified">Full Description of Action *</label>
-                <textarea 
-                  formControlName="description" 
-                  rows="4" 
-                  class="form-input-unified description-textarea"
-                  placeholder="Write a complete description of the action taken..."></textarea>
-              </div>
-              
-              <div class="form-row-optional">
-                <div class="form-group-unified optional">
-                  <label class="label-unified">Branch (Optional)</label>
-                  <input type="text" formControlName="branch" class="form-input-unified">
-                </div>
-                <div class="form-group-unified optional">
-                  <label class="label-unified">Account Number (Optional)</label>
-                  <input type="text" formControlName="accountNumber" class="form-input-unified">
-                </div>
-              </div>
-            </div>
           </div>
-          
-          <div *ngIf="unifiedActivities.length === 0" class="empty-activities">
-            <p>No activities added yet. Click "Add Activity" to get started.</p>
-          </div>
+        </div>
+        
+        <div *ngIf="tempActivities.length === 0" class="empty-activities">
+          <p>No activities added yet. Enter an activity above and click "Add" to get started.</p>
         </div>
       </div>
 
       <!-- Action Buttons -->
-      <div class="form-actions-unified">
+      <div class="form-actions-save">
         <div class="messages" *ngIf="errorMessage || successMessage">
           <div class="error-message" *ngIf="errorMessage">{{ errorMessage }}</div>
           <div class="success-message" *ngIf="successMessage">{{ successMessage }}</div>
         </div>
-        <div class="buttons-unified">
-          <button type="button" class="btn-secondary-unified" (click)="saveDraft()" [disabled]="saving">
-            {{ saving ? 'Saving...' : 'Save Draft' }}
-          </button>
-          <button type="button" class="btn-primary-unified" (click)="submitReport()" [disabled]="submitting || reportForm.invalid">
-            {{ submitting ? 'Submitting...' : 'Submit Report' }}
+        <div class="buttons-save">
+          <button type="button" class="btn-save-primary" (click)="saveDraft()" [disabled]="saving || tempActivities.length === 0">
+            {{ saving ? 'Saving...' : 'Save Report' }}
           </button>
         </div>
       </div>
       
-      <!-- Post-Submission Actions -->
-      <div class="post-submission-actions" *ngIf="currentReport && currentReport.id && currentReport.status !== 'DRAFT'">
+      <!-- Post-Save Actions -->
+      <div class="post-save-actions" *ngIf="currentReport && currentReport.id">
         <div class="action-buttons-group">
-          <button type="button" class="btn-action" (click)="viewReport(currentReport)">
-            <span class="icon">👁️</span> Review Report
+          <button type="button" class="btn-action-view" (click)="viewReport(currentReport)">
+            <span class="icon">👁️</span> View Report
           </button>
-          <button type="button" class="btn-action" (click)="viewReport(currentReport)">
-            <span class="icon">📄</span> View Report
+          <button type="button" class="btn-action-edit" (click)="loadReportForEdit(currentReport)">
+            <span class="icon">✏️</span> Edit Report
           </button>
-          <button type="button" class="btn-action" (click)="downloadMyReport(currentReport)" [disabled]="downloading">
-            <span class="icon">📥</span> {{ downloading ? 'Downloading...' : 'Download Report' }}
+          <button type="button" class="btn-action-download" (click)="downloadMyReport(currentReport)" [disabled]="downloading">
+            <span class="icon">📥</span> {{ downloading ? 'Downloading...' : 'Download PDF' }}
           </button>
         </div>
       </div>
@@ -197,6 +218,12 @@
                 Edit
               </button>
               <button class="btn-sm btn-secondary" (click)="viewReport(report)">View</button>
+              <button 
+                class="btn-sm btn-download" 
+                (click)="downloadMyReport(report)"
+                [disabled]="downloading">
+                {{ downloading ? 'Downloading...' : 'Download' }}
+              </button>
             </div>
           </div>
         </div>
@@ -225,6 +252,12 @@
               Edit
             </button>
             <button class="btn-sm btn-secondary" (click)="viewReport(report)">View</button>
+            <button 
+              class="btn-sm btn-download" 
+              (click)="downloadMyReport(report)"
+              [disabled]="downloading">
+              {{ downloading ? 'Downloading...' : 'Download' }}
+            </button>
           </div>
         </div>
       </div>
@@ -272,21 +305,50 @@
       
       <div class="download-section">
         <h3>Download Combined Team Report</h3>
-        <p class="info-text">Each day must be downloaded separately. Please select a specific date.</p>
-        <div class="form-group">
-          <label>Select Date *</label>
-          <input 
-            type="date" 
-            [(ngModel)]="selectedDateForDownload"
-            class="form-input"
-            required>
-        </div>
-        <button 
-          class="btn-primary" 
-          (click)="downloadCombinedReport()"
-          [disabled]="downloading || !selectedDateForDownload">
-          {{ downloading ? 'Downloading...' : 'Download Combined Report' }}
-        </button>
+        <p class="info-text">Each day must be downloaded separately. Please select a specific date and provide CBS time tracking.</p>
+        
+        <form [formGroup]="combinedReportForm" *ngIf="combinedReportForm">
+          <div class="form-group">
+            <label>Select Date *</label>
+            <input 
+              type="date" 
+              formControlName="date"
+              class="form-input"
+              (change)="selectedDateForDownload = combinedReportForm.get('date')?.value"
+              required>
+          </div>
+          
+          <div class="form-row-simple">
+            <div class="form-group">
+              <label>CBS End Time (Current Day) *</label>
+              <input 
+                type="time" 
+                formControlName="cbsEndTime"
+                class="form-input"
+                required>
+            </div>
+            <div class="form-group">
+              <label>CBS Start Time (Next Day) *</label>
+              <input 
+                type="time" 
+                formControlName="cbsStartTimeNextDay"
+                class="form-input"
+                required>
+            </div>
+          </div>
+          
+          <button 
+            type="button"
+            class="btn-primary" 
+            (click)="downloadCombinedReport(
+              combinedReportForm.get('date')?.value,
+              combinedReportForm.get('cbsEndTime')?.value,
+              combinedReportForm.get('cbsStartTimeNextDay')?.value
+            )"
+            [disabled]="downloading || combinedReportForm.invalid">
+            {{ downloading ? 'Downloading...' : 'Download Combined Report' }}
+          </button>
+        </form>
       </div>
     </div>
     

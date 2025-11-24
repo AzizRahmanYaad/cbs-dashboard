@@ -104,10 +104,15 @@ export class DailyReportComponent implements OnInit {
       businessDate: [this.today, Validators.required],
       dayOfWeek: [dayName, Validators.required],
       reportingLine: [''],
-      unifiedActivities: this.fb.array([], Validators.required) // Simplified unified activities
+      unifiedActivities: this.fb.array([]) // Will be populated from tempActivities
     });
     
     this.selectedDay = dayName;
+    this.tempActivities = [];
+    this.newActivityDescription = '';
+    this.newActivityBranch = '';
+    this.editingActivityIndex = null;
+    this.editingActivityBranch = '';
   }
   
   // Controller combined report form
@@ -123,23 +128,137 @@ export class DailyReportComponent implements OnInit {
     });
   }
   
-  // Unified Activities
+  // Simplified Activity Input
+  newActivityDescription = '';
+  newActivityBranch = '';
+  tempActivities: { id: number; description: string; branch?: string }[] = [];
+  editingActivityIndex: number | null = null;
+  editingActivityText = '';
+  editingActivityBranch = '';
+  private activityIdCounter = 1;
+  
+  // Branch List
+  branches = [
+    // Center Zone Department
+    'Logar Provincial Branch',
+    'Panjshir Provincial Branch',
+    'Bamyan Provincial Branch',
+    'Kapisa Provincial Branch',
+    'Parwan Provincial Branch',
+    'Wardak / Maidan Shahr Branch',
+    'First City Branch',
+    'Second City Branch',
+    'Third City Branch',
+    'Fourth City Branch',
+    'Fifth City Branch',
+    'Sixth City Branch',
+    'Seventh City Branch',
+    'Teller Counter – Kabul International Airport',
+    // West Zone Department
+    'Herat Provincial Branch',
+    'Nimruz Provincial Branch',
+    'Farah Provincial Branch',
+    'Badghis Provincial Branch',
+    'Ghor Provincial Branch',
+    'Islam Qala Branch',
+    'Torghonde Branch',
+    'Herat City Branch',
+    'Nimruz Teller Counter',
+    // South West Zone Department
+    'Kandahar Provincial Branch',
+    'Uruzgan Provincial Branch',
+    'Helmand Provincial Branch',
+    'Zabul Provincial Branch',
+    'Daikundi Provincial Branch',
+    'Speen Boldak Branch',
+    'Kandahar City Branch',
+    // East Zone Department
+    'Jalalabad Provincial Branch',
+    'Laghman Provincial Branch',
+    'Kunar Provincial Branch',
+    'Nooristan Provincial Branch',
+    'Torkham Branch',
+    'Jalalabad City Branch',
+    // South East Zone Department
+    'Gardiz Provincial Branch',
+    'Khost Provincial Branch',
+    'Ghazni Provincial Branch',
+    'Paktika Provincial Branch',
+    'Dand Patan (Paktia) Branch',
+    'Gholam Khan (Khost) Branch',
+    'Argon (Paktika) Branch',
+    // North East Zone Department
+    'Kunduz Provincial Branch',
+    'Pole Khumri Provincial Branch',
+    'Badakhshan Provincial Branch',
+    'Takhar Provincial Branch',
+    'Sher Khan Port Branch',
+    // North Zone Department
+    'Mazar-e-Sharif Provincial Branch',
+    'Maimana Provincial Branch',
+    'Sheberghan Provincial Branch',
+    'Sar-e-Pul Provincial Branch',
+    'Samangan Provincial Branch',
+    'Hayratan Branch',
+    'Aqeena Branch'
+  ];
+  
+  // Unified Activities (for backend conversion)
   get unifiedActivities(): FormArray {
     return this.reportForm.get('unifiedActivities') as FormArray;
   }
   
-  addUnifiedActivity() {
-    const group = this.fb.group({
-      activityType: ['', Validators.required],
-      description: ['', Validators.required],
-      branch: [''],
-      accountNumber: ['']
-    });
-    this.unifiedActivities.push(group);
+  addActivity() {
+    const description = this.newActivityDescription.trim();
+    if (!description) {
+      this.errorMessage = 'Please enter an activity description';
+      return;
+    }
+    
+    if (this.editingActivityIndex !== null) {
+      // Update existing activity
+      this.tempActivities[this.editingActivityIndex].description = description;
+      this.tempActivities[this.editingActivityIndex].branch = this.newActivityBranch || undefined;
+      this.editingActivityIndex = null;
+      this.editingActivityText = '';
+      this.editingActivityBranch = '';
+    } else {
+      // Add new activity
+      this.tempActivities.push({
+        id: this.activityIdCounter++,
+        description: description,
+        branch: this.newActivityBranch || undefined
+      });
+    }
+    
+    this.newActivityDescription = '';
+    this.newActivityBranch = '';
+    this.errorMessage = '';
   }
   
-  removeUnifiedActivity(index: number) {
-    this.unifiedActivities.removeAt(index);
+  editActivity(index: number) {
+    this.editingActivityIndex = index;
+    this.editingActivityText = this.tempActivities[index].description;
+    this.editingActivityBranch = this.tempActivities[index].branch || '';
+    this.newActivityDescription = this.tempActivities[index].description;
+    this.newActivityBranch = this.tempActivities[index].branch || '';
+  }
+  
+  cancelEdit() {
+    this.editingActivityIndex = null;
+    this.editingActivityText = '';
+    this.editingActivityBranch = '';
+    this.newActivityDescription = '';
+    this.newActivityBranch = '';
+  }
+  
+  removeActivity(index: number) {
+    this.tempActivities.splice(index, 1);
+    if (this.editingActivityIndex === index) {
+      this.cancelEdit();
+    } else if (this.editingActivityIndex !== null && this.editingActivityIndex > index) {
+      this.editingActivityIndex--;
+    }
   }
   
   onDateChange() {
@@ -152,8 +271,8 @@ export class DailyReportComponent implements OnInit {
     }
   }
 
-  // Convert unified activities to backend format
-  convertUnifiedActivitiesToBackendFormat(unifiedActivities: UnifiedActivity[]): CreateDailyReportRequest {
+  // Convert temp activities to backend format
+  convertTempActivitiesToBackendFormat(): CreateDailyReportRequest {
     const request: CreateDailyReportRequest = {
       businessDate: this.reportForm.get('businessDate')?.value,
       reportingLine: this.reportForm.get('reportingLine')?.value,
@@ -169,93 +288,13 @@ export class DailyReportComponent implements OnInit {
       qrmisIssues: []
     };
     
-    unifiedActivities.forEach(activity => {
-      const desc = activity.description;
-      const branch = activity.branch || '';
-      const account = activity.accountNumber || '';
-      
-      switch(activity.activityType) {
-        case 'CBS Team Activity':
-        case 'Allowing without check number':
-        case 'Reversals':
-        case 'System enhancements':
-        case 'Email confirmations':
-        case 'Ticket submissions':
-        case 'Branch coordination':
-        case 'Manual entry work':
-        case 'Other':
-          request.cbsTeamActivities!.push({
-            description: desc,
-            activityType: activity.activityType,
-            branch: branch,
-            accountNumber: account
-          });
-          break;
-        case 'Chat Communication':
-          request.chatCommunications!.push({
-            platform: 'General',
-            summary: desc,
-            actionTaken: ''
-          });
-          break;
-        case 'Email Communication':
-          request.emailCommunications!.push({
-            isInternal: true,
-            sender: '',
-            receiver: '',
-            subject: desc,
-            summary: desc,
-            followUpRequired: false
-          });
-          break;
-        case 'Problem Escalation':
-          request.problemEscalations!.push({
-            escalatedTo: '',
-            reason: desc,
-            escalationDateTime: new Date().toISOString()
-          });
-          break;
-        case 'Training & Capacity Building':
-          request.trainingCapacityBuildings!.push({
-            trainingType: 'Internal',
-            topic: desc
-          });
-          break;
-        case 'Project Progress Update':
-          request.projectProgressUpdates!.push({
-            projectName: '',
-            progressDetail: desc
-          });
-          break;
-        case 'Pending Activity':
-          request.pendingActivities!.push({
-            title: desc,
-            description: desc,
-            status: 'Pending',
-            followUpRequired: false
-          });
-          break;
-        case 'Meeting':
-          request.meetings!.push({
-            meetingType: 'Internal',
-            topic: desc,
-            summary: desc
-          });
-          break;
-        case 'AFPay Card Request':
-          request.afpayCardRequests!.push({
-            requestType: 'Issue',
-            requestedBy: '',
-            requestDate: this.today
-          });
-          break;
-        case 'QRMIS Issue':
-          request.qrmisIssues!.push({
-            problemType: '',
-            problemDescription: desc
-          });
-          break;
-      }
+    // All activities are saved as CBS Team Activities by default
+    this.tempActivities.forEach(activity => {
+      request.cbsTeamActivities!.push({
+        description: activity.description,
+        activityType: 'CBS Team Activity',
+        branch: activity.branch
+      });
     });
     
     return request;
@@ -298,63 +337,53 @@ export class DailyReportComponent implements OnInit {
     
     this.selectedDay = dayName;
 
-    // Convert all activities to unified format
-    this.unifiedActivities.clear();
+    // Convert all activities to temp activities format
+    this.tempActivities = [];
+    this.activityIdCounter = 1;
     
     // Convert CBS Team Activities
     report.cbsTeamActivities.forEach(activity => {
-      this.unifiedActivities.push(this.fb.group({
-        activityType: [activity.activityType || 'CBS Team Activity', Validators.required],
-        description: [activity.description, Validators.required],
-        branch: [activity.branch || ''],
-        accountNumber: [activity.accountNumber || '']
-      }));
+      this.tempActivities.push({
+        id: this.activityIdCounter++,
+        description: activity.description,
+        branch: activity.branch
+      });
     });
     
     // Convert other activities
     report.chatCommunications.forEach(chat => {
-      this.unifiedActivities.push(this.fb.group({
-        activityType: ['Chat Communication', Validators.required],
-        description: [chat.summary, Validators.required],
-        branch: [''],
-        accountNumber: ['']
-      }));
+      this.tempActivities.push({
+        id: this.activityIdCounter++,
+        description: `Chat: ${chat.summary}`
+      });
     });
     
     report.emailCommunications.forEach(email => {
-      this.unifiedActivities.push(this.fb.group({
-        activityType: ['Email Communication', Validators.required],
-        description: [email.summary, Validators.required],
-        branch: [''],
-        accountNumber: ['']
-      }));
+      this.tempActivities.push({
+        id: this.activityIdCounter++,
+        description: `Email: ${email.summary}`
+      });
     });
     
     report.problemEscalations.forEach(escalation => {
-      this.unifiedActivities.push(this.fb.group({
-        activityType: ['Problem Escalation', Validators.required],
-        description: [escalation.reason, Validators.required],
-        branch: [''],
-        accountNumber: ['']
-      }));
+      this.tempActivities.push({
+        id: this.activityIdCounter++,
+        description: `Escalation: ${escalation.reason}`
+      });
     });
     
     report.pendingActivities.forEach(pending => {
-      this.unifiedActivities.push(this.fb.group({
-        activityType: ['Pending Activity', Validators.required],
-        description: [pending.description, Validators.required],
-        branch: [''],
-        accountNumber: ['']
-      }));
+      this.tempActivities.push({
+        id: this.activityIdCounter++,
+        description: `Pending: ${pending.description}`
+      });
     });
     
     report.meetings.forEach(meeting => {
-      this.unifiedActivities.push(this.fb.group({
-        activityType: ['Meeting', Validators.required],
-        description: [meeting.summary, Validators.required],
-        branch: [''],
-        accountNumber: ['']
-      }));
+      this.tempActivities.push({
+        id: this.activityIdCounter++,
+        description: `Meeting: ${meeting.summary}`
+      });
     });
   }
 
@@ -364,7 +393,7 @@ export class DailyReportComponent implements OnInit {
       return;
     }
 
-    if (this.unifiedActivities.length === 0) {
+    if (this.tempActivities.length === 0) {
       this.errorMessage = 'Please add at least one activity';
       return;
     }
@@ -374,14 +403,7 @@ export class DailyReportComponent implements OnInit {
     this.successMessage = '';
 
     try {
-      const formValue = this.reportForm.value;
-      const request = this.convertUnifiedActivitiesToBackendFormat(formValue.unifiedActivities);
-      
-      // Set basic fields
-      request.businessDate = formValue.businessDate;
-      request.cbsEndTime = formValue.cbsEndTime;
-      request.cbsStartTimeNextDay = formValue.cbsStartTimeNextDay;
-      request.reportingLine = formValue.reportingLine;
+      const request = this.convertTempActivitiesToBackendFormat();
 
       if (this.currentReport?.id) {
         const updatedReport = await this.reportService.updateReport(this.currentReport.id, request).toPromise();
@@ -391,7 +413,7 @@ export class DailyReportComponent implements OnInit {
       } else {
         const report = await this.reportService.createReport(request).toPromise();
         this.currentReport = report!;
-        this.successMessage = 'Report created successfully';
+        this.successMessage = 'Report saved successfully';
         this.loadMyReports();
       }
     } catch (error: any) {
@@ -401,45 +423,7 @@ export class DailyReportComponent implements OnInit {
     }
   }
 
-  async submitReport() {
-    if (this.reportForm.invalid) {
-      this.errorMessage = 'Please fill in all required fields before submitting';
-      return;
-    }
-
-    if (this.unifiedActivities.length === 0) {
-      this.errorMessage = 'Please add at least one activity before submitting';
-      return;
-    }
-
-    // Save first, then submit
-    await this.saveDraft();
-    
-    if (!this.currentReport?.id) {
-      this.errorMessage = 'Failed to create report';
-      return;
-    }
-
-    this.submitting = true;
-    this.errorMessage = '';
-    this.successMessage = '';
-
-    try {
-      const report = await this.reportService.submitReport(this.currentReport.id).toPromise();
-      this.currentReport = report!;
-      this.successMessage = 'Report submitted successfully';
-      this.loadMyReports();
-      
-      // Auto-reset form after successful submission
-      setTimeout(() => {
-        this.resetForm();
-      }, 1000);
-    } catch (error: any) {
-      this.errorMessage = error.error?.message || 'Failed to submit report';
-    } finally {
-      this.submitting = false;
-    }
-  }
+  // Submit is removed for individual users - only Save is available
   
   resetForm() {
     this.currentReport = null;
@@ -449,6 +433,11 @@ export class DailyReportComponent implements OnInit {
     this.initializeForm();
     this.successMessage = '';
     this.errorMessage = '';
+    this.tempActivities = [];
+    this.newActivityDescription = '';
+    this.newActivityBranch = '';
+    this.editingActivityIndex = null;
+    this.editingActivityBranch = '';
   }
   
   async downloadMyReport(report: DailyReport) {
