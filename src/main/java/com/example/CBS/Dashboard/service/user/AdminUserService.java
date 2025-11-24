@@ -72,16 +72,33 @@ public class AdminUserService {
         // Define module display order
         List<String> moduleOrder = Arrays.asList("ADMIN", "GENERAL", "DRILL", "TRAINING", "DAILY", "TEST_MANAGEMENT", "MANAGER", "OTHER");
         
-        roleRepository.findAllByOrderByNameAsc().forEach(role -> {
+        // Get all roles from database
+        List<Role> allRoles = roleRepository.findAllByOrderByNameAsc();
+        
+        // Debug: Log all roles found
+        System.out.println("=== DEBUG: All roles from database ===");
+        allRoles.forEach(role -> System.out.println("Role: " + role.getName() + " (ID: " + role.getId() + ")"));
+        
+        allRoles.forEach(role -> {
             String module = extractModuleFromRole(role.getName());
             String moduleDisplayName = getModuleDisplayName(module);
+            
+            // Debug: Log role mapping
+            System.out.println("Role: " + role.getName() + " -> Module: " + module + " (" + moduleDisplayName + ")");
             
             moduleMap.computeIfAbsent(module, k -> new ArrayList<>())
                     .add(new RoleDto(role.getName(), buildRoleDescription(role.getName()), module));
         });
         
+        // Debug: Log module map contents
+        System.out.println("=== DEBUG: Module map contents ===");
+        moduleMap.forEach((module, roles) -> {
+            System.out.println("Module: " + module + " has " + roles.size() + " roles:");
+            roles.forEach(r -> System.out.println("  - " + r.getName()));
+        });
+        
         // Sort modules according to predefined order
-        return moduleOrder.stream()
+        List<ModuleRoleDto> result = moduleOrder.stream()
                 .filter(moduleMap::containsKey)
                 .map(module -> new ModuleRoleDto(
                         module,
@@ -89,6 +106,14 @@ public class AdminUserService {
                         moduleMap.get(module)
                 ))
                 .collect(Collectors.toList());
+        
+        // Debug: Log final result
+        System.out.println("=== DEBUG: Final result ===");
+        result.forEach(mr -> {
+            System.out.println("Module: " + mr.getModuleName() + " (" + mr.getModuleDisplayName() + ") - " + mr.getRoles().size() + " roles");
+        });
+        
+        return result;
     }
 
     @Transactional(readOnly = true)
@@ -220,10 +245,11 @@ public class AdminUserService {
             }
             
             // Handle compound roles - check if it contains REPORT for Daily Report module
+            // But exclude REPORT_ADMIN to avoid conflicts
             if (rolePart.contains("_")) {
                 String[] parts = rolePart.split("_");
-                // If the role contains "REPORT", it's likely a Daily Report role
-                if (rolePart.contains("REPORT")) {
+                // If the role contains "REPORT" but is not "REPORT_ADMIN", it's likely a Daily Report role
+                if (rolePart.contains("REPORT") && !rolePart.equals("REPORT_ADMIN")) {
                     return "DAILY";
                 }
                 return parts[0];
