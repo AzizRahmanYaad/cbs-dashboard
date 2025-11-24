@@ -199,14 +199,17 @@ public class AdminUserService {
         if (roleName.startsWith("ROLE_")) {
             String rolePart = roleName.replace("ROLE_", "").toUpperCase();
             
-            // Handle specific role mappings
+            // Handle specific role mappings - check exact matches first
+            if (rolePart.equals("INDIVIDUAL_REPORT")) {
+                return "DAILY";
+            }
             if (rolePart.equals("DRILL_TESTING") || rolePart.startsWith("DRILL")) {
                 return "DRILL";
             }
             if (rolePart.equals("TRAINING")) {
                 return "TRAINING";
             }
-            if (rolePart.equals("INDIVIDUAL_REPORT") || rolePart.equals("DAILY_REPORT") || rolePart.startsWith("DAILY")) {
+            if (rolePart.equals("DAILY_REPORT") || rolePart.startsWith("DAILY")) {
                 return "DAILY";
             }
             if (rolePart.equals("QA_LEAD") || rolePart.equals("TESTER") || rolePart.startsWith("QA") || rolePart.startsWith("TEST")) {
@@ -216,9 +219,13 @@ public class AdminUserService {
                 return "MANAGER";
             }
             
-            // Handle compound roles
+            // Handle compound roles - check if it contains REPORT for Daily Report module
             if (rolePart.contains("_")) {
                 String[] parts = rolePart.split("_");
+                // If the role contains "REPORT", it's likely a Daily Report role
+                if (rolePart.contains("REPORT")) {
+                    return "DAILY";
+                }
                 return parts[0];
             }
             
