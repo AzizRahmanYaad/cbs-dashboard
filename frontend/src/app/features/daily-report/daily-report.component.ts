@@ -576,7 +576,7 @@ export class DailyReportComponent implements OnInit {
       this.errorMessage = 'Report ID is missing';
       return;
     }
-    
+
     this.downloading = true;
     this.errorMessage = '';
     try {
@@ -596,7 +596,39 @@ export class DailyReportComponent implements OnInit {
       }
     } catch (error: any) {
       console.error('Download error:', error);
-      this.errorMessage = error.error?.message || 'Failed to download report. Please try again.';
+      console.error('Error details:', {
+        status: error.status,
+        statusText: error.statusText,
+        message: error.message,
+        error: error.error
+      });
+      
+      if (error.status === 404) {
+        this.errorMessage = 'Report not found. Please refresh and try again.';
+      } else if (error.status === 403) {
+        this.errorMessage = 'You do not have permission to download this report.';
+      } else if (error.status === 500) {
+        this.errorMessage = 'Server error occurred. Please contact support.';
+      } else if (error.error instanceof Blob) {
+        // Try to read error message from blob
+        const reader = new FileReader();
+        reader.onload = () => {
+          try {
+            const errorText = reader.result as string;
+            const errorJson = JSON.parse(errorText);
+            this.errorMessage = errorJson.message || 'Failed to download report.';
+          } catch {
+            this.errorMessage = 'Failed to download report. Please try again.';
+          }
+        };
+        reader.onerror = () => {
+          this.errorMessage = 'Failed to download report. Please try again.';
+        };
+        reader.readAsText(error.error);
+        return; // Don't set downloading to false yet, wait for reader
+      } else {
+        this.errorMessage = error.error?.message || error.message || 'Failed to download report. Please try again.';
+      }
     } finally {
       this.downloading = false;
     }

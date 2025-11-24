@@ -164,18 +164,45 @@ public class DailyReportController {
     public ResponseEntity<Resource> downloadMyReport(
             @PathVariable Long reportId,
             Authentication authentication) throws IOException {
-        Long userId = getUserIdFromAuthentication(authentication);
-        byte[] pdfBytes = dailyReportService.generateMyReportPdf(reportId, userId);
-        ByteArrayResource resource = new ByteArrayResource(pdfBytes);
-        
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_PDF);
-        String dateStr = java.time.LocalDate.now().format(java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd"));
-        headers.setContentDispositionFormData("attachment", "my_daily_report_" + dateStr + ".pdf");
-        
-        return ResponseEntity.ok()
-                .headers(headers)
-                .body(resource);
+        try {
+            Long userId = getUserIdFromAuthentication(authentication);
+            
+            // Get report first to verify ownership and get filename info
+            DailyReport report = dailyReportService.getReportEntity(reportId);
+            
+            // Verify ownership
+            if (report.getEmployee() == null || !report.getEmployee().getId().equals(userId)) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+            }
+            
+            // Generate PDF
+            byte[] pdfBytes = dailyReportService.generateMyReportPdf(reportId, userId);
+            ByteArrayResource resource = new ByteArrayResource(pdfBytes);
+            
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_PDF);
+            
+            // Create filename from report data
+            String dateStr = report.getBusinessDate().format(java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd"));
+            String employeeName = report.getEmployee() != null && report.getEmployee().getUsername() != null 
+                ? report.getEmployee().getUsername().replaceAll("[^a-zA-Z0-9]", "_") 
+                : "report";
+            String filename = "Daily_Report_" + employeeName + "_" + dateStr + ".pdf";
+            headers.setContentDispositionFormData("attachment", filename);
+            
+            return ResponseEntity.ok()
+                    .headers(headers)
+                    .body(resource);
+        } catch (jakarta.persistence.EntityNotFoundException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+        } catch (RuntimeException e) {
+            if (e.getMessage() != null && e.getMessage().contains("own reports")) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+            }
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
     }
     
     @GetMapping("/download/combined")

@@ -491,30 +491,83 @@ public class DailyReportService {
     }
     
     @Transactional(readOnly = true)
+    public DailyReport getReportEntity(Long reportId) {
+        return dailyReportRepository.findById(reportId)
+            .orElseThrow(() -> new EntityNotFoundException("Report not found with id: " + reportId));
+    }
+    
+    @Transactional(readOnly = true)
     public byte[] generateMyReportPdf(Long reportId, Long userId) throws IOException {
         DailyReport report = dailyReportRepository.findById(reportId)
-            .orElseThrow(() -> new IllegalArgumentException("Report not found"));
+            .orElseThrow(() -> new EntityNotFoundException("Report not found with id: " + reportId));
         
-        // Verify user owns this report
-        if (!report.getEmployee().getId().equals(userId)) {
+        // Ownership is verified in controller, but double-check here for security
+        if (report.getEmployee() == null || !report.getEmployee().getId().equals(userId)) {
             throw new RuntimeException("You can only download your own reports");
         }
         
         // Initialize collections to avoid lazy loading issues
-        if (report.getChatCommunications() != null) report.getChatCommunications().size();
-        if (report.getEmailCommunications() != null) report.getEmailCommunications().size();
-        if (report.getProblemEscalations() != null) report.getProblemEscalations().size();
-        if (report.getTrainingCapacityBuildings() != null) report.getTrainingCapacityBuildings().size();
-        if (report.getProjectProgressUpdates() != null) report.getProjectProgressUpdates().size();
-        if (report.getCbsTeamActivities() != null) report.getCbsTeamActivities().size();
-        if (report.getPendingActivities() != null) report.getPendingActivities().size();
-        if (report.getMeetings() != null) report.getMeetings().size();
-        if (report.getAfpayCardRequests() != null) report.getAfpayCardRequests().size();
-        if (report.getQrmisIssues() != null) report.getQrmisIssues().size();
-        if (report.getEmployee() != null) report.getEmployee().getUsername();
-        if (report.getReviewedBy() != null) report.getReviewedBy().getUsername();
+        if (report.getChatCommunications() != null) {
+            report.getChatCommunications().size();
+            report.getChatCommunications().forEach(chat -> {
+                if (chat.getPlatform() != null) chat.getPlatform();
+                if (chat.getSummary() != null) chat.getSummary();
+            });
+        }
+        if (report.getEmailCommunications() != null) {
+            report.getEmailCommunications().size();
+            report.getEmailCommunications().forEach(email -> {
+                if (email.getSender() != null) email.getSender();
+                if (email.getReceiver() != null) email.getReceiver();
+                if (email.getSubject() != null) email.getSubject();
+            });
+        }
+        if (report.getProblemEscalations() != null) {
+            report.getProblemEscalations().size();
+            report.getProblemEscalations().forEach(escalation -> {
+                if (escalation.getReason() != null) escalation.getReason();
+            });
+        }
+        if (report.getTrainingCapacityBuildings() != null) {
+            report.getTrainingCapacityBuildings().size();
+        }
+        if (report.getProjectProgressUpdates() != null) {
+            report.getProjectProgressUpdates().size();
+        }
+        if (report.getCbsTeamActivities() != null) {
+            report.getCbsTeamActivities().size();
+            report.getCbsTeamActivities().forEach(activity -> {
+                if (activity.getDescription() != null) activity.getDescription();
+                if (activity.getActivityType() != null) activity.getActivityType();
+                if (activity.getBranch() != null) activity.getBranch();
+                if (activity.getAccountNumber() != null) activity.getAccountNumber();
+            });
+        }
+        if (report.getPendingActivities() != null) {
+            report.getPendingActivities().size();
+        }
+        if (report.getMeetings() != null) {
+            report.getMeetings().size();
+        }
+        if (report.getAfpayCardRequests() != null) {
+            report.getAfpayCardRequests().size();
+        }
+        if (report.getQrmisIssues() != null) {
+            report.getQrmisIssues().size();
+        }
+        if (report.getEmployee() != null) {
+            report.getEmployee().getUsername();
+            report.getEmployee().getEmail();
+        }
+        if (report.getReviewedBy() != null) {
+            report.getReviewedBy().getUsername();
+        }
         
-        return pdfService.generateEmployeeReportPdf(List.of(report));
+        try {
+            return pdfService.generateEmployeeReportPdf(List.of(report));
+        } catch (Exception e) {
+            throw new IOException("Failed to generate PDF: " + e.getMessage(), e);
+        }
     }
     
     @Transactional(readOnly = true)
