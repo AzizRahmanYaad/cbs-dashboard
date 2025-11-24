@@ -23,6 +23,7 @@ export class DailyReportPermissionService {
     TEAM_LEAD: 'ROLE_DAILY_REPORT_TEAM_LEAD',
     ADMIN: 'ROLE_ADMIN',
     DAILY_REPORT: 'ROLE_DAILY_REPORT', // General daily report access
+    INDIVIDUAL_REPORT_ACCESS: 'ROLE_INDIVIDUAL_REPORT_ACCESS', // Individual report access only
     CONTROLLER: 'ROLE_DAILY_REPORT_SUPERVISOR', // Controller maps to Supervisor
     CFO: 'ROLE_DAILY_REPORT_DIRECTOR' // CFO maps to Director
   };
@@ -43,7 +44,8 @@ export class DailyReportPermissionService {
       this.ROLES.MANAGER,
       this.ROLES.TEAM_LEAD,
       this.ROLES.ADMIN,
-      this.ROLES.DAILY_REPORT
+      this.ROLES.DAILY_REPORT,
+      this.ROLES.INDIVIDUAL_REPORT_ACCESS
     ]);
   }
 
@@ -58,7 +60,8 @@ export class DailyReportPermissionService {
       this.ROLES.MANAGER,
       this.ROLES.TEAM_LEAD,
       this.ROLES.ADMIN,
-      this.ROLES.DAILY_REPORT
+      this.ROLES.DAILY_REPORT,
+      this.ROLES.INDIVIDUAL_REPORT_ACCESS
     ]);
   }
 
@@ -73,7 +76,31 @@ export class DailyReportPermissionService {
       this.ROLES.MANAGER,
       this.ROLES.TEAM_LEAD,
       this.ROLES.ADMIN,
-      this.ROLES.DAILY_REPORT
+      this.ROLES.DAILY_REPORT,
+      this.ROLES.INDIVIDUAL_REPORT_ACCESS
+    ]);
+  }
+  
+  /**
+   * Check if user has Individual Report Access role (limited to own reports only)
+   */
+  hasIndividualReportAccess(): boolean {
+    return this.hasAnyRole([this.ROLES.INDIVIDUAL_REPORT_ACCESS]);
+  }
+  
+  /**
+   * Check if user can download their own reports
+   */
+  canDownloadOwnReport(): boolean {
+    return this.hasAnyRole([
+      this.ROLES.EMPLOYEE,
+      this.ROLES.SUPERVISOR,
+      this.ROLES.DIRECTOR,
+      this.ROLES.MANAGER,
+      this.ROLES.TEAM_LEAD,
+      this.ROLES.ADMIN,
+      this.ROLES.DAILY_REPORT,
+      this.ROLES.INDIVIDUAL_REPORT_ACCESS
     ]);
   }
 
@@ -211,8 +238,8 @@ export class DailyReportPermissionService {
       return true;
     }
 
-    // Employees can only edit their own reports
-    return this.hasAnyRole([this.ROLES.EMPLOYEE, this.ROLES.DAILY_REPORT]) 
+    // Employees and individual report access users can only edit their own reports
+    return this.hasAnyRole([this.ROLES.EMPLOYEE, this.ROLES.DAILY_REPORT, this.ROLES.INDIVIDUAL_REPORT_ACCESS]) 
       && currentUser.id === reportEmployeeId;
   }
 
@@ -249,7 +276,7 @@ export class DailyReportPermissionService {
     if (user.roles.includes(this.ROLES.TEAM_LEAD)) {
       return 'team_lead';
     }
-    if (user.roles.includes(this.ROLES.EMPLOYEE) || user.roles.includes(this.ROLES.DAILY_REPORT)) {
+    if (user.roles.includes(this.ROLES.EMPLOYEE) || user.roles.includes(this.ROLES.DAILY_REPORT) || user.roles.includes(this.ROLES.INDIVIDUAL_REPORT_ACCESS)) {
       return 'employee';
     }
 

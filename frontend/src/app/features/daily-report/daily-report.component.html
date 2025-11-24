@@ -431,70 +431,235 @@
     </div>
   </div>
 
-  <!-- View Report Modal -->
-  <div class="modal-overlay" *ngIf="showViewModal" (click)="closeViewModal()">
-    <div class="modal-content" (click)="$event.stopPropagation()">
-      <div class="modal-header">
-        <h2>Daily Report Details</h2>
-        <button class="modal-close" (click)="closeViewModal()">×</button>
+  <!-- View Report Modal - World-Class Design -->
+  <div class="modal-overlay-premium" *ngIf="showViewModal" (click)="closeViewModal()">
+    <div class="modal-content-premium" (click)="$event.stopPropagation()">
+      <div class="modal-header-premium">
+        <div class="modal-title-section">
+          <div class="modal-icon-wrapper">
+            <svg class="modal-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+            </svg>
+          </div>
+          <div>
+            <h2 class="modal-title">Daily Report Details</h2>
+            <p class="modal-subtitle">Comprehensive report information and activities</p>
+          </div>
+        </div>
+        <button class="modal-close-premium" (click)="closeViewModal()" aria-label="Close">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"></path>
+          </svg>
+        </button>
       </div>
-      <div class="modal-body" *ngIf="viewReportModal">
-        <div class="report-view-section">
-          <h3>Report Information</h3>
-          <p><strong>Business Date:</strong> {{ viewReportModal.businessDate | date:'mediumDate' }}</p>
-          <p><strong>Employee:</strong> {{ viewReportModal.employeeUsername }}</p>
-          <p><strong>Status:</strong> <span [class]="'status-badge ' + getStatusColor(viewReportModal.status)">{{ viewReportModal.status }}</span></p>
-          <p *ngIf="viewReportModal.cbsEndTime"><strong>CBS End Time:</strong> {{ viewReportModal.cbsEndTime }}</p>
-          <p *ngIf="viewReportModal.cbsStartTimeNextDay"><strong>CBS Start Time (Next Day):</strong> {{ viewReportModal.cbsStartTimeNextDay }}</p>
-        </div>
-
-        <div class="report-view-section" *ngIf="viewReportModal.cbsTeamActivities && viewReportModal.cbsTeamActivities.length > 0">
-          <h3>CBS Team Activities ({{ viewReportModal.cbsTeamActivities.length }})</h3>
-          <div *ngFor="let activity of viewReportModal.cbsTeamActivities; let i = index" class="activity-item">
-            <p><strong>{{ i + 1 }}.</strong> {{ activity.description }}</p>
-            <p *ngIf="activity.activityType" class="activity-detail">Type: {{ activity.activityType }}</p>
-            <p *ngIf="activity.actionTaken" class="activity-detail">Action Taken: {{ activity.actionTaken }}</p>
-            <p *ngIf="activity.finalStatus" class="activity-detail">Final Status: {{ activity.finalStatus }}</p>
+      
+      <div class="modal-body-premium" *ngIf="viewReportModal">
+        <!-- Report Header Card -->
+        <div class="report-header-card">
+          <div class="report-header-grid">
+            <div class="info-item">
+              <div class="info-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                </svg>
+              </div>
+              <div class="info-content">
+                <span class="info-label">Business Date</span>
+                <span class="info-value">{{ viewReportModal.businessDate | date:'fullDate' }}</span>
+              </div>
+            </div>
+            
+            <div class="info-item">
+              <div class="info-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
+                </svg>
+              </div>
+              <div class="info-content">
+                <span class="info-label">Employee</span>
+                <span class="info-value">{{ viewReportModal.employeeUsername }}</span>
+              </div>
+            </div>
+            
+            <div class="info-item">
+              <div class="info-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                </svg>
+              </div>
+              <div class="info-content">
+                <span class="info-label">Status</span>
+                <span [class]="'status-badge-premium ' + getStatusColor(viewReportModal.status)">
+                  {{ viewReportModal.status }}
+                </span>
+              </div>
+            </div>
           </div>
         </div>
 
-        <div class="report-view-section" *ngIf="viewReportModal.chatCommunications && viewReportModal.chatCommunications.length > 0">
-          <h3>Chat Communications ({{ viewReportModal.chatCommunications.length }})</h3>
-          <div *ngFor="let comm of viewReportModal.chatCommunications" class="activity-item">
-            <p><strong>Platform:</strong> {{ comm.platform }}</p>
-            <p><strong>Summary:</strong> {{ comm.summary }}</p>
-            <p *ngIf="comm.actionTaken"><strong>Action Taken:</strong> {{ comm.actionTaken }}</p>
+        <!-- Activities Sections -->
+        <div class="activities-container-premium" *ngIf="viewReportModal.cbsTeamActivities && viewReportModal.cbsTeamActivities.length > 0">
+          <div class="section-header-premium">
+            <div class="section-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
+              </svg>
+            </div>
+            <div>
+              <h3 class="section-title-premium">CBS Team Activities</h3>
+              <p class="section-count">{{ viewReportModal.cbsTeamActivities.length }} activity(s)</p>
+            </div>
+          </div>
+          
+          <div class="activities-list-premium">
+            <div *ngFor="let activity of viewReportModal.cbsTeamActivities; let i = index" class="activity-card-premium">
+              <div class="activity-number-premium">{{ i + 1 }}</div>
+              <div class="activity-content-premium">
+                <p class="activity-description-premium">{{ activity.description }}</p>
+                <div class="activity-meta" *ngIf="activity.activityType || activity.branch">
+                  <span class="activity-type-tag" *ngIf="activity.activityType">{{ activity.activityType }}</span>
+                  <span class="activity-branch-tag" *ngIf="activity.branch">🏢 {{ activity.branch }}</span>
+                </div>
+                <div class="activity-details-premium" *ngIf="activity.actionTaken || activity.finalStatus">
+                  <p *ngIf="activity.actionTaken" class="detail-item">
+                    <svg class="detail-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"></path>
+                    </svg>
+                    <strong>Action Taken:</strong> {{ activity.actionTaken }}
+                  </p>
+                  <p *ngIf="activity.finalStatus" class="detail-item">
+                    <svg class="detail-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"></path>
+                    </svg>
+                    <strong>Final Status:</strong> {{ activity.finalStatus }}
+                  </p>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
 
-        <div class="report-view-section" *ngIf="viewReportModal.emailCommunications && viewReportModal.emailCommunications.length > 0">
-          <h3>Email Communications ({{ viewReportModal.emailCommunications.length }})</h3>
-          <div *ngFor="let email of viewReportModal.emailCommunications" class="activity-item">
-            <p><strong>Type:</strong> {{ email.isInternal ? 'Internal' : 'External' }}</p>
-            <p><strong>From:</strong> {{ email.sender }} <strong>To:</strong> {{ email.receiver }}</p>
-            <p><strong>Subject:</strong> {{ email.subject }}</p>
-            <p><strong>Summary:</strong> {{ email.summary }}</p>
+        <!-- Other Sections with similar premium design -->
+        <div class="activities-container-premium" *ngIf="viewReportModal.chatCommunications && viewReportModal.chatCommunications.length > 0">
+          <div class="section-header-premium">
+            <div class="section-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path>
+              </svg>
+            </div>
+            <div>
+              <h3 class="section-title-premium">Chat Communications</h3>
+              <p class="section-count">{{ viewReportModal.chatCommunications.length }} communication(s)</p>
+            </div>
+          </div>
+          <div class="activities-list-premium">
+            <div *ngFor="let comm of viewReportModal.chatCommunications" class="activity-card-premium">
+              <div class="activity-content-premium">
+                <p class="activity-description-premium">{{ comm.summary }}</p>
+                <div class="activity-meta">
+                  <span class="activity-type-tag">{{ comm.platform }}</span>
+                </div>
+                <p *ngIf="comm.actionTaken" class="detail-item">
+                  <svg class="detail-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"></path>
+                  </svg>
+                  <strong>Action Taken:</strong> {{ comm.actionTaken }}
+                </p>
+              </div>
+            </div>
           </div>
         </div>
 
-        <div class="report-view-section" *ngIf="viewReportModal.pendingActivities && viewReportModal.pendingActivities.length > 0">
-          <h3>Pending Activities ({{ viewReportModal.pendingActivities.length }})</h3>
-          <div *ngFor="let pending of viewReportModal.pendingActivities" class="activity-item">
-            <p><strong>{{ pending.title }}</strong> - Status: {{ pending.status }}</p>
-            <p>{{ pending.description }}</p>
-            <p *ngIf="pending.amount">Amount: {{ pending.amount }}</p>
+        <div class="activities-container-premium" *ngIf="viewReportModal.emailCommunications && viewReportModal.emailCommunications.length > 0">
+          <div class="section-header-premium">
+            <div class="section-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
+              </svg>
+            </div>
+            <div>
+              <h3 class="section-title-premium">Email Communications</h3>
+              <p class="section-count">{{ viewReportModal.emailCommunications.length }} email(s)</p>
+            </div>
+          </div>
+          <div class="activities-list-premium">
+            <div *ngFor="let email of viewReportModal.emailCommunications" class="activity-card-premium">
+              <div class="activity-content-premium">
+                <p class="activity-description-premium"><strong>Subject:</strong> {{ email.subject }}</p>
+                <p class="activity-description-premium">{{ email.summary }}</p>
+                <div class="activity-meta">
+                  <span class="activity-type-tag">{{ email.isInternal ? 'Internal' : 'External' }}</span>
+                  <span class="activity-branch-tag">From: {{ email.sender }}</span>
+                  <span class="activity-branch-tag">To: {{ email.receiver }}</span>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
 
-        <div class="report-view-section" *ngIf="viewReportModal.reviewedByUsername">
-          <h3>Review Information</h3>
-          <p><strong>Reviewed By:</strong> {{ viewReportModal.reviewedByUsername }}</p>
-          <p *ngIf="viewReportModal.reviewedAt"><strong>Reviewed At:</strong> {{ viewReportModal.reviewedAt | date:'short' }}</p>
-          <p *ngIf="viewReportModal.reviewComments"><strong>Comments:</strong> {{ viewReportModal.reviewComments }}</p>
+        <div class="activities-container-premium" *ngIf="viewReportModal.pendingActivities && viewReportModal.pendingActivities.length > 0">
+          <div class="section-header-premium">
+            <div class="section-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+              </svg>
+            </div>
+            <div>
+              <h3 class="section-title-premium">Pending Activities</h3>
+              <p class="section-count">{{ viewReportModal.pendingActivities.length }} pending item(s)</p>
+            </div>
+          </div>
+          <div class="activities-list-premium">
+            <div *ngFor="let pending of viewReportModal.pendingActivities" class="activity-card-premium">
+              <div class="activity-content-premium">
+                <p class="activity-description-premium"><strong>{{ pending.title }}</strong></p>
+                <p class="activity-description-premium">{{ pending.description }}</p>
+                <div class="activity-meta">
+                  <span class="activity-type-tag">{{ pending.status }}</span>
+                  <span class="activity-branch-tag" *ngIf="pending.amount">Amount: {{ pending.amount }}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Review Information -->
+        <div class="review-section-premium" *ngIf="viewReportModal.reviewedByUsername">
+          <div class="section-header-premium">
+            <div class="section-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path>
+              </svg>
+            </div>
+            <div>
+              <h3 class="section-title-premium">Review Information</h3>
+            </div>
+          </div>
+          <div class="review-content-premium">
+            <div class="review-item">
+              <span class="review-label">Reviewed By</span>
+              <span class="review-value">{{ viewReportModal.reviewedByUsername }}</span>
+            </div>
+            <div class="review-item" *ngIf="viewReportModal.reviewedAt">
+              <span class="review-label">Reviewed At</span>
+              <span class="review-value">{{ viewReportModal.reviewedAt | date:'full' }}</span>
+            </div>
+            <div class="review-item" *ngIf="viewReportModal.reviewComments">
+              <span class="review-label">Comments</span>
+              <span class="review-value">{{ viewReportModal.reviewComments }}</span>
+            </div>
+          </div>
         </div>
       </div>
-      <div class="modal-footer">
-        <button class="btn-secondary" (click)="closeViewModal()">Close</button>
+      
+      <div class="modal-footer-premium">
+        <button class="btn-download-premium" (click)="downloadMyReport(viewReportModal)" [disabled]="downloading">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
+          </svg>
+          {{ downloading ? 'Downloading...' : 'Download PDF' }}
+        </button>
+        <button class="btn-close-premium" (click)="closeViewModal()">Close</button>
       </div>
     </div>
   </div>

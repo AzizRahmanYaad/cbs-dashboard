@@ -491,6 +491,33 @@ public class DailyReportService {
     }
     
     @Transactional(readOnly = true)
+    public byte[] generateMyReportPdf(Long reportId, Long userId) throws IOException {
+        DailyReport report = dailyReportRepository.findById(reportId)
+            .orElseThrow(() -> new IllegalArgumentException("Report not found"));
+        
+        // Verify user owns this report
+        if (!report.getEmployee().getId().equals(userId)) {
+            throw new RuntimeException("You can only download your own reports");
+        }
+        
+        // Initialize collections to avoid lazy loading issues
+        if (report.getChatCommunications() != null) report.getChatCommunications().size();
+        if (report.getEmailCommunications() != null) report.getEmailCommunications().size();
+        if (report.getProblemEscalations() != null) report.getProblemEscalations().size();
+        if (report.getTrainingCapacityBuildings() != null) report.getTrainingCapacityBuildings().size();
+        if (report.getProjectProgressUpdates() != null) report.getProjectProgressUpdates().size();
+        if (report.getCbsTeamActivities() != null) report.getCbsTeamActivities().size();
+        if (report.getPendingActivities() != null) report.getPendingActivities().size();
+        if (report.getMeetings() != null) report.getMeetings().size();
+        if (report.getAfpayCardRequests() != null) report.getAfpayCardRequests().size();
+        if (report.getQrmisIssues() != null) report.getQrmisIssues().size();
+        if (report.getEmployee() != null) report.getEmployee().getUsername();
+        if (report.getReviewedBy() != null) report.getReviewedBy().getUsername();
+        
+        return pdfService.generateEmployeeReportPdf(List.of(report));
+    }
+    
+    @Transactional(readOnly = true)
     public byte[] generateCombinedReportPdf(LocalDate specificDate, LocalTime cbsEndTime, LocalTime cbsStartTimeNextDay) throws IOException {
         if (specificDate == null) {
             throw new IllegalArgumentException("Date is required for combined report. Each day must be downloaded separately.");

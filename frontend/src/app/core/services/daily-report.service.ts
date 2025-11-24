@@ -116,6 +116,13 @@ export class DailyReportService {
       headers: { 'Accept': 'application/pdf' }
     });
   }
+  
+  downloadMyReport(reportId: number): Observable<Blob> {
+    return this.http.get(`${this.baseUrl}/download/my-report/${reportId}`, {
+      responseType: 'blob',
+      headers: { 'Accept': 'application/pdf' }
+    });
+  }
 
   downloadCombinedReport(date: string, cbsEndTime?: string, cbsStartTimeNextDay?: string): Observable<Blob> {
     if (!date) {

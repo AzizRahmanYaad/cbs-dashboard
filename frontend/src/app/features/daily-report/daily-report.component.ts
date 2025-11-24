@@ -572,24 +572,31 @@ export class DailyReportComponent implements OnInit {
   }
   
   async downloadMyReport(report: DailyReport) {
-    if (!report.id || !report.employeeId) return;
+    if (!report.id) {
+      this.errorMessage = 'Report ID is missing';
+      return;
+    }
     
     this.downloading = true;
+    this.errorMessage = '';
     try {
-      const blob = await this.reportService.downloadEmployeeReport(report.employeeId).toPromise();
+      const blob = await this.reportService.downloadMyReport(report.id).toPromise();
       if (blob) {
         const url = window.URL.createObjectURL(blob);
         const link = document.createElement('a');
         link.href = url;
         const dateStr = report.businessDate.split('T')[0];
-        link.download = `daily_report_${dateStr}.pdf`;
+        const employeeName = report.employeeUsername || 'report';
+        link.download = `Daily_Report_${employeeName}_${dateStr}.pdf`;
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
         window.URL.revokeObjectURL(url);
+        this.successMessage = 'Report downloaded successfully';
       }
     } catch (error: any) {
-      this.errorMessage = 'Failed to download report';
+      console.error('Download error:', error);
+      this.errorMessage = error.error?.message || 'Failed to download report. Please try again.';
     } finally {
       this.downloading = false;
     }

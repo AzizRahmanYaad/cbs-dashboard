@@ -160,6 +160,24 @@ public class DailyReportController {
                 .body(resource);
     }
     
+    @GetMapping("/download/my-report/{reportId}")
+    public ResponseEntity<Resource> downloadMyReport(
+            @PathVariable Long reportId,
+            Authentication authentication) throws IOException {
+        Long userId = getUserIdFromAuthentication(authentication);
+        byte[] pdfBytes = dailyReportService.generateMyReportPdf(reportId, userId);
+        ByteArrayResource resource = new ByteArrayResource(pdfBytes);
+        
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_PDF);
+        String dateStr = java.time.LocalDate.now().format(java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd"));
+        headers.setContentDispositionFormData("attachment", "my_daily_report_" + dateStr + ".pdf");
+        
+        return ResponseEntity.ok()
+                .headers(headers)
+                .body(resource);
+    }
+    
     @GetMapping("/download/combined")
     @PreAuthorize("hasAnyRole('ROLE_DAILY_REPORT_SUPERVISOR', 'ROLE_ADMIN')")
     public ResponseEntity<Resource> downloadCombinedReport(
