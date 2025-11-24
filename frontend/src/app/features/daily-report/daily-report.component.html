@@ -115,7 +115,10 @@
             <div class="activity-row-content">
               <span class="activity-number-small">{{ i + 1 }}</span>
               <div class="activity-details">
-                <span class="activity-description">{{ activity.description }}</span>
+                <div class="activity-description-line">
+                  <span class="activity-description">{{ activity.description }}</span>
+                  <span class="activity-status-badge">Activity</span>
+                </div>
                 <span class="activity-branch-badge" *ngIf="activity.branch">
                   🏢 {{ activity.branch }}
                 </span>

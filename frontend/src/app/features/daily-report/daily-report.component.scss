@@ -296,11 +296,35 @@
   box-shadow: 0 2px 4px rgba(139, 69, 19, 0.3);
 }
 
+.activity-description-line {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  width: 100%;
+}
+
 .activity-description {
   flex: 1;
   color: #374151;
   font-size: 0.95rem;
   line-height: 1.5;
+  min-width: 200px;
+}
+
+.activity-status-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.35rem 0.85rem;
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  color: white;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  box-shadow: 0 2px 4px rgba(16, 185, 129, 0.3);
+  white-space: nowrap;
 }
 
 .activity-branch-select {
