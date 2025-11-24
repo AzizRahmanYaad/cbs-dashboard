@@ -14,9 +14,10 @@ import { AuthService } from './auth.service';
 export class DailyReportPermissionService {
   private authService = inject(AuthService);
 
-  // Role constants - Only IndividualReport role for Daily Report module
+  // Role constants
   readonly ROLES = {
-    INDIVIDUAL_REPORT: 'ROLE_INDIVIDUAL_REPORT' // Single role for Daily Report module
+    INDIVIDUAL_REPORT: 'ROLE_INDIVIDUAL_REPORT', // Individual report access - full access to own reports
+    ADMIN: 'ROLE_ADMIN'
   };
 
   /**
@@ -28,8 +29,11 @@ export class DailyReportPermissionService {
       return false;
     }
 
-    // Only IndividualReport role has access to Daily Report module
-    return this.hasAnyRole([this.ROLES.INDIVIDUAL_REPORT]);
+    // Primary role for daily report module
+    return this.hasAnyRole([
+      this.ROLES.INDIVIDUAL_REPORT,
+      this.ROLES.ADMIN
+    ]);
   }
 
   /**
@@ -37,7 +41,10 @@ export class DailyReportPermissionService {
    */
   canCreateReport(): boolean {
     // IndividualReport role has full access to create reports
-    return this.hasAnyRole([this.ROLES.INDIVIDUAL_REPORT]);
+    return this.hasAnyRole([
+      this.ROLES.INDIVIDUAL_REPORT,
+      this.ROLES.ADMIN
+    ]);
   }
 
   /**
@@ -45,11 +52,14 @@ export class DailyReportPermissionService {
    */
   canEditOwnReport(): boolean {
     // IndividualReport role has full access to edit own reports
-    return this.hasAnyRole([this.ROLES.INDIVIDUAL_REPORT]);
+    return this.hasAnyRole([
+      this.ROLES.INDIVIDUAL_REPORT,
+      this.ROLES.ADMIN
+    ]);
   }
   
   /**
-   * Check if user has IndividualReport role
+   * Check if user has IndividualReport role (limited to own reports only)
    */
   hasIndividualReportAccess(): boolean {
     return this.hasAnyRole([this.ROLES.INDIVIDUAL_REPORT]);
@@ -57,60 +67,86 @@ export class DailyReportPermissionService {
   
   /**
    * Check if user can download their own reports
-   * IndividualReport role has full download access
+   * IndividualReport role has full download access to own reports
    */
   canDownloadOwnReport(): boolean {
-    return this.hasAnyRole([this.ROLES.INDIVIDUAL_REPORT]);
+    return this.hasAnyRole([
+      this.ROLES.INDIVIDUAL_REPORT,
+      this.ROLES.ADMIN
+    ]);
   }
 
   /**
-   * Check if user can review reports (supervisor and above)
+   * Check if user can review reports (admin only)
    */
-  // All other role checks return false - only IndividualReport role exists
   canReviewReports(): boolean {
-    return false; // IndividualReport users can only manage their own reports
+    return this.hasAnyRole([this.ROLES.ADMIN]);
   }
 
+  /**
+   * Check if user can approve reports (admin only)
+   */
   canApproveReports(): boolean {
-    return false; // IndividualReport users can only manage their own reports
+    return this.hasAnyRole([this.ROLES.ADMIN]);
   }
 
+  /**
+   * Check if user can reject/send back reports (admin only)
+   */
   canRejectReports(): boolean {
-    return false; // IndividualReport users can only manage their own reports
+    return this.hasAnyRole([this.ROLES.ADMIN]);
   }
 
+  /**
+   * Check if user can view all reports (not just their own) - admin only
+   */
   canViewAllReports(): boolean {
-    return false; // IndividualReport users can only view their own reports
+    return this.hasAnyRole([this.ROLES.ADMIN]);
   }
 
+  /**
+   * Check if user is a Controller (can generate and download reports) - admin only
+   */
   isController(): boolean {
-    return false; // IndividualReport users are not controllers
+    return this.hasAnyRole([this.ROLES.ADMIN]);
   }
 
+  /**
+   * Check if user is a CFO (can view and confirm reports) - admin only
+   */
   isCFO(): boolean {
-    return false; // IndividualReport users are not CFOs
+    return this.hasAnyRole([this.ROLES.ADMIN]);
   }
 
+  /**
+   * Check if user can view dashboard/analytics - admin only
+   */
   canViewDashboard(): boolean {
-    return false; // IndividualReport users don't have dashboard access
+    return this.hasAnyRole([this.ROLES.ADMIN]);
   }
 
+  /**
+   * Check if user has view-only access - not applicable with new role structure
+   */
   isViewOnly(): boolean {
     return false;
   }
 
+  /**
+   * Check if user has full access (Admin only)
+   */
   hasFullAccess(): boolean {
-    return false; // IndividualReport users only have access to their own reports
+    return this.hasAnyRole([this.ROLES.ADMIN]);
   }
 
   /**
    * Check if user can edit a specific report
-   * - Employees can only edit their own reports if not approved
-   * - Supervisors can edit any report if not approved
+   * - IndividualReport role users can only edit their own reports if not approved
+   * - Admins can edit any report
    */
   canEditReport(reportEmployeeId: number, isApproved: boolean): boolean {
     if (isApproved) {
-      // Approved reports require supervisor re-approval
+      // Approved reports require admin re-approval
       return this.hasFullAccess();
     }
 
@@ -119,12 +155,12 @@ export class DailyReportPermissionService {
       return false;
     }
 
-    // Supervisors and admins can edit any report
+    // Admins can edit any report
     if (this.hasFullAccess()) {
       return true;
     }
 
-    // IndividualReport users can only edit their own reports
+    // IndividualReport role users can only edit their own reports
     return this.hasAnyRole([this.ROLES.INDIVIDUAL_REPORT]) 
       && currentUser.id === reportEmployeeId;
   }
@@ -134,12 +170,12 @@ export class DailyReportPermissionService {
    * Only supervisors and admins can delete reports
    */
   canDeleteReport(): boolean {
-    return false; // IndividualReport users cannot delete reports
+    return this.hasFullAccess();
   }
 
   /**
    * Get user's role level for Daily Report module
-   * Returns: 'employee' | 'supervisor' | 'director' | 'manager' | 'team_lead' | 'admin' | null
+   * Returns: 'individual_report' | 'admin' | null
    */
   getUserRoleLevel(): string | null {
     const user = this.authService.currentUserValue;
@@ -149,18 +185,6 @@ export class DailyReportPermissionService {
 
     if (user.roles.includes(this.ROLES.ADMIN)) {
       return 'admin';
-    }
-    if (user.roles.includes(this.ROLES.SUPERVISOR)) {
-      return 'supervisor';
-    }
-    if (user.roles.includes(this.ROLES.DIRECTOR)) {
-      return 'director';
-    }
-    if (user.roles.includes(this.ROLES.MANAGER)) {
-      return 'manager';
-    }
-    if (user.roles.includes(this.ROLES.TEAM_LEAD)) {
-      return 'team_lead';
     }
     if (user.roles.includes(this.ROLES.INDIVIDUAL_REPORT)) {
       return 'individual_report';

@@ -64,7 +64,7 @@ public class DailyReportController {
     }
     
     @PostMapping("/{id}/review")
-    @PreAuthorize("hasAnyRole('ROLE_DAILY_REPORT_SUPERVISOR', 'ROLE_ADMIN')")
+    @PreAuthorize("hasRole('ROLE_ADMIN')")
     public ResponseEntity<DailyReportDto> reviewReport(
             @PathVariable Long id,
             @RequestBody ReviewReportRequest request,
@@ -110,7 +110,7 @@ public class DailyReportController {
     }
     
     @GetMapping
-    @PreAuthorize("hasAnyRole('ROLE_DAILY_REPORT_SUPERVISOR', 'ROLE_DAILY_REPORT_DIRECTOR', 'ROLE_DAILY_REPORT_MANAGER', 'ROLE_DAILY_REPORT_TEAM_LEAD', 'ROLE_ADMIN')")
+    @PreAuthorize("hasRole('ROLE_ADMIN')")
     public ResponseEntity<Page<DailyReportDto>> getAllReports(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
@@ -127,7 +127,7 @@ public class DailyReportController {
     }
     
     @GetMapping("/dashboard")
-    @PreAuthorize("hasAnyRole('ROLE_DAILY_REPORT_SUPERVISOR', 'ROLE_DAILY_REPORT_DIRECTOR', 'ROLE_DAILY_REPORT_MANAGER', 'ROLE_DAILY_REPORT_TEAM_LEAD', 'ROLE_ADMIN')")
+    @PreAuthorize("hasRole('ROLE_ADMIN')")
     public ResponseEntity<DailyReportDashboardDto> getDashboard() {
         DailyReportDashboardDto dashboard = dailyReportService.getDashboard();
         return ResponseEntity.ok(dashboard);
@@ -143,7 +143,7 @@ public class DailyReportController {
     }
     
     @GetMapping("/download/employee/{employeeId}")
-    @PreAuthorize("hasAnyRole('ROLE_DAILY_REPORT_SUPERVISOR', 'ROLE_ADMIN')")
+    @PreAuthorize("hasRole('ROLE_ADMIN')")
     public ResponseEntity<Resource> downloadEmployeeReport(
             @PathVariable Long employeeId,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
@@ -170,7 +170,7 @@ public class DailyReportController {
             // Get report first to verify ownership and get filename info
             DailyReport report = dailyReportService.getReportEntity(reportId);
             
-            // Verify ownership - Individual Report Access users can only download their own reports
+            // Verify ownership - IndividualReport role users can only download their own reports
             if (report.getEmployee() == null) {
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                     .header("X-Error-Message", "Report has no associated employee")
@@ -180,6 +180,8 @@ public class DailyReportController {
             Long reportEmployeeId = report.getEmployee().getId();
             System.out.println("Download ownership check - Report Employee ID: " + reportEmployeeId + ", Current User ID: " + userId + ", Match: " + reportEmployeeId.equals(userId));
             
+            // Verify ownership - users can only download their own reports
+            // This applies to all users including those with IndividualReport role
             if (!reportEmployeeId.equals(userId)) {
                 return ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .header("X-Error-Message", "You can only download your own reports. Report belongs to employee ID: " + reportEmployeeId + ", but you are user ID: " + userId)
@@ -225,7 +227,7 @@ public class DailyReportController {
     }
     
     @GetMapping("/download/combined")
-    @PreAuthorize("hasAnyRole('ROLE_DAILY_REPORT_SUPERVISOR', 'ROLE_ADMIN')")
+    @PreAuthorize("hasRole('ROLE_ADMIN')")
     public ResponseEntity<Resource> downloadCombinedReport(
             @RequestParam(required = true) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date,
             @RequestParam(required = false) String cbsEndTime,
@@ -260,7 +262,7 @@ public class DailyReportController {
     }
     
     @GetMapping("/by-date/{date}")
-    @PreAuthorize("hasAnyRole('ROLE_DAILY_REPORT_SUPERVISOR', 'ROLE_DAILY_REPORT_DIRECTOR', 'ROLE_DAILY_REPORT_MANAGER', 'ROLE_DAILY_REPORT_TEAM_LEAD', 'ROLE_ADMIN')")
+    @PreAuthorize("hasRole('ROLE_ADMIN')")
     public ResponseEntity<List<DailyReportDto>> getReportsByDate(
             @PathVariable @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date) {
         List<DailyReportDto> reports = dailyReportService.getReportsByDate(date);

@@ -176,24 +176,9 @@ public class AdminUserService {
             return "Basic dashboard access";
         }
         
-        // Daily Report specific roles
-        if (roleName.equalsIgnoreCase("ROLE_DAILY_REPORT_EMPLOYEE")) {
-            return "Can create and submit own daily reports";
-        }
-        if (roleName.equalsIgnoreCase("ROLE_DAILY_REPORT_SUPERVISOR")) {
-            return "Can review, approve, or send back daily reports";
-        }
-        if (roleName.equalsIgnoreCase("ROLE_DAILY_REPORT_DIRECTOR")) {
-            return "View-only or full access to daily reports";
-        }
-        if (roleName.equalsIgnoreCase("ROLE_DAILY_REPORT_MANAGER")) {
-            return "View-only or full access to daily reports";
-        }
-        if (roleName.equalsIgnoreCase("ROLE_DAILY_REPORT_TEAM_LEAD")) {
-            return "View-only or full access to daily reports";
-        }
-        if (roleName.equalsIgnoreCase("ROLE_DAILY_REPORT")) {
-            return "General daily report module access";
+        // Daily Report specific role
+        if (roleName.equalsIgnoreCase("ROLE_INDIVIDUAL_REPORT")) {
+            return "Full access to own daily reports (create, edit, view, download)";
         }
         
         if (roleName.startsWith("ROLE_")) {
@@ -221,7 +206,7 @@ public class AdminUserService {
             if (rolePart.equals("TRAINING")) {
                 return "TRAINING";
             }
-            if (rolePart.equals("DAILY_REPORT") || rolePart.startsWith("DAILY")) {
+            if (rolePart.equals("INDIVIDUAL_REPORT") || rolePart.equals("DAILY_REPORT") || rolePart.startsWith("DAILY")) {
                 return "DAILY";
             }
             if (rolePart.equals("QA_LEAD") || rolePart.equals("TESTER") || rolePart.startsWith("QA") || rolePart.startsWith("TEST")) {

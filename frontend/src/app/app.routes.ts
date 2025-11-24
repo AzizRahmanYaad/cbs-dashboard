@@ -55,12 +55,7 @@ export const routes: Routes = [
         canActivate: [dailyReportGuard],
         data: { 
           roles: [
-            'ROLE_DAILY_REPORT',
-            'ROLE_DAILY_REPORT_EMPLOYEE',
-            'ROLE_DAILY_REPORT_SUPERVISOR',
-            'ROLE_DAILY_REPORT_DIRECTOR',
-            'ROLE_DAILY_REPORT_MANAGER',
-            'ROLE_DAILY_REPORT_TEAM_LEAD',
+            'ROLE_INDIVIDUAL_REPORT',
             'ROLE_ADMIN'
           ] 
         }

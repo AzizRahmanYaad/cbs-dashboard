@@ -16,13 +16,8 @@ export interface RolePermission {
  * Daily Report role definitions
  */
 export const DAILY_REPORT_ROLES = {
-  EMPLOYEE: 'ROLE_DAILY_REPORT_EMPLOYEE',
-  SUPERVISOR: 'ROLE_DAILY_REPORT_SUPERVISOR',
-  DIRECTOR: 'ROLE_DAILY_REPORT_DIRECTOR',
-  MANAGER: 'ROLE_DAILY_REPORT_MANAGER',
-  TEAM_LEAD: 'ROLE_DAILY_REPORT_TEAM_LEAD',
-  ADMIN: 'ROLE_ADMIN',
-  GENERAL: 'ROLE_DAILY_REPORT'
+  INDIVIDUAL_REPORT: 'ROLE_INDIVIDUAL_REPORT',
+  ADMIN: 'ROLE_ADMIN'
 } as const;
 
 /**
@@ -30,12 +25,7 @@ export const DAILY_REPORT_ROLES = {
  * Higher number = more permissions
  */
 export const ROLE_HIERARCHY: Record<string, number> = {
-  [DAILY_REPORT_ROLES.EMPLOYEE]: 1,
-  [DAILY_REPORT_ROLES.GENERAL]: 1,
-  [DAILY_REPORT_ROLES.TEAM_LEAD]: 2,
-  [DAILY_REPORT_ROLES.MANAGER]: 3,
-  [DAILY_REPORT_ROLES.DIRECTOR]: 3,
-  [DAILY_REPORT_ROLES.SUPERVISOR]: 4,
+  [DAILY_REPORT_ROLES.INDIVIDUAL_REPORT]: 1,
   [DAILY_REPORT_ROLES.ADMIN]: 5
 };
 
@@ -58,13 +48,8 @@ export function hasHigherOrEqualRole(role1: string, role2: string): boolean {
  */
 export function getRoleDisplayName(role: string): string {
   const roleMap: Record<string, string> = {
-    [DAILY_REPORT_ROLES.EMPLOYEE]: 'Employee',
-    [DAILY_REPORT_ROLES.SUPERVISOR]: 'Supervisor',
-    [DAILY_REPORT_ROLES.DIRECTOR]: 'Director',
-    [DAILY_REPORT_ROLES.MANAGER]: 'Manager',
-    [DAILY_REPORT_ROLES.TEAM_LEAD]: 'Team Lead',
-    [DAILY_REPORT_ROLES.ADMIN]: 'Administrator',
-    [DAILY_REPORT_ROLES.GENERAL]: 'Daily Report User'
+    [DAILY_REPORT_ROLES.INDIVIDUAL_REPORT]: 'Individual Report',
+    [DAILY_REPORT_ROLES.ADMIN]: 'Administrator'
   };
   
   return roleMap[role] || role.replace('ROLE_', '').replace(/_/g, ' ');

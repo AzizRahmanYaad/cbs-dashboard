@@ -8,7 +8,7 @@ VALUES
     ('ROLE_USER'),
     ('ROLE_TRAINING'),
     ('ROLE_DRILL_TESTING'),
-    ('ROLE_DAILY_REPORT'),
+    ('ROLE_INDIVIDUAL_REPORT'),
     ('ROLE_QA_LEAD'),
     ('ROLE_TESTER'),
     ('ROLE_MANAGER')
@@ -47,7 +47,7 @@ ON CONFLICT (username) DO NOTHING;
 INSERT INTO user_roles (user_id, role_id)
 SELECT u.id, r.id
 FROM users u
-JOIN roles r ON r.name = 'ROLE_DAILY_REPORT'
+JOIN roles r ON r.name = 'ROLE_INDIVIDUAL_REPORT'
 WHERE u.username = 'daily_report_user'
 ON CONFLICT DO NOTHING;
 

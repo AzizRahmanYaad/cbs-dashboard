@@ -107,7 +107,7 @@ public class DailyReportService {
     }
     
     @Transactional
-    @PreAuthorize("hasAnyRole('ROLE_DAILY_REPORT_SUPERVISOR', 'ROLE_ADMIN')")
+    @PreAuthorize("hasRole('ROLE_ADMIN')")
     public DailyReportDto reviewReport(Long reportId, Long reviewerId, ReviewReportRequest request) {
         DailyReport report = dailyReportRepository.findById(reportId)
             .orElseThrow(() -> new EntityNotFoundException("Report not found"));
@@ -129,9 +129,8 @@ public class DailyReportService {
         DailyReport report = dailyReportRepository.findById(reportId)
             .orElseThrow(() -> new EntityNotFoundException("Report not found"));
         
-        // Verify ownership - IndividualReport users can only submit their own reports
-        if (report.getEmployee() == null || !report.getEmployee().getId().equals(employeeId)) {
-            throw new RuntimeException("You can only submit your own reports");
+        if (!report.getEmployee().getId().equals(employeeId)) {
+            throw new SecurityException("You can only submit your own reports");
         }
         
         // Validate required fields
@@ -147,15 +146,14 @@ public class DailyReportService {
         DailyReport report = dailyReportRepository.findById(reportId)
             .orElseThrow(() -> new EntityNotFoundException("Report not found"));
         
-        // Check access: users can only view their own reports
-        // IndividualReport role users can view their own reports
+        // Check access: owner or supervisor
+        // Individual Report Access users can view their own reports
         if (report.getEmployee() == null) {
             throw new RuntimeException("Report has no associated employee");
         }
         
-        // Only allow viewing own reports - no supervisor access for IndividualReport role
-        if (!report.getEmployee().getId().equals(userId)) {
-            throw new RuntimeException("You can only view your own reports");
+        if (!report.getEmployee().getId().equals(userId) && !hasSupervisorAccess(userId)) {
+            throw new RuntimeException("You don't have permission to view this report");
         }
         
         return dailyReportMapper.toDto(report);
@@ -195,7 +193,7 @@ public class DailyReportService {
     }
     
     @Transactional(readOnly = true)
-    @PreAuthorize("hasAnyRole('ROLE_DAILY_REPORT_SUPERVISOR', 'ROLE_DAILY_REPORT_DIRECTOR', 'ROLE_DAILY_REPORT_MANAGER', 'ROLE_DAILY_REPORT_TEAM_LEAD', 'ROLE_ADMIN')")
+    @PreAuthorize("hasRole('ROLE_ADMIN')")
     public Page<DailyReportDto> getAllReports(Pageable pageable, LocalDate startDate, LocalDate endDate, 
                                                Long employeeId, DailyReport.ReportStatus status) {
         Specification<DailyReport> spec = null;
@@ -228,7 +226,7 @@ public class DailyReportService {
     }
     
     @Transactional(readOnly = true)
-    @PreAuthorize("hasAnyRole('ROLE_DAILY_REPORT_SUPERVISOR', 'ROLE_DAILY_REPORT_DIRECTOR', 'ROLE_DAILY_REPORT_MANAGER', 'ROLE_DAILY_REPORT_TEAM_LEAD', 'ROLE_ADMIN')")
+    @PreAuthorize("hasRole('ROLE_ADMIN')")
     public DailyReportDashboardDto getDashboard() {
         DailyReportDashboardDto dashboard = new DailyReportDashboardDto();
         
@@ -516,13 +514,16 @@ public class DailyReportService {
         DailyReport report = dailyReportRepository.findById(reportId)
             .orElseThrow(() -> new EntityNotFoundException("Report not found with id: " + reportId));
         
-        // Verify ownership - Individual Report Access users can only download their own reports
+        // Verify ownership - users can only download their own reports
         // Ownership is already verified in controller, but double-check here for security
         if (report.getEmployee() == null) {
             throw new RuntimeException("Report has no associated employee");
         }
         
         Long reportEmployeeId = report.getEmployee().getId();
+        
+        // Allow download only if user owns the report
+        // This applies to all users including those with IndividualReport role
         if (!reportEmployeeId.equals(userId)) {
             System.out.println("PDF Generation - Permission denied. Report employee ID: " + reportEmployeeId + ", User ID: " + userId);
             throw new RuntimeException("You can only download your own reports");
@@ -627,9 +628,9 @@ public class DailyReportService {
         User user = userRepository.findById(userId).orElse(null);
         if (user == null) return false;
         
+        // Only ADMIN has supervisor access now (since we removed supervisor roles)
         return user.getRoles().stream()
-            .anyMatch(role -> role.getName().equals("ROLE_DAILY_REPORT_SUPERVISOR") ||
-                            role.getName().equals("ROLE_ADMIN"));
+            .anyMatch(role -> role.getName().equals("ROLE_ADMIN"));
     }
 }
 

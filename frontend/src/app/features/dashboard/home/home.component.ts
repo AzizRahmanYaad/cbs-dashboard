@@ -49,7 +49,7 @@ export class HomeComponent implements OnInit {
       route: '/dashboard/daily-report',
       color: 'purple',
       stats: { label: 'Reports Today', value: '24' },
-      requiredRoles: ['ROLE_DAILY_REPORT']
+      requiredRoles: ['ROLE_INDIVIDUAL_REPORT', 'ROLE_ADMIN']
     }
   ];
 
