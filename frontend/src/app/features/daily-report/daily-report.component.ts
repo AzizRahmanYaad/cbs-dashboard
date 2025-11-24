@@ -67,6 +67,7 @@ export class DailyReportComponent implements OnInit {
   canApprove = false;
   isController = false;
   isCFO = false;
+  hasIndividualReport = false;
   
   // Download state
   downloading = false;
@@ -94,6 +95,7 @@ export class DailyReportComponent implements OnInit {
     this.canApprove = this.permissionService.canApproveReports();
     this.isController = this.permissionService.isController();
     this.isCFO = this.permissionService.isCFO();
+    this.hasIndividualReport = this.permissionService.hasIndividualReportAccess();
   }
 
   initializeForm() {

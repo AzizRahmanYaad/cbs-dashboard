@@ -426,8 +426,8 @@
       </div>
     </div>
     
-    <div *ngIf="!isController && !isCFO" class="dashboard-placeholder">
-      <p>Dashboard access requires Controller or CFO role.</p>
+    <div *ngIf="!isController && !isCFO && !hasIndividualReport" class="dashboard-placeholder">
+      <p>Dashboard access requires appropriate role.</p>
     </div>
   </div>
 

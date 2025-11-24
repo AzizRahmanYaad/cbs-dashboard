@@ -129,8 +129,9 @@ public class DailyReportService {
         DailyReport report = dailyReportRepository.findById(reportId)
             .orElseThrow(() -> new EntityNotFoundException("Report not found"));
         
-        if (!report.getEmployee().getId().equals(employeeId)) {
-            throw new SecurityException("You can only submit your own reports");
+        // Verify ownership - IndividualReport users can only submit their own reports
+        if (report.getEmployee() == null || !report.getEmployee().getId().equals(employeeId)) {
+            throw new RuntimeException("You can only submit your own reports");
         }
         
         // Validate required fields
@@ -146,14 +147,15 @@ public class DailyReportService {
         DailyReport report = dailyReportRepository.findById(reportId)
             .orElseThrow(() -> new EntityNotFoundException("Report not found"));
         
-        // Check access: owner or supervisor
-        // Individual Report Access users can view their own reports
+        // Check access: users can only view their own reports
+        // IndividualReport role users can view their own reports
         if (report.getEmployee() == null) {
             throw new RuntimeException("Report has no associated employee");
         }
         
-        if (!report.getEmployee().getId().equals(userId) && !hasSupervisorAccess(userId)) {
-            throw new RuntimeException("You don't have permission to view this report");
+        // Only allow viewing own reports - no supervisor access for IndividualReport role
+        if (!report.getEmployee().getId().equals(userId)) {
+            throw new RuntimeException("You can only view your own reports");
         }
         
         return dailyReportMapper.toDto(report);
