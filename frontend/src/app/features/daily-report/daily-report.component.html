@@ -58,13 +58,6 @@
         </div>
       </div>
 
-      <!-- Reporting Line (Optional) -->
-      <div class="form-section-simple">
-        <div class="form-group">
-          <label>Reporting Line (Optional)</label>
-          <input type="text" formControlName="reportingLine" class="form-input" placeholder="Enter reporting line if applicable">
-        </div>
-      </div>
 
       <!-- Simplified Activity Input Section -->
       <div class="form-section-activities">
@@ -104,7 +97,9 @@
               class="activity-branch-select"
               [ngModelOptions]="{standalone: true}">
               <option value="">Select Branch (Optional)</option>
-              <option *ngFor="let branch of branches" [value]="branch">{{ branch }}</option>
+              <optgroup *ngFor="let zoneGroup of branchZones" [label]="zoneGroup.zone">
+                <option *ngFor="let branch of zoneGroup.branches" [value]="branch">{{ branch }}</option>
+              </optgroup>
             </select>
           </div>
         </div>
@@ -440,7 +435,6 @@
           <p><strong>Status:</strong> <span [class]="'status-badge ' + getStatusColor(viewReportModal.status)">{{ viewReportModal.status }}</span></p>
           <p *ngIf="viewReportModal.cbsEndTime"><strong>CBS End Time:</strong> {{ viewReportModal.cbsEndTime }}</p>
           <p *ngIf="viewReportModal.cbsStartTimeNextDay"><strong>CBS Start Time (Next Day):</strong> {{ viewReportModal.cbsStartTimeNextDay }}</p>
-          <p *ngIf="viewReportModal.reportingLine"><strong>Reporting Line:</strong> {{ viewReportModal.reportingLine }}</p>
         </div>
 
         <div class="report-view-section" *ngIf="viewReportModal.cbsTeamActivities && viewReportModal.cbsTeamActivities.length > 0">

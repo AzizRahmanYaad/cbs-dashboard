@@ -103,7 +103,6 @@ export class DailyReportComponent implements OnInit {
     this.reportForm = this.fb.group({
       businessDate: [this.today, Validators.required],
       dayOfWeek: [dayName, Validators.required],
-      reportingLine: [''],
       unifiedActivities: this.fb.array([]) // Will be populated from tempActivities
     });
     
@@ -137,70 +136,98 @@ export class DailyReportComponent implements OnInit {
   editingActivityBranch = '';
   private activityIdCounter = 1;
   
-  // Branch List
-  branches = [
-    // Center Zone Department
-    'Logar Provincial Branch',
-    'Panjshir Provincial Branch',
-    'Bamyan Provincial Branch',
-    'Kapisa Provincial Branch',
-    'Parwan Provincial Branch',
-    'Wardak / Maidan Shahr Branch',
-    'First City Branch',
-    'Second City Branch',
-    'Third City Branch',
-    'Fourth City Branch',
-    'Fifth City Branch',
-    'Sixth City Branch',
-    'Seventh City Branch',
-    'Teller Counter – Kabul International Airport',
-    // West Zone Department
-    'Herat Provincial Branch',
-    'Nimruz Provincial Branch',
-    'Farah Provincial Branch',
-    'Badghis Provincial Branch',
-    'Ghor Provincial Branch',
-    'Islam Qala Branch',
-    'Torghonde Branch',
-    'Herat City Branch',
-    'Nimruz Teller Counter',
-    // South West Zone Department
-    'Kandahar Provincial Branch',
-    'Uruzgan Provincial Branch',
-    'Helmand Provincial Branch',
-    'Zabul Provincial Branch',
-    'Daikundi Provincial Branch',
-    'Speen Boldak Branch',
-    'Kandahar City Branch',
-    // East Zone Department
-    'Jalalabad Provincial Branch',
-    'Laghman Provincial Branch',
-    'Kunar Provincial Branch',
-    'Nooristan Provincial Branch',
-    'Torkham Branch',
-    'Jalalabad City Branch',
-    // South East Zone Department
-    'Gardiz Provincial Branch',
-    'Khost Provincial Branch',
-    'Ghazni Provincial Branch',
-    'Paktika Provincial Branch',
-    'Dand Patan (Paktia) Branch',
-    'Gholam Khan (Khost) Branch',
-    'Argon (Paktika) Branch',
-    // North East Zone Department
-    'Kunduz Provincial Branch',
-    'Pole Khumri Provincial Branch',
-    'Badakhshan Provincial Branch',
-    'Takhar Provincial Branch',
-    'Sher Khan Port Branch',
-    // North Zone Department
-    'Mazar-e-Sharif Provincial Branch',
-    'Maimana Provincial Branch',
-    'Sheberghan Provincial Branch',
-    'Sar-e-Pul Provincial Branch',
-    'Samangan Provincial Branch',
-    'Hayratan Branch',
-    'Aqeena Branch'
+  // Branch List organized by zones
+  branchZones: { zone: string; branches: string[] }[] = [
+    {
+      zone: 'Center Zone Department',
+      branches: [
+        'Logar Provincial Branch',
+        'Panjshir Provincial Branch',
+        'Bamyan Provincial Branch',
+        'Kapisa Provincial Branch',
+        'Parwan Provincial Branch',
+        'Wardak / Maidan Shahr Branch',
+        'First City Branch',
+        'Second City Branch',
+        'Third City Branch',
+        'Fourth City Branch',
+        'Fifth City Branch',
+        'Sixth City Branch',
+        'Seventh City Branch',
+        'Teller Counter – Kabul International Airport'
+      ]
+    },
+    {
+      zone: 'West Zone Department',
+      branches: [
+        'Herat Provincial Branch',
+        'Nimruz Provincial Branch',
+        'Farah Provincial Branch',
+        'Badghis Provincial Branch',
+        'Ghor Provincial Branch',
+        'Islam Qala Branch',
+        'Torghonde Branch',
+        'Herat City Branch',
+        'Nimruz Teller Counter'
+      ]
+    },
+    {
+      zone: 'South West Zone Department',
+      branches: [
+        'Kandahar Provincial Branch',
+        'Uruzgan Provincial Branch',
+        'Helmand Provincial Branch',
+        'Zabul Provincial Branch',
+        'Daikundi Provincial Branch',
+        'Speen Boldak Branch',
+        'Kandahar City Branch'
+      ]
+    },
+    {
+      zone: 'East Zone Department',
+      branches: [
+        'Jalalabad Provincial Branch',
+        'Laghman Provincial Branch',
+        'Kunar Provincial Branch',
+        'Nooristan Provincial Branch',
+        'Torkham Branch',
+        'Jalalabad City Branch'
+      ]
+    },
+    {
+      zone: 'South East Zone Department',
+      branches: [
+        'Gardiz Provincial Branch',
+        'Khost Provincial Branch',
+        'Ghazni Provincial Branch',
+        'Paktika Provincial Branch',
+        'Dand Patan (Paktia) Branch',
+        'Gholam Khan (Khost) Branch',
+        'Argon (Paktika) Branch'
+      ]
+    },
+    {
+      zone: 'North East Zone Department',
+      branches: [
+        'Kunduz Provincial Branch',
+        'Pole Khumri Provincial Branch',
+        'Badakhshan Provincial Branch',
+        'Takhar Provincial Branch',
+        'Sher Khan Port Branch'
+      ]
+    },
+    {
+      zone: 'North Zone Department',
+      branches: [
+        'Mazar-e-Sharif Provincial Branch',
+        'Maimana Provincial Branch',
+        'Sheberghan Provincial Branch',
+        'Sar-e-Pul Provincial Branch',
+        'Samangan Provincial Branch',
+        'Hayratan Branch',
+        'Aqeena Branch'
+      ]
+    }
   ];
   
   // Unified Activities (for backend conversion)
@@ -275,7 +302,6 @@ export class DailyReportComponent implements OnInit {
   convertTempActivitiesToBackendFormat(): CreateDailyReportRequest {
     const request: CreateDailyReportRequest = {
       businessDate: this.reportForm.get('businessDate')?.value,
-      reportingLine: this.reportForm.get('reportingLine')?.value,
       chatCommunications: [],
       emailCommunications: [],
       problemEscalations: [],
@@ -331,8 +357,7 @@ export class DailyReportComponent implements OnInit {
     
     this.reportForm.patchValue({
       businessDate: report.businessDate,
-      dayOfWeek: dayName,
-      reportingLine: report.reportingLine
+      dayOfWeek: dayName
     });
     
     this.selectedDay = dayName;
