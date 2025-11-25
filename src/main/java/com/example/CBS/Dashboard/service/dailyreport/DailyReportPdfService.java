@@ -920,28 +920,47 @@ public class DailyReportPdfService {
                         .setTextAlignment(TextAlignment.LEFT);
                     document.add(activityDesc);
                     
-                    // Branch Name and Account Number on same line if both exist, otherwise separate lines
+                    // Branch Name and Account Number displayed as styled badges
                     boolean hasBranch = activity.branch != null && !activity.branch.isEmpty();
                     boolean hasAccount = activity.accountNumber != null && !activity.accountNumber.isEmpty();
                     
                     if (hasBranch || hasAccount) {
-                        String metaInfo = "";
-                        if (hasBranch && hasAccount) {
-                            metaInfo = "Branch: " + activity.branch + " | Account Number: " + activity.accountNumber;
-                        } else if (hasBranch) {
-                            metaInfo = "Branch: " + activity.branch;
-                        } else {
-                            metaInfo = "Account Number: " + activity.accountNumber;
+                        // Create a container for badges
+                        if (hasBranch) {
+                            // Branch badge with styled background (badge-like appearance)
+                            Paragraph branchBadge = new Paragraph("🏢 " + activity.branch)
+                                .setFontSize(10)
+                                .setMarginTop(4)
+                                .setMarginBottom(hasAccount ? 3 : (descIndex < typeActivities.size() ? 4 : 8))
+                                .setMarginLeft(15)
+                                .setFontColor(new DeviceRgb(211, 78, 78)) // #D34E4E
+                                .setBackgroundColor(new DeviceRgb(254, 242, 242)) // Light red background
+                                .setPaddingLeft(8)
+                                .setPaddingRight(8)
+                                .setPaddingTop(4)
+                                .setPaddingBottom(4)
+                                .setBorder(new SolidBorder(new DeviceRgb(254, 202, 202), 1f))
+                                .setBorderRadius(new com.itextpdf.layout.properties.BorderRadius(6f));
+                            document.add(branchBadge);
                         }
                         
-                        Paragraph metaPara = new Paragraph(metaInfo)
-                            .setFontSize(10)
-                            .setMarginTop(2)
-                            .setMarginBottom(descIndex < typeActivities.size() ? 4 : 8)
-                            .setMarginLeft(15)
-                            .setFontColor(new DeviceRgb(107, 114, 128))
-                            .setItalic();
-                        document.add(metaPara);
+                        if (hasAccount) {
+                            // Account Number badge
+                            Paragraph accountBadge = new Paragraph("💳 " + activity.accountNumber)
+                                .setFontSize(10)
+                                .setMarginTop(hasBranch ? 0 : 4)
+                                .setMarginBottom(descIndex < typeActivities.size() ? 4 : 8)
+                                .setMarginLeft(15)
+                                .setFontColor(new DeviceRgb(3, 105, 161)) // Blue color
+                                .setBackgroundColor(new DeviceRgb(240, 249, 255)) // Light blue background
+                                .setPaddingLeft(8)
+                                .setPaddingRight(8)
+                                .setPaddingTop(4)
+                                .setPaddingBottom(4)
+                                .setBorder(new SolidBorder(new DeviceRgb(186, 230, 253), 1f))
+                                .setBorderRadius(new com.itextpdf.layout.properties.BorderRadius(6f));
+                            document.add(accountBadge);
+                        }
                     } else {
                         // Add bottom margin if no branch/account and this is the last item in group
                         if (descIndex >= typeActivities.size()) {

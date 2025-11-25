@@ -185,8 +185,14 @@ public class DailyReportService {
             if (report.getAfpayCardRequests() != null) report.getAfpayCardRequests().size();
             if (report.getQrmisIssues() != null) report.getQrmisIssues().size();
             // Also initialize employee and reviewedBy
-            if (report.getEmployee() != null) report.getEmployee().getUsername();
-            if (report.getReviewedBy() != null) report.getReviewedBy().getUsername();
+            if (report.getEmployee() != null) {
+                report.getEmployee().getUsername();
+                report.getEmployee().getFullName();
+            }
+            if (report.getReviewedBy() != null) {
+                report.getReviewedBy().getUsername();
+                report.getReviewedBy().getFullName();
+            }
         });
         
         return reportsPage.map(dailyReportMapper::toDto);
@@ -488,8 +494,14 @@ public class DailyReportService {
             if (report.getMeetings() != null) report.getMeetings().size();
             if (report.getAfpayCardRequests() != null) report.getAfpayCardRequests().size();
             if (report.getQrmisIssues() != null) report.getQrmisIssues().size();
-            if (report.getEmployee() != null) report.getEmployee().getUsername();
-            if (report.getReviewedBy() != null) report.getReviewedBy().getUsername();
+            if (report.getEmployee() != null) {
+                report.getEmployee().getUsername();
+                report.getEmployee().getFullName();
+            }
+            if (report.getReviewedBy() != null) {
+                report.getReviewedBy().getUsername();
+                report.getReviewedBy().getFullName();
+            }
         });
         
         return pdfService.generateEmployeeReportPdf(reports);
@@ -504,6 +516,7 @@ public class DailyReportService {
         if (report.getEmployee() != null) {
             report.getEmployee().getId();
             report.getEmployee().getUsername();
+            report.getEmployee().getFullName(); // Initialize fullName
         }
         
         return report;
@@ -617,8 +630,14 @@ public class DailyReportService {
             if (report.getMeetings() != null) report.getMeetings().size();
             if (report.getAfpayCardRequests() != null) report.getAfpayCardRequests().size();
             if (report.getQrmisIssues() != null) report.getQrmisIssues().size();
-            if (report.getEmployee() != null) report.getEmployee().getUsername();
-            if (report.getReviewedBy() != null) report.getReviewedBy().getUsername();
+            if (report.getEmployee() != null) {
+                report.getEmployee().getUsername();
+                report.getEmployee().getFullName();
+            }
+            if (report.getReviewedBy() != null) {
+                report.getReviewedBy().getUsername();
+                report.getReviewedBy().getFullName();
+            }
         });
         
         return pdfService.generateCombinedReportPdf(reports, cbsEndTime, cbsStartTimeNextDay);
