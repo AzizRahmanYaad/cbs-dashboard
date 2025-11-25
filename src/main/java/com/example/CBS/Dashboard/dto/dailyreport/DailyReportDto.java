@@ -19,6 +19,7 @@ public class DailyReportDto {
     private LocalDate businessDate;
     private Long employeeId;
     private String employeeUsername;
+    private String employeeFullName;
     private String employeeEmail;
     
     // CBS Time Tracking

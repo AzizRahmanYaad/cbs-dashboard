@@ -10,6 +10,9 @@ import java.util.Set;
 @Data
 public class UpdateUserRequest {
 
+    @Size(max = 200, message = "Full name must not exceed 200 characters")
+    private String fullName;
+
     @Email(message = "Invalid email format")
     private String email;
 

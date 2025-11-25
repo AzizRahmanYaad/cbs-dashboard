@@ -713,7 +713,10 @@ public class DailyReportPdfService {
         infoTable.setMarginBottom(15);
         infoTable.setBorder(new SolidBorder(new DeviceRgb(211, 78, 78), 2));
 
-        addStyledInfoRow(infoTable, "Prepared By:", report.getEmployee().getUsername());
+        String preparedBy = report.getEmployee().getFullName() != null && !report.getEmployee().getFullName().isEmpty()
+            ? report.getEmployee().getFullName()
+            : report.getEmployee().getUsername();
+        addStyledInfoRow(infoTable, "Prepared By:", preparedBy);
         if (report.getReviewedBy() != null) {
             addStyledInfoRow(infoTable, "Reviewed By:", report.getReviewedBy().getUsername());
         }

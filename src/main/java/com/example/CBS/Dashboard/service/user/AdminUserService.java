@@ -165,6 +165,7 @@ public class AdminUserService {
 
         User user = new User();
         user.setUsername(request.getUsername());
+        user.setFullName(request.getFullName());
         user.setEmail(request.getEmail());
         user.setPassword(passwordEncoder.encode(request.getPassword()));
         user.setEnabled(request.getEnabled() == null ? true : request.getEnabled());
@@ -178,6 +179,10 @@ public class AdminUserService {
     public UserDto updateUser(Long id, UpdateUserRequest request) {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("User not found with id: " + id));
+
+        if (request.getFullName() != null) {
+            user.setFullName(request.getFullName());
+        }
 
         if (request.getEmail() != null && !request.getEmail().equalsIgnoreCase(user.getEmail())) {
             if (userRepository.existsByEmailAndIdNot(request.getEmail(), id)) {

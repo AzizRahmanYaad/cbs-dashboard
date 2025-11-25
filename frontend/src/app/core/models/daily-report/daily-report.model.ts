@@ -112,6 +112,7 @@ export interface DailyReport {
   businessDate: string;
   employeeId?: number;
   employeeUsername?: string;
+  employeeFullName?: string;
   employeeEmail?: string;
   cbsEndTime?: string;
   cbsStartTimeNextDay?: string;

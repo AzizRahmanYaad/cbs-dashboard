@@ -19,7 +19,7 @@
   color: #1f2937;
   margin: 0 0 0.5rem 0;
   letter-spacing: -1px;
-  background: linear-gradient(135deg, #8b4513 0%, #a0522d 100%);
+  background: linear-gradient(135deg, #D34E4E 0%, #b83d3d 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -55,8 +55,8 @@
   }
 
   &.active {
-    color: #7c3aed;
-    border-bottom-color: #7c3aed;
+    color: #D34E4E;
+    border-bottom-color: #D34E4E;
     font-weight: 600;
   }
 }
@@ -67,16 +67,16 @@
   padding: 3rem;
   box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08), 0 4px 10px rgba(0, 0, 0, 0.04);
   margin-top: 1.5rem;
-  border: 1px solid rgba(139, 69, 19, 0.1);
+  border: 1px solid rgba(211, 78, 78, 0.1);
 }
 
 // Simplified Form Styles
 .form-section-header {
-  background: linear-gradient(135deg, #8b4513 0%, #a0522d 100%);
+  background: linear-gradient(135deg, #D34E4E 0%, #b83d3d 100%);
   border-radius: 12px;
   padding: 2rem;
   margin-bottom: 2rem;
-  box-shadow: 0 4px 12px rgba(139, 69, 19, 0.2);
+  box-shadow: 0 4px 12px rgba(211, 78, 78, 0.2);
 }
 
 .date-day-selector {
@@ -163,7 +163,7 @@
   font-weight: 700;
   color: #1f2937;
   margin: 0 0 0.5rem 0;
-  background: linear-gradient(135deg, #8b4513 0%, #a0522d 100%);
+  background: linear-gradient(135deg, #D34E4E 0%, #b83d3d 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -210,8 +210,8 @@
   
   &:focus {
     outline: none;
-    border-color: #8b4513;
-    box-shadow: 0 0 0 4px rgba(139, 69, 19, 0.1);
+    border-color: #D34E4E;
+    box-shadow: 0 0 0 4px rgba(211, 78, 78, 0.1);
   }
   
   &::placeholder {
@@ -232,8 +232,8 @@
   
   &:focus {
     outline: none;
-    border-color: #8b4513;
-    box-shadow: 0 0 0 4px rgba(139, 69, 19, 0.1);
+    border-color: #D34E4E;
+    box-shadow: 0 0 0 4px rgba(211, 78, 78, 0.1);
   }
   
   option {
@@ -257,8 +257,8 @@
   
   &:focus {
     outline: none;
-    border-color: #8b4513;
-    box-shadow: 0 0 0 4px rgba(139, 69, 19, 0.1);
+    border-color: #D34E4E;
+    box-shadow: 0 0 0 4px rgba(211, 78, 78, 0.1);
   }
   
   &::placeholder {
@@ -268,7 +268,7 @@
 
 .btn-add-activity {
   padding: 0.875rem 1.5rem;
-  background: linear-gradient(135deg, #8b4513 0%, #a0522d 100%);
+  background: linear-gradient(135deg, #D34E4E 0%, #b83d3d 100%);
   color: white;
   border: none;
   border-radius: 8px;
@@ -277,11 +277,11 @@
   font-size: 0.95rem;
   transition: all 0.3s;
   white-space: nowrap;
-  box-shadow: 0 2px 4px rgba(139, 69, 19, 0.2);
+  box-shadow: 0 2px 4px rgba(211, 78, 78, 0.2);
   
   &:hover:not(:disabled) {
     transform: translateY(-2px);
-    box-shadow: 0 4px 8px rgba(139, 69, 19, 0.3);
+    box-shadow: 0 4px 8px rgba(211, 78, 78, 0.3);
   }
   
   &:disabled {
@@ -326,8 +326,8 @@
   transition: all 0.3s;
   
   &:hover {
-    border-color: #d4a574;
-    box-shadow: 0 2px 8px rgba(139, 69, 19, 0.1);
+    border-color: #D34E4E;
+    box-shadow: 0 2px 8px rgba(211, 78, 78, 0.1);
     transform: translateX(4px);
   }
 }
@@ -352,13 +352,13 @@
   justify-content: center;
   width: 28px;
   height: 28px;
-  background: linear-gradient(135deg, #8b4513 0%, #a0522d 100%);
+  background: linear-gradient(135deg, #D34E4E 0%, #b83d3d 100%);
   color: white;
   border-radius: 50%;
   font-weight: 700;
   font-size: 0.85rem;
   flex-shrink: 0;
-  box-shadow: 0 2px 4px rgba(139, 69, 19, 0.3);
+  box-shadow: 0 2px 4px rgba(211, 78, 78, 0.3);
 }
 
 .activity-description-line {
@@ -406,8 +406,8 @@
   
   &:focus {
     outline: none;
-    border-color: #8b4513;
-    box-shadow: 0 0 0 4px rgba(139, 69, 19, 0.1);
+    border-color: #D34E4E;
+    box-shadow: 0 0 0 4px rgba(211, 78, 78, 0.1);
   }
   
   option {
@@ -429,9 +429,9 @@
 .activity-branch-badge {
   display: inline-block;
   padding: 0.25rem 0.75rem;
-  background: linear-gradient(135deg, #fef3e2 0%, #fef9f3 100%);
-  color: #8b4513;
-  border: 1px solid #f4d4a3;
+  background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%);
+  color: #D34E4E;
+  border: 1px solid #fecaca;
   border-radius: 6px;
   font-size: 0.85rem;
   font-weight: 500;
@@ -640,8 +640,8 @@
   
   &:focus {
     outline: none;
-    border-color: #8b4513;
-    box-shadow: 0 0 0 4px rgba(139, 69, 19, 0.1);
+    border-color: #D34E4E;
+    box-shadow: 0 0 0 4px rgba(211, 78, 78, 0.1);
   }
   
   &.ng-invalid.ng-touched {
@@ -689,7 +689,7 @@
 
 .btn-save-primary {
   padding: 1rem 3rem;
-  background: linear-gradient(135deg, #8b4513 0%, #a0522d 100%);
+  background: linear-gradient(135deg, #D34E4E 0%, #b83d3d 100%);
   color: white;
   border: none;
   border-radius: 10px;
@@ -697,13 +697,13 @@
   font-weight: 700;
   font-size: 1.1rem;
   transition: all 0.3s;
-  box-shadow: 0 4px 8px rgba(139, 69, 19, 0.3);
+  box-shadow: 0 4px 8px rgba(211, 78, 78, 0.3);
   text-transform: uppercase;
   letter-spacing: 0.5px;
   
   &:hover:not(:disabled) {
     transform: translateY(-3px);
-    box-shadow: 0 6px 12px rgba(139, 69, 19, 0.4);
+    box-shadow: 0 6px 12px rgba(211, 78, 78, 0.4);
   }
   
   &:disabled {
@@ -716,9 +716,9 @@
 .post-save-actions {
   margin-top: 2rem;
   padding: 2rem;
-  background: linear-gradient(135deg, #fef3e2 0%, #fef9f3 100%);
+  background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%);
   border-radius: 12px;
-  border: 2px solid #f4d4a3;
+  border: 2px solid #fecaca;
 }
 
 .action-buttons-group {
@@ -1160,15 +1160,15 @@ textarea.form-input {
 }
 
 .btn-download {
-  background: linear-gradient(135deg, #8b4513 0%, #a0522d 100%);
+  background: linear-gradient(135deg, #D34E4E 0%, #b83d3d 100%);
   color: white;
   border: none;
-  box-shadow: 0 2px 4px rgba(139, 69, 19, 0.3);
+  box-shadow: 0 2px 4px rgba(211, 78, 78, 0.3);
   
   &:hover:not(:disabled) {
-    background: linear-gradient(135deg, #a0522d 0%, #8b4513 100%);
+    background: linear-gradient(135deg, #b83d3d 0%, #D34E4E 100%);
     transform: translateY(-1px);
-    box-shadow: 0 4px 6px rgba(139, 69, 19, 0.4);
+    box-shadow: 0 4px 6px rgba(211, 78, 78, 0.4);
   }
 }
 
@@ -1199,12 +1199,15 @@ textarea.form-input {
 .report-card {
   padding: 1.5rem;
   background: white;
-  border: 1px solid #e5e7eb;
-  border-radius: 8px;
-  transition: box-shadow 0.2s;
+  border: 2px solid #f3f4f6;
+  border-radius: 12px;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.04);
 
   &:hover {
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    border-color: #D34E4E;
+    box-shadow: 0 8px 16px rgba(211, 78, 78, 0.15);
+    transform: translateY(-2px);
   }
 }
 
@@ -1332,8 +1335,8 @@ textarea.form-input {
 .date-header {
   margin-bottom: 1rem;
   padding-bottom: 0.5rem;
-  border-bottom: 2px solid #7c3aed;
-  color: #7c3aed;
+  border-bottom: 2px solid #D34E4E;
+  color: #D34E4E;
   font-size: 1.1rem;
   font-weight: 600;
 }
@@ -1467,12 +1470,12 @@ textarea.form-input {
 }
 
 .report-header-card {
-  background: linear-gradient(135deg, #fef3e2 0%, #fef9f3 100%);
+  background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%);
   border-radius: 16px;
   padding: 2rem;
   margin-bottom: 2.5rem;
-  border: 2px solid #f4d4a3;
-  box-shadow: 0 4px 12px rgba(139, 69, 19, 0.1);
+  border: 2px solid #fecaca;
+  box-shadow: 0 4px 12px rgba(211, 78, 78, 0.1);
 }
 
 .report-header-grid {
@@ -1516,7 +1519,7 @@ textarea.form-input {
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.5px;
-  color: #8b4513;
+  color: #D34E4E;
   opacity: 0.8;
 }
 

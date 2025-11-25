@@ -44,7 +44,8 @@
               formControlName="businessDate"
               [max]="today"
               (change)="onDateChange()"
-              class="form-input-primary">
+              class="form-input-primary"
+              [readonly]="false">
           </div>
           <div class="form-group">
             <label class="label-primary">Day of Week *</label>
@@ -486,8 +487,8 @@
                 </svg>
               </div>
               <div class="info-content">
-                <span class="info-label">Employee</span>
-                <span class="info-value">{{ viewReportModal.employeeUsername }}</span>
+                <span class="info-label">Prepared By</span>
+                <span class="info-value">{{ viewReportModal.employeeFullName || viewReportModal.employeeUsername }}</span>
               </div>
             </div>
             

@@ -1,5 +1,6 @@
 export interface CreateUserRequest {
   username: string;
+  fullName?: string;
   email: string;
   password: string;
   roles: string[];
@@ -7,6 +8,7 @@ export interface CreateUserRequest {
 }
 
 export interface UpdateUserRequest {
+  fullName?: string;
   email?: string;
   password?: string;
   roles: string[];

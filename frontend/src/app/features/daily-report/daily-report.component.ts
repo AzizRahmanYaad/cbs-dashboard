@@ -539,6 +539,10 @@ export class DailyReportComponent implements OnInit {
         this.currentReport = updatedReport!;
         this.successMessage = 'Report saved successfully';
         this.loadMyReports();
+        // Refresh view modal if it's open
+        if (this.showViewModal && this.viewReportModal?.id === this.currentReport.id) {
+          this.refreshViewModal();
+        }
       } else {
         const report = await this.reportService.createReport(request).toPromise();
         this.currentReport = report!;
@@ -732,6 +736,7 @@ export class DailyReportComponent implements OnInit {
   async viewReport(report: DailyReport) {
     this.loading = true;
     try {
+      // Always fetch fresh data to ensure latest changes are shown
       const fullReport = await this.reportService.getReport(report.id!).toPromise();
       this.viewReportModal = fullReport!;
       this.showViewModal = true;
@@ -739,6 +744,13 @@ export class DailyReportComponent implements OnInit {
       this.errorMessage = 'Failed to load report';
     } finally {
       this.loading = false;
+    }
+  }
+  
+  // Refresh view modal after updates
+  refreshViewModal() {
+    if (this.viewReportModal && this.viewReportModal.id) {
+      this.viewReport(this.viewReportModal);
     }
   }
   

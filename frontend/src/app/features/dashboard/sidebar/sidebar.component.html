@@ -54,7 +54,7 @@
 
   <div class="sidebar-footer" *ngIf="currentUser$ | async as currentUser">
     <div class="user-card">
-      <p class="user-name">{{ currentUser.username }}</p>
+      <p class="user-name">{{ currentUser.fullName || currentUser.username }}</p>
       <p class="user-role">{{ currentUser.roles.join(', ') || 'User' }}</p>
       <span class="user-status">Active · {{ officeShort }} Office</span>
     </div>

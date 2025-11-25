@@ -28,6 +28,7 @@ public class DailyReportMapper {
         if (report.getEmployee() != null) {
             dto.setEmployeeId(report.getEmployee().getId());
             dto.setEmployeeUsername(report.getEmployee().getUsername());
+            dto.setEmployeeFullName(report.getEmployee().getFullName());
             dto.setEmployeeEmail(report.getEmployee().getEmail());
         }
         
