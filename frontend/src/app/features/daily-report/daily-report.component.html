@@ -171,13 +171,23 @@
       <div class="post-save-actions" *ngIf="currentReport && currentReport.id">
         <div class="action-buttons-group">
           <button type="button" class="btn-action-view" (click)="viewReport(currentReport)">
-            <span class="icon">👁️</span> View Report
+            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+              <path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+            </svg>
+            View Report
           </button>
           <button type="button" class="btn-action-edit" (click)="loadReportForEdit(currentReport)">
-            <span class="icon">✏️</span> Edit Report
+            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+            </svg>
+            Edit Report
           </button>
           <button type="button" class="btn-action-download" (click)="downloadMyReport(currentReport)" [disabled]="downloading">
-            <span class="icon">📥</span> {{ downloading ? 'Downloading...' : 'Download PDF' }}
+            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
+            </svg>
+            {{ downloading ? 'Downloading...' : 'Download PDF' }}
           </button>
         </div>
       </div>
@@ -497,126 +507,43 @@
           </div>
         </div>
 
-        <!-- Activities Sections -->
-        <div class="activities-container-premium" *ngIf="viewReportModal.cbsTeamActivities && viewReportModal.cbsTeamActivities.length > 0">
+        <!-- Unified Activities Section - Clean Design -->
+        <div class="activities-container-premium" *ngIf="getAllActivities(viewReportModal).length > 0">
           <div class="section-header-premium">
             <div class="section-icon">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
+                <path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"></path>
               </svg>
             </div>
             <div>
-              <h3 class="section-title-premium">CBS Team Activities</h3>
-              <p class="section-count">{{ viewReportModal.cbsTeamActivities.length }} activity(s)</p>
+              <h3 class="section-title-premium">Daily Activities</h3>
+              <p class="section-count">{{ getAllActivities(viewReportModal).length }} activity(s)</p>
             </div>
           </div>
           
           <div class="activities-list-premium">
-            <div *ngFor="let activity of viewReportModal.cbsTeamActivities; let i = index" class="activity-card-premium">
-              <div class="activity-number-premium">{{ i + 1 }}</div>
-              <div class="activity-content-premium">
-                <p class="activity-description-premium">{{ activity.description }}</p>
-                <div class="activity-meta" *ngIf="activity.activityType || activity.branch">
-                  <span class="activity-type-tag" *ngIf="activity.activityType">{{ activity.activityType }}</span>
-                  <span class="activity-branch-tag" *ngIf="activity.branch">🏢 {{ activity.branch }}</span>
-                </div>
-                <div class="activity-details-premium" *ngIf="activity.actionTaken || activity.finalStatus">
-                  <p *ngIf="activity.actionTaken" class="detail-item">
-                    <svg class="detail-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                      <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"></path>
+            <div *ngFor="let activity of getAllActivities(viewReportModal); let i = index" class="activity-card-premium-modern">
+              <div class="activity-icon-modern">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                </svg>
+              </div>
+              <div class="activity-content-premium-modern">
+                <h4 class="activity-name-modern">{{ activity.activityName }}</h4>
+                <p class="activity-description-modern">{{ activity.description }}</p>
+                <div class="activity-meta-modern" *ngIf="activity.branch || activity.accountNumber">
+                  <span class="activity-branch-tag-modern" *ngIf="activity.branch">
+                    <svg class="meta-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path>
                     </svg>
-                    <strong>Action Taken:</strong> {{ activity.actionTaken }}
-                  </p>
-                  <p *ngIf="activity.finalStatus" class="detail-item">
-                    <svg class="detail-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                      <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"></path>
+                    {{ activity.branch }}
+                  </span>
+                  <span class="activity-account-tag-modern" *ngIf="activity.accountNumber">
+                    <svg class="meta-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"></path>
                     </svg>
-                    <strong>Final Status:</strong> {{ activity.finalStatus }}
-                  </p>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Other Sections with similar premium design -->
-        <div class="activities-container-premium" *ngIf="viewReportModal.chatCommunications && viewReportModal.chatCommunications.length > 0">
-          <div class="section-header-premium">
-            <div class="section-icon">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path>
-              </svg>
-            </div>
-            <div>
-              <h3 class="section-title-premium">Chat Communications</h3>
-              <p class="section-count">{{ viewReportModal.chatCommunications.length }} communication(s)</p>
-            </div>
-          </div>
-          <div class="activities-list-premium">
-            <div *ngFor="let comm of viewReportModal.chatCommunications" class="activity-card-premium">
-              <div class="activity-content-premium">
-                <p class="activity-description-premium">{{ comm.summary }}</p>
-                <div class="activity-meta">
-                  <span class="activity-type-tag">{{ comm.platform }}</span>
-                </div>
-                <p *ngIf="comm.actionTaken" class="detail-item">
-                  <svg class="detail-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"></path>
-                  </svg>
-                  <strong>Action Taken:</strong> {{ comm.actionTaken }}
-                </p>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div class="activities-container-premium" *ngIf="viewReportModal.emailCommunications && viewReportModal.emailCommunications.length > 0">
-          <div class="section-header-premium">
-            <div class="section-icon">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
-              </svg>
-            </div>
-            <div>
-              <h3 class="section-title-premium">Email Communications</h3>
-              <p class="section-count">{{ viewReportModal.emailCommunications.length }} email(s)</p>
-            </div>
-          </div>
-          <div class="activities-list-premium">
-            <div *ngFor="let email of viewReportModal.emailCommunications" class="activity-card-premium">
-              <div class="activity-content-premium">
-                <p class="activity-description-premium"><strong>Subject:</strong> {{ email.subject }}</p>
-                <p class="activity-description-premium">{{ email.summary }}</p>
-                <div class="activity-meta">
-                  <span class="activity-type-tag">{{ email.isInternal ? 'Internal' : 'External' }}</span>
-                  <span class="activity-branch-tag">From: {{ email.sender }}</span>
-                  <span class="activity-branch-tag">To: {{ email.receiver }}</span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div class="activities-container-premium" *ngIf="viewReportModal.pendingActivities && viewReportModal.pendingActivities.length > 0">
-          <div class="section-header-premium">
-            <div class="section-icon">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-              </svg>
-            </div>
-            <div>
-              <h3 class="section-title-premium">Pending Activities</h3>
-              <p class="section-count">{{ viewReportModal.pendingActivities.length }} pending item(s)</p>
-            </div>
-          </div>
-          <div class="activities-list-premium">
-            <div *ngFor="let pending of viewReportModal.pendingActivities" class="activity-card-premium">
-              <div class="activity-content-premium">
-                <p class="activity-description-premium"><strong>{{ pending.title }}</strong></p>
-                <p class="activity-description-premium">{{ pending.description }}</p>
-                <div class="activity-meta">
-                  <span class="activity-type-tag">{{ pending.status }}</span>
-                  <span class="activity-branch-tag" *ngIf="pending.amount">Amount: {{ pending.amount }}</span>
+                    {{ activity.accountNumber }}
+                  </span>
                 </div>
               </div>
             </div>

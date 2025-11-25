@@ -861,4 +861,115 @@ export class DailyReportComponent implements OnInit {
       this.loading = false;
     }
   }
+
+  // Get all activities in unified format for display
+  getAllActivities(report: DailyReport | null): Array<{activityName: string, description: string, branch?: string, accountNumber?: string}> {
+    if (!report) return [];
+    
+    const activities: Array<{activityName: string, description: string, branch?: string, accountNumber?: string}> = [];
+    
+    // CBS Team Activities
+    if (report.cbsTeamActivities && report.cbsTeamActivities.length > 0) {
+      report.cbsTeamActivities.forEach(activity => {
+        activities.push({
+          activityName: activity.activityType || 'CBS Team Activity',
+          description: activity.description,
+          branch: activity.branch,
+          accountNumber: activity.accountNumber
+        });
+      });
+    }
+    
+    // Email Communications
+    if (report.emailCommunications && report.emailCommunications.length > 0) {
+      report.emailCommunications.forEach(email => {
+        activities.push({
+          activityName: 'Email Communication',
+          description: email.summary || email.subject || ''
+        });
+      });
+    }
+    
+    // Chat Communications
+    if (report.chatCommunications && report.chatCommunications.length > 0) {
+      report.chatCommunications.forEach(chat => {
+        activities.push({
+          activityName: 'Chat Communication',
+          description: chat.summary || ''
+        });
+      });
+    }
+    
+    // Problem Escalations
+    if (report.problemEscalations && report.problemEscalations.length > 0) {
+      report.problemEscalations.forEach(escalation => {
+        activities.push({
+          activityName: 'Problem Escalation',
+          description: escalation.reason || ''
+        });
+      });
+    }
+    
+    // Pending Activities
+    if (report.pendingActivities && report.pendingActivities.length > 0) {
+      report.pendingActivities.forEach(pending => {
+        activities.push({
+          activityName: 'Pending Activity',
+          description: pending.description || pending.title || ''
+        });
+      });
+    }
+    
+    // Meetings
+    if (report.meetings && report.meetings.length > 0) {
+      report.meetings.forEach(meeting => {
+        activities.push({
+          activityName: 'Meeting',
+          description: meeting.summary || meeting.topic || ''
+        });
+      });
+    }
+    
+    // Training & Capacity Building
+    if (report.trainingCapacityBuildings && report.trainingCapacityBuildings.length > 0) {
+      report.trainingCapacityBuildings.forEach(training => {
+        activities.push({
+          activityName: 'Training & Capacity Building',
+          description: training.topic || ''
+        });
+      });
+    }
+    
+    // Project Progress Updates
+    if (report.projectProgressUpdates && report.projectProgressUpdates.length > 0) {
+      report.projectProgressUpdates.forEach(project => {
+        activities.push({
+          activityName: 'Project Progress Update',
+          description: project.progressDetail || ''
+        });
+      });
+    }
+    
+    // AFPay Card Requests
+    if (report.afpayCardRequests && report.afpayCardRequests.length > 0) {
+      report.afpayCardRequests.forEach(afpay => {
+        activities.push({
+          activityName: 'AFPay Card Request',
+          description: afpay.resolutionDetails || ''
+        });
+      });
+    }
+    
+    // QRMIS Issues
+    if (report.qrmisIssues && report.qrmisIssues.length > 0) {
+      report.qrmisIssues.forEach(qrmis => {
+        activities.push({
+          activityName: 'QRMIS Issue',
+          description: qrmis.problemDescription || ''
+        });
+      });
+    }
+    
+    return activities;
+  }
 }

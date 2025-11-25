@@ -93,13 +93,13 @@ public class DailyReportPdfService {
     
     private void addCombinedHeader(Document document, DailyReport sampleReport, java.time.LocalDate businessDate, 
                                    java.time.LocalTime cbsEndTime, java.time.LocalTime cbsStartTimeNextDay) {
-        // Main Title with brown/gold accent
+        // Main Title with modern #D34E4E accent
         Paragraph mainTitle = new Paragraph("Da Afghanistan Bank")
             .setBold()
             .setFontSize(20)
             .setTextAlignment(TextAlignment.CENTER)
             .setMarginBottom(5)
-            .setFontColor(new DeviceRgb(139, 69, 19)); // Brown color
+            .setFontColor(new DeviceRgb(211, 78, 78)); // #D34E4E
         document.add(mainTitle);
 
         Paragraph subtitle = new Paragraph("CBS TEAM DAILY STATUS REPORT")
@@ -107,7 +107,7 @@ public class DailyReportPdfService {
             .setFontSize(17)
             .setTextAlignment(TextAlignment.CENTER)
             .setMarginBottom(8)
-            .setFontColor(new DeviceRgb(101, 67, 33)); // Darker brown
+            .setFontColor(new DeviceRgb(211, 78, 78)); // #D34E4E
         document.add(subtitle);
 
         Paragraph businessDay = new Paragraph("BUSINESS DAY: " + businessDate.format(DATE_FORMATTER))
@@ -115,15 +115,15 @@ public class DailyReportPdfService {
             .setFontSize(13)
             .setTextAlignment(TextAlignment.CENTER)
             .setMarginBottom(15)
-            .setFontColor(new DeviceRgb(139, 69, 19)) // Brown
-            .setBackgroundColor(new DeviceRgb(245, 222, 179)) // Light brown background
+            .setFontColor(ColorConstants.WHITE)
+            .setBackgroundColor(new DeviceRgb(211, 78, 78)) // #D34E4E background
             .setPadding(8);
         document.add(businessDay);
 
-        // Report Info Table with better styling (brown theme)
+        // Report Info Table with modern #D34E4E styling
         Table infoTable = new Table(2).useAllAvailableWidth();
         infoTable.setMarginBottom(15);
-        infoTable.setBorder(new SolidBorder(new DeviceRgb(139, 69, 19), 2));
+        infoTable.setBorder(new SolidBorder(new DeviceRgb(211, 78, 78), 2));
 
         addStyledInfoRow(infoTable, "Prepared By:", getEmployeeNames(sampleReport));
         if (sampleReport.getReportingLine() != null && !sampleReport.getReportingLine().isEmpty()) {
@@ -150,14 +150,14 @@ public class DailyReportPdfService {
         Cell labelCell = new Cell()
             .add(new Paragraph(label).setBold().setFontSize(10))
             .setPadding(8)
-            .setBackgroundColor(new DeviceRgb(222, 184, 135)) // Burlywood brown
-            .setFontColor(new DeviceRgb(101, 67, 33)) // Dark brown text
-            .setBorder(new SolidBorder(new DeviceRgb(139, 69, 19), 0.5f));
+            .setBackgroundColor(new DeviceRgb(211, 78, 78)) // #D34E4E
+            .setFontColor(ColorConstants.WHITE)
+            .setBorder(new SolidBorder(new DeviceRgb(211, 78, 78), 0.5f));
         Cell valueCell = new Cell()
             .add(new Paragraph(value != null ? value : "").setFontSize(10))
             .setPadding(8)
-            .setBackgroundColor(new DeviceRgb(255, 248, 220)) // Cornsilk
-            .setBorder(new SolidBorder(new DeviceRgb(139, 69, 19), 0.5f));
+            .setBackgroundColor(ColorConstants.WHITE)
+            .setBorder(new SolidBorder(new DeviceRgb(211, 78, 78), 0.5f));
         table.addCell(labelCell);
         table.addCell(valueCell);
     }
@@ -681,13 +681,13 @@ public class DailyReportPdfService {
     }
 
     private void addHeader(Document document, DailyReport report) throws IOException {
-        // Title with professional brown styling
+        // Title with modern #D34E4E styling
         Paragraph title = new Paragraph("Da Afghanistan Bank")
             .setBold()
             .setFontSize(20)
             .setTextAlignment(TextAlignment.CENTER)
             .setMarginBottom(5)
-            .setFontColor(new DeviceRgb(139, 69, 19)); // Brown
+            .setFontColor(new DeviceRgb(211, 78, 78)); // #D34E4E
         document.add(title);
 
         Paragraph subtitle = new Paragraph("CBS TEAM DAILY STATUS REPORT")
@@ -695,7 +695,7 @@ public class DailyReportPdfService {
             .setFontSize(17)
             .setTextAlignment(TextAlignment.CENTER)
             .setMarginBottom(8)
-            .setFontColor(new DeviceRgb(101, 67, 33)); // Darker brown
+            .setFontColor(new DeviceRgb(211, 78, 78)); // #D34E4E
         document.add(subtitle);
 
         Paragraph businessDay = new Paragraph("BUSINESS DAY: " + report.getBusinessDate().format(DATE_FORMATTER))
@@ -703,15 +703,15 @@ public class DailyReportPdfService {
             .setFontSize(13)
             .setTextAlignment(TextAlignment.CENTER)
             .setMarginBottom(15)
-            .setFontColor(new DeviceRgb(139, 69, 19)) // Brown
-            .setBackgroundColor(new DeviceRgb(245, 222, 179)) // Light brown background
+            .setFontColor(ColorConstants.WHITE)
+            .setBackgroundColor(new DeviceRgb(211, 78, 78)) // #D34E4E background
             .setPadding(8);
         document.add(businessDay);
 
-        // Report Info Table with professional brown styling
+        // Report Info Table with modern #D34E4E styling
         Table infoTable = new Table(2).useAllAvailableWidth();
         infoTable.setMarginBottom(15);
-        infoTable.setBorder(new SolidBorder(new DeviceRgb(139, 69, 19), 2));
+        infoTable.setBorder(new SolidBorder(new DeviceRgb(211, 78, 78), 2));
 
         addStyledInfoRow(infoTable, "Prepared By:", report.getEmployee().getUsername());
         if (report.getReviewedBy() != null) {
@@ -732,373 +732,227 @@ public class DailyReportPdfService {
     }
 
     private void addReportContent(Document document, DailyReport report) throws IOException {
-        // Separate "without check number" activities first
-        List<CbsTeamActivity> withoutCheckNumber = new ArrayList<>();
-        List<CbsTeamActivity> otherActivities = new ArrayList<>();
+        // Collect all activities from all activity types
+        List<UnifiedActivity> allActivities = new ArrayList<>();
         
+        // Collect CBS Team Activities
         if (report.getCbsTeamActivities() != null && !report.getCbsTeamActivities().isEmpty()) {
             for (CbsTeamActivity activity : report.getCbsTeamActivities()) {
-                if (activity.getActivityType() != null && 
-                    (activity.getActivityType().toLowerCase().contains("without check number") ||
-                     activity.getActivityType().toLowerCase().contains("allowing without check number"))) {
-                    withoutCheckNumber.add(activity);
-                } else {
-                    otherActivities.add(activity);
-                }
+                allActivities.add(new UnifiedActivity(
+                    activity.getActivityType() != null && !activity.getActivityType().isEmpty() 
+                        ? activity.getActivityType() 
+                        : "CBS Team Activity",
+                    activity.getDescription(),
+                    activity.getBranch(),
+                    activity.getAccountNumber()
+                ));
             }
         }
         
-        // Add "Without Check Number" section first
-        if (!withoutCheckNumber.isEmpty()) {
-            Paragraph sectionTitle = new Paragraph("Allowing Without Check Number")
-                .setBold()
-                .setFontSize(14)
-                .setMarginTop(15)
-                .setMarginBottom(12)
-                .setFontColor(new DeviceRgb(139, 69, 19)) // Brown
-                .setBackgroundColor(new DeviceRgb(245, 222, 179)) // Light brown background
-                .setPadding(10)
-                .setBorderBottom(new SolidBorder(new DeviceRgb(139, 69, 19), 3));
-            document.add(sectionTitle);
-            
-            Table withoutCheckTable = new Table(4).useAllAvailableWidth();
-            withoutCheckTable.setMarginBottom(15);
-            withoutCheckTable.setBorder(new SolidBorder(new DeviceRgb(139, 69, 19), 2));
-            
-            addStyledTableHeaderBrown(withoutCheckTable, "No.");
-            addStyledTableHeaderBrown(withoutCheckTable, "Branch");
-            addStyledTableHeaderBrown(withoutCheckTable, "Account Number");
-            addStyledTableHeaderBrown(withoutCheckTable, "Description");
-            
-            int index = 1;
-            for (CbsTeamActivity activity : withoutCheckNumber) {
-                addStyledTableCellBrown(withoutCheckTable, String.valueOf(index));
-                addStyledTableCellBrown(withoutCheckTable, activity.getBranch() != null ? activity.getBranch() : "");
-                addStyledTableCellBrown(withoutCheckTable, activity.getAccountNumber() != null ? activity.getAccountNumber() : "");
-                addStyledTableCellBrown(withoutCheckTable, activity.getDescription());
-                index++;
-            }
-            
-            document.add(withoutCheckTable);
-            document.add(new Paragraph("\n"));
-        }
-        
-        // Group CBS Team Activities by type
-        Map<String, List<CbsTeamActivity>> activitiesByType = otherActivities.stream()
-            .collect(Collectors.groupingBy(
-                activity -> activity.getActivityType() != null && !activity.getActivityType().isEmpty() 
-                    ? activity.getActivityType() 
-                    : "CBS Team Activity"
-            ));
-        
-        // Display each activity type as a separate section
-        for (Map.Entry<String, List<CbsTeamActivity>> entry : activitiesByType.entrySet()) {
-            String activityType = entry.getKey();
-            List<CbsTeamActivity> typeActivities = entry.getValue();
-            
-            Paragraph sectionTitle = new Paragraph(activityType)
-                .setBold()
-                .setFontSize(14)
-                .setMarginTop(15)
-                .setMarginBottom(10)
-                .setFontColor(new DeviceRgb(139, 69, 19)) // Brown
-                .setBackgroundColor(new DeviceRgb(245, 222, 179)) // Light brown background
-                .setPadding(10)
-                .setBorderBottom(new SolidBorder(new DeviceRgb(139, 69, 19), 3));
-            document.add(sectionTitle);
-
-            // If multiple activities of same type, number them
-            int index = 1;
-            boolean showNumbers = typeActivities.size() > 1;
-            
-            for (var activity : typeActivities) {
-                String prefix = showNumbers ? index + ". " : "";
-                Paragraph activityPara = new Paragraph(prefix + activity.getDescription())
-                    .setFontSize(11)
-                    .setMarginBottom(3)
-                    .setMarginLeft(10);
-                document.add(activityPara);
-                
-                if (activity.getBranch() != null && !activity.getBranch().isEmpty()) {
-                    document.add(new Paragraph("   Branch: " + activity.getBranch())
-                        .setFontSize(10)
-                        .setMarginLeft(15)
-                        .setMarginBottom(2)
-                        .setFontColor(new DeviceRgb(101, 67, 33))); // Brown
-                }
-                if (activity.getAccountNumber() != null && !activity.getAccountNumber().isEmpty()) {
-                    document.add(new Paragraph("   Account Number: " + activity.getAccountNumber())
-                        .setFontSize(10)
-                        .setMarginLeft(15)
-                        .setMarginBottom(2)
-                        .setFontColor(new DeviceRgb(101, 67, 33))); // Brown
-                }
-                if (activity.getActionTaken() != null && !activity.getActionTaken().isEmpty()) {
-                    document.add(new Paragraph("   Action Taken: " + activity.getActionTaken())
-                        .setFontSize(10)
-                        .setMarginLeft(15)
-                        .setMarginBottom(2)
-                        .setFontColor(new DeviceRgb(101, 67, 33))); // Brown
-                }
-                if (activity.getFinalStatus() != null && !activity.getFinalStatus().isEmpty()) {
-                    document.add(new Paragraph("   Final Status: " + activity.getFinalStatus())
-                        .setFontSize(10)
-                        .setMarginLeft(15)
-                        .setMarginBottom(2)
-                        .setFontColor(new DeviceRgb(101, 67, 33))); // Brown
-                }
-                index++;
-            }
-            document.add(new Paragraph("\n"));
-        }
-
-        // Email Communications
+        // Collect other activity types and convert to unified format
         if (report.getEmailCommunications() != null && !report.getEmailCommunications().isEmpty()) {
-            Paragraph sectionTitle = new Paragraph("Email Communication")
-                .setBold()
-                .setFontSize(14)
-                .setMarginTop(15)
-                .setMarginBottom(10)
-                .setFontColor(new DeviceRgb(101, 67, 33)) // Dark brown
-                .setBackgroundColor(new DeviceRgb(255, 228, 181)) // Moccasin
-                .setPadding(10)
-                .setBorderBottom(new SolidBorder(new DeviceRgb(139, 69, 19), 3));
-            document.add(sectionTitle);
-
-            Table emailTable = new Table(6).useAllAvailableWidth();
-            emailTable.setMarginBottom(10);
-            emailTable.setBorder(new SolidBorder(new DeviceRgb(139, 69, 19), 2));
-
-            // Header
-            addStyledTableHeader(emailTable, "Internal/External");
-            addStyledTableHeader(emailTable, "Sender");
-            addStyledTableHeader(emailTable, "Receiver");
-            addStyledTableHeader(emailTable, "Subject");
-            addStyledTableHeader(emailTable, "Summary");
-            addStyledTableHeader(emailTable, "Action taken");
-
-            // Rows
-            for (var email : report.getEmailCommunications()) {
-                addStyledTableCell(emailTable, email.getIsInternal() ? "Internal" : "External");
-                addStyledTableCell(emailTable, email.getSender());
-                addStyledTableCell(emailTable, email.getReceiver());
-                addStyledTableCell(emailTable, email.getSubject());
-                addStyledTableCell(emailTable, email.getSummary());
-                addStyledTableCell(emailTable, email.getActionTaken() != null ? email.getActionTaken() : "");
+            for (EmailCommunication email : report.getEmailCommunications()) {
+                allActivities.add(new UnifiedActivity(
+                    "Email Communication",
+                    email.getSummary() != null ? email.getSummary() : email.getSubject(),
+                    null,
+                    null
+                ));
             }
-
-            document.add(emailTable);
-            document.add(new Paragraph("\n"));
         }
-
-        // Pending Activities
-        if (report.getPendingActivities() != null && !report.getPendingActivities().isEmpty()) {
-            Paragraph sectionTitle = new Paragraph("CBS Pending Activities")
-                .setBold()
-                .setFontSize(14)
-                .setMarginTop(15)
-                .setMarginBottom(10)
-                .setFontColor(new DeviceRgb(101, 67, 33)) // Dark brown
-                .setBackgroundColor(new DeviceRgb(255, 228, 181)) // Moccasin
-                .setPadding(10)
-                .setBorderBottom(new SolidBorder(new DeviceRgb(139, 69, 19), 3));
-            document.add(sectionTitle);
-
-            Table pendingTable = new Table(4).useAllAvailableWidth();
-            pendingTable.setMarginBottom(10);
-            pendingTable.setBorder(new SolidBorder(new DeviceRgb(139, 69, 19), 2));
-
-            addStyledTableHeader(pendingTable, "Title");
-            addStyledTableHeader(pendingTable, "Description");
-            addStyledTableHeader(pendingTable, "Status");
-            addStyledTableHeader(pendingTable, "Amount");
-
-            for (var pending : report.getPendingActivities()) {
-                addStyledTableCell(pendingTable, pending.getTitle());
-                addStyledTableCell(pendingTable, pending.getDescription());
-                addStyledTableCell(pendingTable, pending.getStatus());
-                addStyledTableCell(pendingTable, pending.getAmount() != null ? pending.getAmount().toString() : "");
-            }
-
-            document.add(pendingTable);
-            document.add(new Paragraph("\n"));
-        }
-
-        // Chat Communications
+        
         if (report.getChatCommunications() != null && !report.getChatCommunications().isEmpty()) {
-            Paragraph sectionTitle = new Paragraph("Chat/Instant Messaging Communications")
-                .setBold()
-                .setFontSize(14)
-                .setMarginTop(15)
-                .setMarginBottom(10)
-                .setFontColor(new DeviceRgb(101, 67, 33)) // Dark brown
-                .setBackgroundColor(new DeviceRgb(255, 228, 181)) // Moccasin
-                .setPadding(10)
-                .setBorderBottom(new SolidBorder(new DeviceRgb(139, 69, 19), 3));
-            document.add(sectionTitle);
-
-            Table chatTable = new Table(4).useAllAvailableWidth();
-            chatTable.setMarginBottom(10);
-            chatTable.setBorder(new SolidBorder(new DeviceRgb(139, 69, 19), 2));
-
-            addStyledTableHeader(chatTable, "Platform");
-            addStyledTableHeader(chatTable, "Summary");
-            addStyledTableHeader(chatTable, "Action Taken");
-            addStyledTableHeader(chatTable, "Reference No.");
-
-            for (var chat : report.getChatCommunications()) {
-                addStyledTableCell(chatTable, chat.getPlatform());
-                addStyledTableCell(chatTable, chat.getSummary());
-                addStyledTableCell(chatTable, chat.getActionTaken() != null ? chat.getActionTaken() : "");
-                addStyledTableCell(chatTable, chat.getReferenceNumber() != null ? chat.getReferenceNumber() : "");
+            for (ChatCommunication chat : report.getChatCommunications()) {
+                allActivities.add(new UnifiedActivity(
+                    "Chat Communication",
+                    chat.getSummary(),
+                    null,
+                    null
+                ));
             }
-
-            document.add(chatTable);
-            document.add(new Paragraph("\n"));
         }
-
-        // Problem Escalations
+        
         if (report.getProblemEscalations() != null && !report.getProblemEscalations().isEmpty()) {
-            Paragraph sectionTitle = new Paragraph("Problem Escalation")
-                .setBold()
-                .setFontSize(14)
-                .setMarginTop(15)
-                .setMarginBottom(10)
-                .setFontColor(new DeviceRgb(101, 67, 33)) // Dark brown
-                .setBackgroundColor(new DeviceRgb(255, 228, 181)) // Moccasin
-                .setPadding(10)
-                .setBorderBottom(new SolidBorder(new DeviceRgb(139, 69, 19), 3));
-            document.add(sectionTitle);
-
-            for (var escalation : report.getProblemEscalations()) {
-                document.add(new Paragraph("Escalated To: " + escalation.getEscalatedTo())
-                    .setFontSize(11)
-                    .setMarginBottom(3)
-                    .setMarginLeft(10));
-                document.add(new Paragraph("Reason: " + escalation.getReason())
-                    .setFontSize(11)
-                    .setMarginBottom(3)
-                    .setMarginLeft(10));
-                if (escalation.getFollowUpStatus() != null) {
-                    document.add(new Paragraph("Follow-up Status: " + escalation.getFollowUpStatus())
-                        .setFontSize(11)
-                        .setMarginBottom(5)
-                        .setMarginLeft(10));
-                }
-                document.add(new Paragraph("\n"));
+            for (ProblemEscalation escalation : report.getProblemEscalations()) {
+                allActivities.add(new UnifiedActivity(
+                    "Problem Escalation",
+                    escalation.getReason(),
+                    null,
+                    null
+                ));
             }
         }
-
-        // Meetings
+        
+        if (report.getPendingActivities() != null && !report.getPendingActivities().isEmpty()) {
+            for (PendingActivity pending : report.getPendingActivities()) {
+                allActivities.add(new UnifiedActivity(
+                    "Pending Activity",
+                    pending.getDescription() != null ? pending.getDescription() : pending.getTitle(),
+                    null,
+                    null
+                ));
+            }
+        }
+        
         if (report.getMeetings() != null && !report.getMeetings().isEmpty()) {
-            Paragraph sectionTitle = new Paragraph("Meetings (Team Collaboration and External)")
-                .setBold()
-                .setFontSize(14)
-                .setMarginTop(15)
-                .setMarginBottom(10)
-                .setFontColor(new DeviceRgb(101, 67, 33)) // Dark brown
-                .setBackgroundColor(new DeviceRgb(255, 228, 181)) // Moccasin
-                .setPadding(10)
-                .setBorderBottom(new SolidBorder(new DeviceRgb(139, 69, 19), 3));
-            document.add(sectionTitle);
-
-            Table meetingTable = new Table(6).useAllAvailableWidth();
-            meetingTable.setMarginBottom(10);
-            meetingTable.setBorder(new SolidBorder(new DeviceRgb(139, 69, 19), 2));
-
-            addStyledTableHeader(meetingTable, "Type");
-            addStyledTableHeader(meetingTable, "Topic");
-            addStyledTableHeader(meetingTable, "Summary");
-            addStyledTableHeader(meetingTable, "Action Taken");
-            addStyledTableHeader(meetingTable, "Next Step");
-            addStyledTableHeader(meetingTable, "Participants");
-
-            for (var meeting : report.getMeetings()) {
-                addStyledTableCell(meetingTable, meeting.getMeetingType());
-                addStyledTableCell(meetingTable, meeting.getTopic());
-                addStyledTableCell(meetingTable, meeting.getSummary());
-                addStyledTableCell(meetingTable, meeting.getActionTaken() != null ? meeting.getActionTaken() : "");
-                addStyledTableCell(meetingTable, meeting.getNextStep() != null ? meeting.getNextStep() : "");
-                addStyledTableCell(meetingTable, meeting.getParticipants() != null ? meeting.getParticipants() : "");
+            for (Meeting meeting : report.getMeetings()) {
+                allActivities.add(new UnifiedActivity(
+                    "Meeting",
+                    meeting.getSummary() != null ? meeting.getSummary() : meeting.getTopic(),
+                    null,
+                    null
+                ));
             }
-
-            document.add(meetingTable);
-            document.add(new Paragraph("\n"));
         }
-
-        // AFPay Card Requests
+        
+        if (report.getTrainingCapacityBuildings() != null && !report.getTrainingCapacityBuildings().isEmpty()) {
+            for (var training : report.getTrainingCapacityBuildings()) {
+                allActivities.add(new UnifiedActivity(
+                    "Training & Capacity Building",
+                    training.getTopic() != null ? training.getTopic() : "",
+                    null,
+                    null
+                ));
+            }
+        }
+        
+        if (report.getProjectProgressUpdates() != null && !report.getProjectProgressUpdates().isEmpty()) {
+            for (var project : report.getProjectProgressUpdates()) {
+                allActivities.add(new UnifiedActivity(
+                    "Project Progress Update",
+                    project.getProgressDetail() != null ? project.getProgressDetail() : "",
+                    null,
+                    null
+                ));
+            }
+        }
+        
         if (report.getAfpayCardRequests() != null && !report.getAfpayCardRequests().isEmpty()) {
-            Paragraph sectionTitle = new Paragraph("AFPay Card")
-                .setBold()
-                .setFontSize(14)
-                .setMarginTop(15)
-                .setMarginBottom(10)
-                .setFontColor(new DeviceRgb(101, 67, 33)) // Dark brown
-                .setBackgroundColor(new DeviceRgb(255, 228, 181)) // Moccasin
-                .setPadding(10)
-                .setBorderBottom(new SolidBorder(new DeviceRgb(139, 69, 19), 3));
-            document.add(sectionTitle);
-
-            Table afpayTable = new Table(6).useAllAvailableWidth();
-            afpayTable.setMarginBottom(10);
-            afpayTable.setBorder(new SolidBorder(new DeviceRgb(139, 69, 19), 2));
-
-            addStyledTableHeader(afpayTable, "Type");
-            addStyledTableHeader(afpayTable, "Requested By");
-            addStyledTableHeader(afpayTable, "Request date");
-            addStyledTableHeader(afpayTable, "Resolution");
-            addStyledTableHeader(afpayTable, "Support Doc Scanned");
-            addStyledTableHeader(afpayTable, "Date Archived");
-
             for (var afpay : report.getAfpayCardRequests()) {
-                addStyledTableCell(afpayTable, afpay.getRequestType());
-                addStyledTableCell(afpayTable, afpay.getRequestedBy());
-                addStyledTableCell(afpayTable, afpay.getRequestDate() != null ? afpay.getRequestDate().toString() : "");
-                addStyledTableCell(afpayTable, afpay.getResolutionDetails() != null ? afpay.getResolutionDetails() : "");
-                addStyledTableCell(afpayTable, afpay.getSupportingDocumentPath() != null ? afpay.getSupportingDocumentPath() : "");
-                addStyledTableCell(afpayTable, afpay.getArchivedDate() != null ? afpay.getArchivedDate().toString() : "");
+                allActivities.add(new UnifiedActivity(
+                    "AFPay Card Request",
+                    afpay.getResolutionDetails() != null ? afpay.getResolutionDetails() : "",
+                    null,
+                    null
+                ));
             }
-
-            document.add(afpayTable);
-            document.add(new Paragraph("\n"));
         }
-
-        // QRMIS Issues
+        
         if (report.getQrmisIssues() != null && !report.getQrmisIssues().isEmpty()) {
-            Paragraph sectionTitle = new Paragraph("QRMIS Issues / Tickets")
-                .setBold()
-                .setFontSize(14)
-                .setMarginTop(15)
-                .setMarginBottom(10)
-                .setFontColor(new DeviceRgb(101, 67, 33)) // Dark brown
-                .setBackgroundColor(new DeviceRgb(255, 228, 181)) // Moccasin
-                .setPadding(10)
-                .setBorderBottom(new SolidBorder(new DeviceRgb(139, 69, 19), 3));
-            document.add(sectionTitle);
-
-            Table qrmisTable = new Table(7).useAllAvailableWidth();
-            qrmisTable.setMarginBottom(10);
-            qrmisTable.setBorder(new SolidBorder(new DeviceRgb(139, 69, 19), 2));
-
-            addStyledTableHeader(qrmisTable, "Problem Type");
-            addStyledTableHeader(qrmisTable, "Problem Description");
-            addStyledTableHeader(qrmisTable, "Solution provided");
-            addStyledTableHeader(qrmisTable, "Posted by");
-            addStyledTableHeader(qrmisTable, "Authorized By");
-            addStyledTableHeader(qrmisTable, "Support Document");
-            addStyledTableHeader(qrmisTable, "Operator");
-
             for (var qrmis : report.getQrmisIssues()) {
-                addStyledTableCell(qrmisTable, qrmis.getProblemType());
-                addStyledTableCell(qrmisTable, qrmis.getProblemDescription());
-                addStyledTableCell(qrmisTable, qrmis.getSolutionProvided() != null ? qrmis.getSolutionProvided() : "");
-                addStyledTableCell(qrmisTable, qrmis.getPostedBy() != null ? qrmis.getPostedBy() : "");
-                addStyledTableCell(qrmisTable, qrmis.getAuthorizedBy() != null ? qrmis.getAuthorizedBy() : "");
-                addStyledTableCell(qrmisTable, qrmis.getSupportingDocumentsArchived() != null ? qrmis.getSupportingDocumentsArchived() : "");
-                addStyledTableCell(qrmisTable, qrmis.getOperator() != null ? qrmis.getOperator() : "");
+                allActivities.add(new UnifiedActivity(
+                    "QRMIS Issue",
+                    qrmis.getProblemDescription() != null ? qrmis.getProblemDescription() : "",
+                    null,
+                    null
+                ));
             }
-
-            document.add(qrmisTable);
+        }
+        
+        // Display all activities in a clean, modern format
+        if (!allActivities.isEmpty()) {
+            // Activities Section Title
+            Paragraph activitiesTitle = new Paragraph("Daily Activities")
+                .setBold()
+                .setFontSize(16)
+                .setMarginTop(20)
+                .setMarginBottom(15)
+                .setFontColor(new DeviceRgb(211, 78, 78)) // #D34E4E
+                .setTextAlignment(TextAlignment.CENTER);
+            document.add(activitiesTitle);
+            
+            // Display each activity in a clean row format
+            int index = 1;
+            for (UnifiedActivity activity : allActivities) {
+                // Activity Name (in bold) - with spacing
+                Paragraph activityName = new Paragraph(activity.activityName)
+                    .setBold()
+                    .setFontSize(13)
+                    .setMarginTop(12)
+                    .setMarginBottom(6)
+                    .setMarginLeft(0)
+                    .setFontColor(new DeviceRgb(211, 78, 78)) // #D34E4E
+                    .setPaddingLeft(10)
+                    .setPaddingTop(8)
+                    .setPaddingBottom(8)
+                    .setBackgroundColor(new DeviceRgb(255, 255, 255))
+                    .setBorder(new SolidBorder(new DeviceRgb(211, 78, 78), 1.5f));
+                document.add(activityName);
+                
+                // Activity Description
+                Paragraph activityDesc = new Paragraph(activity.description != null ? activity.description : "")
+                    .setFontSize(11)
+                    .setMarginTop(4)
+                    .setMarginBottom(4)
+                    .setMarginLeft(15)
+                    .setFontColor(new DeviceRgb(55, 65, 81))
+                    .setLineHeight(1.6f);
+                document.add(activityDesc);
+                
+                // Branch Name (if provided)
+                if (activity.branch != null && !activity.branch.isEmpty()) {
+                    Paragraph branchPara = new Paragraph("Branch: " + activity.branch)
+                        .setFontSize(10)
+                        .setMarginTop(3)
+                        .setMarginBottom(3)
+                        .setMarginLeft(15)
+                        .setFontColor(new DeviceRgb(107, 114, 128))
+                        .setItalic();
+                    document.add(branchPara);
+                }
+                
+                // Account Number (if provided)
+                if (activity.accountNumber != null && !activity.accountNumber.isEmpty()) {
+                    Paragraph accountPara = new Paragraph("Account Number: " + activity.accountNumber)
+                        .setFontSize(10)
+                        .setMarginTop(3)
+                        .setMarginBottom(8)
+                        .setMarginLeft(15)
+                        .setFontColor(new DeviceRgb(107, 114, 128))
+                        .setItalic();
+                    document.add(accountPara);
+                } else if (activity.branch != null && !activity.branch.isEmpty()) {
+                    // Add bottom margin if branch exists but account number doesn't
+                    document.add(new Paragraph("").setMarginBottom(8));
+                } else {
+                    // Add bottom margin if neither branch nor account number exists
+                    document.add(new Paragraph("").setMarginBottom(8));
+                }
+                
+                // Add separator line between activities
+                if (index < allActivities.size()) {
+                    document.add(new Paragraph("")
+                        .setMarginBottom(5)
+                        .setBorderBottom(new SolidBorder(new DeviceRgb(229, 231, 235), 0.5f))
+                        .setPaddingBottom(5));
+                }
+                
+                index++;
+            }
+        } else {
+            // No activities message
+            Paragraph noActivities = new Paragraph("No activities recorded for this report.")
+                .setFontSize(11)
+                .setFontColor(new DeviceRgb(156, 163, 175))
+                .setItalic()
+                .setTextAlignment(TextAlignment.CENTER)
+                .setMarginTop(20);
+            document.add(noActivities);
+        }
+    }
+    
+    // Helper class for unified activity representation
+    private static class UnifiedActivity {
+        String activityName;
+        String description;
+        String branch;
+        String accountNumber;
+        
+        UnifiedActivity(String activityName, String description, String branch, String accountNumber) {
+            this.activityName = activityName;
+            this.description = description;
+            this.branch = branch;
+            this.accountNumber = accountNumber;
         }
     }
 
