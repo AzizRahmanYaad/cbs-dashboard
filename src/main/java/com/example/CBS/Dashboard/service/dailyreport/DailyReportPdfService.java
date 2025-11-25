@@ -886,7 +886,7 @@ public class DailyReportPdfService {
                     .setMarginBottom(4)
                     .setMarginLeft(15)
                     .setFontColor(new DeviceRgb(55, 65, 81))
-                    .setLineHeight(1.6f);
+                    .setMultipliedLeading(1.6f);
                 document.add(activityDesc);
                 
                 // Branch Name (if provided)
