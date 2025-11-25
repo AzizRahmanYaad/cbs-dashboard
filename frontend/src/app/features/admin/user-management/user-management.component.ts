@@ -40,6 +40,7 @@ export class UserManagementComponent implements OnInit, OnDestroy {
 
   userForm: FormGroup = this.fb.group({
     username: ['', [Validators.required, Validators.minLength(3)]],
+    fullName: [''], // Optional field
     email: ['', [Validators.required, Validators.email]],
     password: ['', [Validators.minLength(8)]],
     enabled: [true],
@@ -194,6 +195,7 @@ export class UserManagementComponent implements OnInit, OnDestroy {
     this.editingUser = user;
     this.userForm.reset({
       username: user.username,
+      fullName: user.fullName || '',
       email: user.email,
       password: '',
       enabled: user.enabled ?? true,
@@ -224,6 +226,7 @@ export class UserManagementComponent implements OnInit, OnDestroy {
 
     if (this.editingUser) {
       const payload: UpdateUserRequest = {
+        fullName: formValue.fullName || undefined,
         email: formValue.email,
         password: formValue.password ? formValue.password : undefined,
         enabled: formValue.enabled,
@@ -247,6 +250,7 @@ export class UserManagementComponent implements OnInit, OnDestroy {
 
     const createPayload: CreateUserRequest = {
       username: formValue.username,
+      fullName: formValue.fullName || undefined,
       email: formValue.email,
       password: formValue.password,
       enabled: formValue.enabled,

@@ -508,7 +508,7 @@
           </div>
         </div>
 
-        <!-- Unified Activities Section - Clean Design -->
+        <!-- Unified Activities Section - Clean Design with Grouping -->
         <div class="activities-container-premium" *ngIf="getAllActivities(viewReportModal).length > 0">
           <div class="section-header-premium">
             <div class="section-icon">
@@ -523,28 +523,43 @@
           </div>
           
           <div class="activities-list-premium">
-            <div *ngFor="let activity of getAllActivities(viewReportModal); let i = index" class="activity-card-premium-modern">
-              <div class="activity-icon-modern">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                </svg>
+            <!-- Group activities by type -->
+            <div *ngFor="let activityType of getActivityTypes(viewReportModal)" class="activity-group-modern">
+              <!-- Activity Type Header -->
+              <div class="activity-type-header-modern">
+                <h4 class="activity-name-modern">{{ activityType }}</h4>
               </div>
-              <div class="activity-content-premium-modern">
-                <h4 class="activity-name-modern">{{ activity.activityName }}</h4>
-                <p class="activity-description-modern">{{ activity.description }}</p>
-                <div class="activity-meta-modern" *ngIf="activity.branch || activity.accountNumber">
-                  <span class="activity-branch-tag-modern" *ngIf="activity.branch">
-                    <svg class="meta-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                      <path stroke-linecap="round" stroke-linejoin="round" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path>
+              
+              <!-- Activities for this type -->
+              <div class="activity-items-group">
+                <div *ngFor="let activity of getActivitiesForType(viewReportModal, activityType); let i = index" 
+                     class="activity-card-premium-modern"
+                     [class.multiple-items]="getActivitiesForType(viewReportModal, activityType).length > 1">
+                  <div class="activity-icon-modern">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                     </svg>
-                    {{ activity.branch }}
-                  </span>
-                  <span class="activity-account-tag-modern" *ngIf="activity.accountNumber">
-                    <svg class="meta-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                      <path stroke-linecap="round" stroke-linejoin="round" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"></path>
-                    </svg>
-                    {{ activity.accountNumber }}
-                  </span>
+                  </div>
+                  <div class="activity-content-premium-modern">
+                    <div class="activity-number-badge" *ngIf="getActivitiesForType(viewReportModal, activityType).length > 1">
+                      {{ i + 1 }}
+                    </div>
+                    <p class="activity-description-modern">{{ activity.description || 'No description provided.' }}</p>
+                    <div class="activity-meta-modern" *ngIf="activity.branch || activity.accountNumber">
+                      <span class="activity-branch-tag-modern" *ngIf="activity.branch">
+                        <svg class="meta-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                          <path stroke-linecap="round" stroke-linejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path>
+                        </svg>
+                        {{ activity.branch }}
+                      </span>
+                      <span class="activity-account-tag-modern" *ngIf="activity.accountNumber">
+                        <svg class="meta-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                          <path stroke-linecap="round" stroke-linejoin="round" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"></path>
+                        </svg>
+                        {{ activity.accountNumber }}
+                      </span>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>

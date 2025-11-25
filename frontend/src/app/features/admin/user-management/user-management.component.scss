@@ -565,6 +565,13 @@ table {
 
   small {
     color: #64748b;
+    
+    &.username-hint {
+      font-size: 0.75rem;
+      color: #94a3b8;
+      font-style: italic;
+      margin-top: 0.1rem;
+    }
   }
 }
 

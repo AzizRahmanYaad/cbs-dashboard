@@ -1614,6 +1614,27 @@ textarea.form-input {
   }
 }
 
+.activity-group-modern {
+  margin-bottom: 2rem;
+  
+  &:last-child {
+    margin-bottom: 0;
+  }
+}
+
+.activity-type-header-modern {
+  margin-bottom: 1rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 2px solid #f3f4f6;
+}
+
+.activity-items-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-left: 0.5rem;
+}
+
 .activity-card-premium-modern {
   background: white;
   border-radius: 16px;
@@ -1623,10 +1644,16 @@ textarea.form-input {
   gap: 1.5rem;
   transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
-  margin-bottom: 1rem;
+  margin-bottom: 0;
   animation: slideInUp 0.5s ease-out;
   position: relative;
   overflow: hidden;
+  
+  &.multiple-items {
+    margin-left: 1.5rem;
+    border-left: 3px solid #D34E4E;
+    padding-left: 1.5rem;
+  }
   
   &::before {
     content: '';
@@ -1654,6 +1681,22 @@ textarea.form-input {
       background: linear-gradient(135deg, #D34E4E 0%, #b83d3d 100%);
     }
   }
+}
+
+.activity-number-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  background: linear-gradient(135deg, #D34E4E 0%, #b83d3d 100%);
+  color: white;
+  border-radius: 50%;
+  font-weight: 700;
+  font-size: 0.75rem;
+  margin-right: 0.75rem;
+  flex-shrink: 0;
+  box-shadow: 0 2px 4px rgba(211, 78, 78, 0.3);
 }
 
 @keyframes slideInUp {
@@ -1691,6 +1734,10 @@ textarea.form-input {
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
+  
+  .activity-number-badge + .activity-description-modern {
+    display: inline;
+  }
 }
 
 .activity-name-modern {
@@ -1708,6 +1755,14 @@ textarea.form-input {
   line-height: 1.7;
   color: #374151;
   font-weight: 400;
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  
+  // Ensure proper formatting for professional appearance
+  text-align: left;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
 }
 
 .activity-meta-modern {
@@ -1718,8 +1773,7 @@ textarea.form-input {
   margin-top: 0.5rem;
 }
 
-.activity-branch-tag-modern,
-.activity-account-tag-modern {
+.activity-branch-tag-modern {
   display: inline-flex;
   align-items: center;
   gap: 0.5rem;
@@ -1727,6 +1781,34 @@ textarea.form-input {
   background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%);
   color: #D34E4E;
   border: 1px solid #fecaca;
+  border-radius: 8px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 4px rgba(211, 78, 78, 0.1);
+  
+  .meta-icon {
+    width: 18px;
+    height: 18px;
+    flex-shrink: 0;
+    stroke-width: 2.5;
+  }
+  
+  &:hover {
+    background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(211, 78, 78, 0.2);
+  }
+}
+
+.activity-account-tag-modern {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+  color: #0369a1;
+  border: 1px solid #bae6fd;
   border-radius: 8px;
   font-size: 0.875rem;
   font-weight: 500;
@@ -1739,9 +1821,9 @@ textarea.form-input {
   }
   
   &:hover {
-    background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
+    background: linear-gradient(135deg, #e0f2fe 0%, #bae6fd 100%);
     transform: translateY(-1px);
-    box-shadow: 0 2px 8px rgba(211, 78, 78, 0.15);
+    box-shadow: 0 2px 8px rgba(3, 105, 161, 0.15);
   }
 }
 

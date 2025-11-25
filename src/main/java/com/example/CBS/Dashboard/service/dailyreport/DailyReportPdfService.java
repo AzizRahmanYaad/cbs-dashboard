@@ -852,7 +852,7 @@ public class DailyReportPdfService {
             }
         }
         
-        // Display all activities in a clean, modern format
+        // Display all activities in a clean, modern format with grouping
         if (!allActivities.isEmpty()) {
             // Activities Section Title
             Paragraph activitiesTitle = new Paragraph("Daily Activities")
@@ -864,15 +864,26 @@ public class DailyReportPdfService {
                 .setTextAlignment(TextAlignment.CENTER);
             document.add(activitiesTitle);
             
-            // Display each activity in a clean row format
-            int index = 1;
-            for (UnifiedActivity activity : allActivities) {
-                // Activity Name (in bold) - with spacing
-                Paragraph activityName = new Paragraph(activity.activityName)
+            // Group activities by type
+            Map<String, List<UnifiedActivity>> activitiesByType = allActivities.stream()
+                .collect(Collectors.groupingBy(
+                    activity -> activity.activityName != null && !activity.activityName.isEmpty() 
+                        ? activity.activityName 
+                        : "Other Activity"
+                ));
+            
+            // Display each activity type group
+            int groupIndex = 0;
+            for (Map.Entry<String, List<UnifiedActivity>> entry : activitiesByType.entrySet()) {
+                String activityType = entry.getKey();
+                List<UnifiedActivity> typeActivities = entry.getValue();
+                
+                // Activity Type Header (in bold) - only show once per type
+                Paragraph activityName = new Paragraph(activityType)
                     .setBold()
                     .setFontSize(13)
-                    .setMarginTop(12)
-                    .setMarginBottom(6)
+                    .setMarginTop(groupIndex > 0 ? 16 : 12)
+                    .setMarginBottom(8)
                     .setMarginLeft(0)
                     .setFontColor(new DeviceRgb(211, 78, 78)) // #D34E4E
                     .setPaddingLeft(10)
@@ -882,55 +893,74 @@ public class DailyReportPdfService {
                     .setBorder(new SolidBorder(new DeviceRgb(211, 78, 78), 1.5f));
                 document.add(activityName);
                 
-                // Activity Description
-                Paragraph activityDesc = new Paragraph(activity.description != null ? activity.description : "")
-                    .setFontSize(11)
-                    .setMarginTop(4)
-                    .setMarginBottom(4)
-                    .setMarginLeft(15)
-                    .setFontColor(new DeviceRgb(55, 65, 81))
-                    .setMultipliedLeading(1.6f);
-                document.add(activityDesc);
+                // Display all descriptions for this activity type (numbered if multiple)
+                int descIndex = 1;
+                boolean showNumbers = typeActivities.size() > 1;
                 
-                // Branch Name (if provided)
-                if (activity.branch != null && !activity.branch.isEmpty()) {
-                    Paragraph branchPara = new Paragraph("Branch: " + activity.branch)
-                        .setFontSize(10)
-                        .setMarginTop(3)
-                        .setMarginBottom(3)
+                for (UnifiedActivity activity : typeActivities) {
+                    // Description with optional numbering
+                    String descriptionText = activity.description != null && !activity.description.isEmpty() 
+                        ? activity.description 
+                        : "No description provided.";
+                    
+                    // Format description text - clean and professional
+                    descriptionText = descriptionText.trim();
+                    if (!descriptionText.endsWith(".") && !descriptionText.endsWith("!") && !descriptionText.endsWith("?")) {
+                        descriptionText += ".";
+                    }
+                    
+                    String prefix = showNumbers ? descIndex + ". " : "";
+                    Paragraph activityDesc = new Paragraph(prefix + descriptionText)
+                        .setFontSize(11)
+                        .setMarginTop(descIndex > 1 ? 6 : 4)
+                        .setMarginBottom(4)
                         .setMarginLeft(15)
-                        .setFontColor(new DeviceRgb(107, 114, 128))
-                        .setItalic();
-                    document.add(branchPara);
+                        .setFontColor(new DeviceRgb(55, 65, 81))
+                        .setMultipliedLeading(1.5f)
+                        .setTextAlignment(TextAlignment.LEFT);
+                    document.add(activityDesc);
+                    
+                    // Branch Name and Account Number on same line if both exist, otherwise separate lines
+                    boolean hasBranch = activity.branch != null && !activity.branch.isEmpty();
+                    boolean hasAccount = activity.accountNumber != null && !activity.accountNumber.isEmpty();
+                    
+                    if (hasBranch || hasAccount) {
+                        String metaInfo = "";
+                        if (hasBranch && hasAccount) {
+                            metaInfo = "Branch: " + activity.branch + " | Account Number: " + activity.accountNumber;
+                        } else if (hasBranch) {
+                            metaInfo = "Branch: " + activity.branch;
+                        } else {
+                            metaInfo = "Account Number: " + activity.accountNumber;
+                        }
+                        
+                        Paragraph metaPara = new Paragraph(metaInfo)
+                            .setFontSize(10)
+                            .setMarginTop(2)
+                            .setMarginBottom(descIndex < typeActivities.size() ? 4 : 8)
+                            .setMarginLeft(15)
+                            .setFontColor(new DeviceRgb(107, 114, 128))
+                            .setItalic();
+                        document.add(metaPara);
+                    } else {
+                        // Add bottom margin if no branch/account and this is the last item in group
+                        if (descIndex >= typeActivities.size()) {
+                            document.add(new Paragraph("").setMarginBottom(8));
+                        }
+                    }
+                    
+                    descIndex++;
                 }
                 
-                // Account Number (if provided)
-                if (activity.accountNumber != null && !activity.accountNumber.isEmpty()) {
-                    Paragraph accountPara = new Paragraph("Account Number: " + activity.accountNumber)
-                        .setFontSize(10)
-                        .setMarginTop(3)
-                        .setMarginBottom(8)
-                        .setMarginLeft(15)
-                        .setFontColor(new DeviceRgb(107, 114, 128))
-                        .setItalic();
-                    document.add(accountPara);
-                } else if (activity.branch != null && !activity.branch.isEmpty()) {
-                    // Add bottom margin if branch exists but account number doesn't
-                    document.add(new Paragraph("").setMarginBottom(8));
-                } else {
-                    // Add bottom margin if neither branch nor account number exists
-                    document.add(new Paragraph("").setMarginBottom(8));
-                }
-                
-                // Add separator line between activities
-                if (index < allActivities.size()) {
+                // Add separator line between activity type groups
+                if (groupIndex < activitiesByType.size() - 1) {
                     document.add(new Paragraph("")
-                        .setMarginBottom(5)
+                        .setMarginBottom(8)
                         .setBorderBottom(new SolidBorder(new DeviceRgb(229, 231, 235), 0.5f))
-                        .setPaddingBottom(5));
+                        .setPaddingBottom(8));
                 }
                 
-                index++;
+                groupIndex++;
             }
         } else {
             // No activities message

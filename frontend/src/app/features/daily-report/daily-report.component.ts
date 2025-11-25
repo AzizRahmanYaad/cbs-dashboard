@@ -874,7 +874,7 @@ export class DailyReportComponent implements OnInit {
     }
   }
 
-  // Get all activities in unified format for display
+  // Get all activities grouped by type for display
   getAllActivities(report: DailyReport | null): Array<{activityName: string, description: string, branch?: string, accountNumber?: string}> {
     if (!report) return [];
     
@@ -983,5 +983,35 @@ export class DailyReportComponent implements OnInit {
     }
     
     return activities;
+  }
+  
+  // Get activities grouped by type for display
+  getGroupedActivities(report: DailyReport | null): Map<string, Array<{description: string, branch?: string, accountNumber?: string}>> {
+    const allActivities = this.getAllActivities(report);
+    const grouped = new Map<string, Array<{description: string, branch?: string, accountNumber?: string}>>();
+    
+    allActivities.forEach(activity => {
+      const key = activity.activityName;
+      if (!grouped.has(key)) {
+        grouped.set(key, []);
+      }
+      grouped.get(key)!.push({
+        description: activity.description,
+        branch: activity.branch,
+        accountNumber: activity.accountNumber
+      });
+    });
+    
+    return grouped;
+  }
+  
+  // Get activity type names for iteration
+  getActivityTypes(report: DailyReport | null): string[] {
+    return Array.from(this.getGroupedActivities(report).keys());
+  }
+  
+  // Get activities for a specific type
+  getActivitiesForType(report: DailyReport | null, activityType: string): Array<{description: string, branch?: string, accountNumber?: string}> {
+    return this.getGroupedActivities(report).get(activityType) || [];
   }
 }
