@@ -133,7 +133,8 @@ public class DailyReportService {
             throw new SecurityException("You can only submit your own reports");
         }
         
-        // Validate required fields
+        // Validate required fields (CBS times are NOT required for individual users)
+        // CBS times will be set by Quality Control users during review
         validateReport(report);
         
         report.setStatus(DailyReport.ReportStatus.SUBMITTED);
