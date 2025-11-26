@@ -648,17 +648,17 @@ export class DailyReportComponent implements OnInit {
 
     try {
       const request = this.convertTempActivitiesToBackendFormat();
-      const wasUpdate = !!this.currentReport?.id;
+      const reportId = this.currentReport?.id;
 
-      if (wasUpdate) {
+      if (reportId) {
         // Update existing report
-        const updatedReport = await this.reportService.updateReport(this.currentReport.id, request).toPromise();
+        const updatedReport = await this.reportService.updateReport(reportId, request).toPromise();
         this.currentReport = updatedReport!;
         this.successMessage = 'Report updated successfully';
         this.loadMyReports();
         
         // Refresh view modal if it's open
-        if (this.showViewModal && this.viewReportModal?.id === this.currentReport.id) {
+        if (this.showViewModal && this.viewReportModal?.id === reportId) {
           this.refreshViewModal();
         }
         
