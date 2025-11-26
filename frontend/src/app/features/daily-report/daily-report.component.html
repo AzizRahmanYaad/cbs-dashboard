@@ -37,6 +37,16 @@
     </button>
     <button 
       class="tab" 
+      [class.active]="activeTab === 'my-dashboard'"
+      (click)="setActiveTab('my-dashboard')"
+      *ngIf="canCreate">
+      <svg class="tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+      </svg>
+      <span>My Dashboard</span>
+    </button>
+    <button 
+      class="tab" 
       [class.active]="activeTab === 'dashboard'"
       (click)="setActiveTab('dashboard')"
       *ngIf="canViewDashboard">
@@ -346,7 +356,154 @@
     </div>
   </div>
 
-  <!-- Dashboard Tab -->
+  <!-- My Dashboard Tab (Individual User Statistics) -->
+  <div class="tab-content" *ngIf="activeTab === 'my-dashboard' && canCreate">
+    <div class="dashboard-container-premium">
+      <div class="dashboard-header-premium">
+        <div>
+          <h2 class="dashboard-title-premium">My Activity Dashboard</h2>
+          <p class="dashboard-subtitle-premium">Comprehensive statistics and insights for your daily reports</p>
+        </div>
+        <button class="btn-refresh-premium" (click)="loadMyDashboard()" [disabled]="loading">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+          </svg>
+          Refresh
+        </button>
+      </div>
+
+      <!-- Statistics Cards -->
+      <div class="stats-grid-premium">
+        <div class="stat-card-premium">
+          <div class="stat-icon-premium stat-icon-reports">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+            </svg>
+          </div>
+          <div class="stat-content-premium">
+            <p class="stat-label-premium">Total Reports</p>
+            <h3 class="stat-value-premium">{{ dashboardStats.totalReports }}</h3>
+            <p class="stat-change-premium">All time</p>
+          </div>
+        </div>
+
+        <div class="stat-card-premium">
+          <div class="stat-icon-premium stat-icon-activities">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"></path>
+            </svg>
+          </div>
+          <div class="stat-content-premium">
+            <p class="stat-label-premium">Total Activities</p>
+            <h3 class="stat-value-premium">{{ dashboardStats.totalActivities }}</h3>
+            <p class="stat-change-premium">Across all reports</p>
+          </div>
+        </div>
+
+        <div class="stat-card-premium">
+          <div class="stat-icon-premium stat-icon-approved">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+            </svg>
+          </div>
+          <div class="stat-content-premium">
+            <p class="stat-label-premium">Approved Reports</p>
+            <h3 class="stat-value-premium">{{ dashboardStats.approvedReports }}</h3>
+            <p class="stat-change-premium">Confirmed</p>
+          </div>
+        </div>
+
+        <div class="stat-card-premium">
+          <div class="stat-icon-premium stat-icon-pending">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+            </svg>
+          </div>
+          <div class="stat-content-premium">
+            <p class="stat-label-premium">Draft Reports</p>
+            <h3 class="stat-value-premium">{{ dashboardStats.draftReports }}</h3>
+            <p class="stat-change-premium">In progress</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Charts Section -->
+      <div class="charts-grid-premium">
+        <!-- Activities by Category Chart -->
+        <div class="chart-card-premium">
+          <div class="chart-header-premium">
+            <h3 class="chart-title-premium">Activities by Category</h3>
+            <p class="chart-subtitle-premium">Distribution of activity types</p>
+          </div>
+          <div class="chart-container-premium">
+            <div class="bar-chart-premium">
+              <div *ngFor="let category of getActivityCategories()" class="bar-item-premium">
+                <div class="bar-label-premium">{{ category.name }}</div>
+                <div class="bar-wrapper-premium">
+                  <div class="bar-fill-premium" [style.width.%]="getCategoryPercentage(category.count)" 
+                       [style.background]="getCategoryColor(category.name)"></div>
+                  <span class="bar-value-premium">{{ category.count }}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Reports Over Time Chart -->
+        <div class="chart-card-premium">
+          <div class="chart-header-premium">
+            <h3 class="chart-title-premium">Reports Over Time</h3>
+            <p class="chart-subtitle-premium">Last 30 days activity</p>
+          </div>
+          <div class="chart-container-premium">
+            <div class="line-chart-premium">
+              <div class="line-chart-bars">
+                <div *ngFor="let day of getLast30Days()" class="line-bar-item" [title]="day.date + ': ' + day.count + ' reports'">
+                  <div class="line-bar-fill" [style.height.%]="getDayPercentage(day.count)"></div>
+                  <span class="line-bar-label">{{ day.day }}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Activity Breakdown Table -->
+      <div class="breakdown-card-premium">
+        <div class="breakdown-header-premium">
+          <h3 class="breakdown-title-premium">Activity Breakdown</h3>
+          <p class="breakdown-subtitle-premium">Detailed view of all activity types</p>
+        </div>
+        <div class="breakdown-table-premium">
+          <div class="breakdown-row-premium breakdown-header-row">
+            <div class="breakdown-cell-premium">Activity Type</div>
+            <div class="breakdown-cell-premium">Count</div>
+            <div class="breakdown-cell-premium">Percentage</div>
+          </div>
+          <div *ngFor="let category of getActivityCategories()" class="breakdown-row-premium">
+            <div class="breakdown-cell-premium">
+              <span class="category-badge-premium" [style.background]="getCategoryColor(category.name)">{{ category.name }}</span>
+            </div>
+            <div class="breakdown-cell-premium">{{ category.count }}</div>
+            <div class="breakdown-cell-premium">
+              <div class="percentage-bar-premium">
+                <div class="percentage-fill-premium" [style.width.%]="getCategoryPercentage(category.count)"
+                     [style.background]="getCategoryColor(category.name)"></div>
+                <span class="percentage-text-premium">{{ getCategoryPercentage(category.count) | number:'1.0-0' }}%</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div *ngIf="loading" class="loading-overlay-premium">
+        <div class="spinner-premium"></div>
+        <p>Loading dashboard data...</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Dashboard Tab (Controller/CFO View) -->
   <div class="tab-content" *ngIf="activeTab === 'dashboard'">
     <!-- Controller Download Section -->
     <div class="dashboard-section" *ngIf="isController">

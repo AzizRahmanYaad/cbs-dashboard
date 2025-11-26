@@ -9,6 +9,7 @@ import com.example.CBS.Dashboard.entity.PendingActivity;
 import com.example.CBS.Dashboard.entity.Meeting;
 import com.example.CBS.Dashboard.entity.AfpayCardRequest;
 import com.example.CBS.Dashboard.entity.QrmisIssue;
+import com.itextpdf.io.image.ImageDataFactory;
 import com.itextpdf.kernel.colors.ColorConstants;
 import com.itextpdf.kernel.colors.DeviceRgb;
 import com.itextpdf.kernel.pdf.PdfDocument;
@@ -17,10 +18,14 @@ import com.itextpdf.layout.Document;
 import com.itextpdf.layout.borders.Border;
 import com.itextpdf.layout.borders.SolidBorder;
 import com.itextpdf.layout.element.Cell;
+import com.itextpdf.layout.element.Image;
 import com.itextpdf.layout.element.Paragraph;
 import com.itextpdf.layout.element.Table;
+import com.itextpdf.layout.properties.HorizontalAlignment;
 import com.itextpdf.layout.properties.TextAlignment;
 import com.itextpdf.layout.properties.UnitValue;
+import org.springframework.core.io.ClassPathResource;
+import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Service;
 
 import java.io.ByteArrayOutputStream;
@@ -92,23 +97,66 @@ public class DailyReportPdfService {
     }
     
     private void addCombinedHeader(Document document, DailyReport sampleReport, java.time.LocalDate businessDate, 
-                                   java.time.LocalTime cbsEndTime, java.time.LocalTime cbsStartTimeNextDay) {
-        // Main Title with modern #D34E4E accent
+                                   java.time.LocalTime cbsEndTime, java.time.LocalTime cbsStartTimeNextDay) throws IOException {
+        // Create header table for logo and title
+        Table headerTable = new Table(1).useAllAvailableWidth();
+        headerTable.setMarginBottom(20);
+        
+        // Logo cell (centered)
+        try {
+            Resource logoResource = null;
+            String[] logoPaths = {
+                "static/DAB.png",
+                "DAB.png",
+                "classpath:static/DAB.png",
+                "classpath:DAB.png"
+            };
+            
+            for (String path : logoPaths) {
+                try {
+                    logoResource = new ClassPathResource(path);
+                    if (logoResource.exists() && logoResource.isReadable()) {
+                        break;
+                    }
+                } catch (Exception e) {
+                    continue;
+                }
+            }
+            
+            if (logoResource != null && logoResource.exists()) {
+                byte[] logoBytes = logoResource.getInputStream().readAllBytes();
+                Image logo = new Image(ImageDataFactory.create(logoBytes));
+                logo.setWidth(80);
+                logo.setHorizontalAlignment(HorizontalAlignment.CENTER);
+                logo.setMarginBottom(10);
+                Cell logoCell = new Cell().add(logo).setBorder(Border.NO_BORDER).setTextAlignment(TextAlignment.CENTER);
+                headerTable.addCell(logoCell);
+            }
+        } catch (Exception e) {
+            System.out.println("Logo not found, continuing without logo: " + e.getMessage());
+        }
+        
+        // Main title
         Paragraph mainTitle = new Paragraph("Da Afghanistan Bank")
             .setBold()
-            .setFontSize(20)
+            .setFontSize(22)
             .setTextAlignment(TextAlignment.CENTER)
             .setMarginBottom(5)
             .setFontColor(new DeviceRgb(211, 78, 78)); // #D34E4E
-        document.add(mainTitle);
-
-        Paragraph subtitle = new Paragraph("CBS TEAM DAILY STATUS REPORT")
+        Cell titleCell = new Cell().add(mainTitle).setBorder(Border.NO_BORDER).setTextAlignment(TextAlignment.CENTER);
+        headerTable.addCell(titleCell);
+        
+        // Report title
+        Paragraph reportTitle = new Paragraph("CFO CBS Daily Activities Report")
             .setBold()
-            .setFontSize(17)
+            .setFontSize(18)
             .setTextAlignment(TextAlignment.CENTER)
             .setMarginBottom(8)
             .setFontColor(new DeviceRgb(211, 78, 78)); // #D34E4E
-        document.add(subtitle);
+        Cell reportTitleCell = new Cell().add(reportTitle).setBorder(Border.NO_BORDER).setTextAlignment(TextAlignment.CENTER);
+        headerTable.addCell(reportTitleCell);
+        
+        document.add(headerTable);
 
         Paragraph businessDay = new Paragraph("BUSINESS DAY: " + businessDate.format(DATE_FORMATTER))
             .setBold()
@@ -681,22 +729,66 @@ public class DailyReportPdfService {
     }
 
     private void addHeader(Document document, DailyReport report) throws IOException {
-        // Title with modern #D34E4E styling
-        Paragraph title = new Paragraph("Da Afghanistan Bank")
+        // Create header table for logo and title
+        Table headerTable = new Table(1).useAllAvailableWidth();
+        headerTable.setMarginBottom(20);
+        
+        // Logo cell (centered) - try multiple paths
+        try {
+            Resource logoResource = null;
+            String[] logoPaths = {
+                "static/DAB.png",
+                "DAB.png",
+                "classpath:static/DAB.png",
+                "classpath:DAB.png"
+            };
+            
+            for (String path : logoPaths) {
+                try {
+                    logoResource = new ClassPathResource(path);
+                    if (logoResource.exists() && logoResource.isReadable()) {
+                        break;
+                    }
+                } catch (Exception e) {
+                    continue;
+                }
+            }
+            
+            if (logoResource != null && logoResource.exists()) {
+                byte[] logoBytes = logoResource.getInputStream().readAllBytes();
+                Image logo = new Image(ImageDataFactory.create(logoBytes));
+                logo.setWidth(80);
+                logo.setHorizontalAlignment(HorizontalAlignment.CENTER);
+                logo.setMarginBottom(10);
+                Cell logoCell = new Cell().add(logo).setBorder(Border.NO_BORDER).setTextAlignment(TextAlignment.CENTER);
+                headerTable.addCell(logoCell);
+            }
+        } catch (Exception e) {
+            // If logo not found, continue without it
+            System.out.println("Logo not found, continuing without logo: " + e.getMessage());
+        }
+        
+        // Main title
+        Paragraph mainTitle = new Paragraph("Da Afghanistan Bank")
             .setBold()
-            .setFontSize(20)
+            .setFontSize(22)
             .setTextAlignment(TextAlignment.CENTER)
             .setMarginBottom(5)
             .setFontColor(new DeviceRgb(211, 78, 78)); // #D34E4E
-        document.add(title);
-
-        Paragraph subtitle = new Paragraph("CBS TEAM DAILY STATUS REPORT")
+        Cell titleCell = new Cell().add(mainTitle).setBorder(Border.NO_BORDER).setTextAlignment(TextAlignment.CENTER);
+        headerTable.addCell(titleCell);
+        
+        // Report title
+        Paragraph reportTitle = new Paragraph("CFO CBS Daily Activities Report")
             .setBold()
-            .setFontSize(17)
+            .setFontSize(18)
             .setTextAlignment(TextAlignment.CENTER)
             .setMarginBottom(8)
             .setFontColor(new DeviceRgb(211, 78, 78)); // #D34E4E
-        document.add(subtitle);
+        Cell reportTitleCell = new Cell().add(reportTitle).setBorder(Border.NO_BORDER).setTextAlignment(TextAlignment.CENTER);
+        headerTable.addCell(reportTitleCell);
+        
+        document.add(headerTable);
 
         Paragraph businessDay = new Paragraph("BUSINESS DAY: " + report.getBusinessDate().format(DATE_FORMATTER))
             .setBold()

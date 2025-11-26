@@ -37,7 +37,7 @@ export class DailyReportComponent implements OnInit {
   private fb = inject(FormBuilder);
   private cdr = inject(ChangeDetectorRef);
 
-  activeTab: 'create' | 'my-reports' | 'dashboard' = 'create';
+  activeTab: 'create' | 'my-reports' | 'my-dashboard' | 'dashboard' = 'create';
   
   reportForm!: FormGroup;
   currentReport: DailyReport | null = null;
@@ -78,6 +78,15 @@ export class DailyReportComponent implements OnInit {
   // Reports organized by date
   reportsByDate: Map<string, DailyReport[]> = new Map();
   selectedDateForDownload = '';
+  
+  // Dashboard Statistics
+  dashboardStats = {
+    totalReports: 0,
+    totalActivities: 0,
+    approvedReports: 0,
+    draftReports: 0,
+    activitiesByCategory: new Map<string, number>()
+  };
 
   ngOnInit() {
     this.checkPermissions();
@@ -736,12 +745,16 @@ export class DailyReportComponent implements OnInit {
     );
   }
 
-  setActiveTab(tab: 'create' | 'my-reports' | 'dashboard') {
+  setActiveTab(tab: 'create' | 'my-reports' | 'my-dashboard' | 'dashboard') {
     this.activeTab = tab;
     if (tab === 'my-reports') {
       // Small delay to ensure tab is visible before loading
       setTimeout(() => {
         this.loadMyReports();
+      }, 100);
+    } else if (tab === 'my-dashboard') {
+      setTimeout(() => {
+        this.loadMyDashboard();
       }, 100);
     }
   }
@@ -1038,5 +1051,105 @@ export class DailyReportComponent implements OnInit {
   // TrackBy function for activity list to ensure proper rendering
   trackByActivityId(index: number, activity: { id: number; activityType: string; description: string; branch?: string }): number {
     return activity.id;
+  }
+
+  async loadMyDashboard() {
+    this.loading = true;
+    try {
+      // Load all user reports to calculate statistics
+      const response = await this.reportService.getMyReports(0, 1000).toPromise();
+      const reports = response?.content || (Array.isArray(response) ? response : []);
+      
+      // Calculate statistics
+      this.dashboardStats.totalReports = reports.length;
+      this.dashboardStats.totalActivities = 0;
+      this.dashboardStats.approvedReports = 0;
+      this.dashboardStats.draftReports = 0;
+      this.dashboardStats.activitiesByCategory.clear();
+      
+      reports.forEach(report => {
+        // Count activities
+        const activities = this.getAllActivities(report);
+        this.dashboardStats.totalActivities += activities.length;
+        
+        // Count by status
+        if (report.status === 'APPROVED') {
+          this.dashboardStats.approvedReports++;
+        } else if (report.status === 'DRAFT') {
+          this.dashboardStats.draftReports++;
+        }
+        
+        // Count by category
+        activities.forEach(activity => {
+          const category = activity.activityName || 'Other';
+          const currentCount = this.dashboardStats.activitiesByCategory.get(category) || 0;
+          this.dashboardStats.activitiesByCategory.set(category, currentCount + 1);
+        });
+      });
+    } catch (error: any) {
+      console.error('Error loading dashboard:', error);
+      this.errorMessage = 'Failed to load dashboard statistics';
+    } finally {
+      this.loading = false;
+    }
+  }
+
+  getActivityCategories(): Array<{name: string, count: number}> {
+    const categories: Array<{name: string, count: number}> = [];
+    this.dashboardStats.activitiesByCategory.forEach((count, name) => {
+      categories.push({ name, count });
+    });
+    return categories.sort((a, b) => b.count - a.count);
+  }
+
+  getCategoryPercentage(count: number): number {
+    if (this.dashboardStats.totalActivities === 0) return 0;
+    return (count / this.dashboardStats.totalActivities) * 100;
+  }
+
+  getCategoryColor(categoryName: string): string {
+    const colors: Record<string, string> = {
+      'CBS Team Activity': 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)',
+      'Chat Communication': 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+      'Email Communication': 'linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%)',
+      'Problem Escalation': 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)',
+      'Training & Capacity Building': 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)',
+      'Project Progress Update': 'linear-gradient(135deg, #06b6d4 0%, #0891b2 100%)',
+      'Pending Activity': 'linear-gradient(135deg, #f97316 0%, #ea580c 100%)',
+      'Meeting': 'linear-gradient(135deg, #ec4899 0%, #db2777 100%)',
+      'AFPay Card Request': 'linear-gradient(135deg, #14b8a6 0%, #0d9488 100%)',
+      'QRMIS Issue': 'linear-gradient(135deg, #6366f1 0%, #4f46e5 100%)',
+      'Reversals': 'linear-gradient(135deg, #D34E4E 0%, #b83d3d 100%)',
+      'Branch coordination': 'linear-gradient(135deg, #84cc16 0%, #65a30d 100%)'
+    };
+    return colors[categoryName] || 'linear-gradient(135deg, #6b7280 0%, #4b5563 100%)';
+  }
+
+  getLast30Days(): Array<{date: string, day: string, count: number}> {
+    const days: Array<{date: string, day: string, count: number}> = [];
+    const today = new Date();
+    
+    for (let i = 29; i >= 0; i--) {
+      const date = new Date(today);
+      date.setDate(date.getDate() - i);
+      const dateStr = date.toISOString().split('T')[0];
+      const dayStr = date.toLocaleDateString('en-US', { weekday: 'short' });
+      
+      // Count reports for this date
+      const count = this.myReports.filter(r => {
+        const reportDate = r.businessDate.split('T')[0];
+        return reportDate === dateStr;
+      }).length;
+      
+      days.push({ date: dateStr, day: dayStr, count });
+    }
+    
+    return days;
+  }
+
+  getDayPercentage(count: number): number {
+    const maxCount = Math.max(...this.getLast30Days().map(d => d.count), 1);
+    if (maxCount === 0) return 0;
+    return (count / maxCount) * 100;
   }
 }
