@@ -153,6 +153,24 @@ export interface CreateDailyReportRequest {
   qrmisIssues: QrmisIssue[];
 }
 
+// UpdateDailyReportRequest has the same structure as CreateDailyReportRequest
+// but businessDate is typically not included in updates
+export interface UpdateDailyReportRequest {
+  cbsEndTime?: string;
+  cbsStartTimeNextDay?: string;
+  reportingLine?: string;
+  chatCommunications: ChatCommunication[];
+  emailCommunications: EmailCommunication[];
+  problemEscalations: ProblemEscalation[];
+  trainingCapacityBuildings: TrainingCapacityBuilding[];
+  projectProgressUpdates: ProjectProgressUpdate[];
+  cbsTeamActivities: CbsTeamActivity[];
+  pendingActivities: PendingActivity[];
+  meetings: Meeting[];
+  afpayCardRequests: AfpayCardRequest[];
+  qrmisIssues: QrmisIssue[];
+}
+
 export interface ReviewReportRequest {
   status: ReportStatus;
   reviewComments?: string;

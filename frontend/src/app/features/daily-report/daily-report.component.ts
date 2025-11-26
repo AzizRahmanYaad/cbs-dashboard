@@ -364,8 +364,10 @@ export class DailyReportComponent implements OnInit {
     
     // Convert activities based on their type
     this.tempActivities.forEach(activity => {
-      const desc = activity.description;
-      const branch = activity.branch || '';
+      const desc = activity.description?.trim() || '';
+      const branch = activity.branch?.trim() || '';
+      
+      if (!desc) return; // Skip empty descriptions
       
       switch(activity.activityType) {
         case 'CBS Team Activity':
@@ -380,7 +382,7 @@ export class DailyReportComponent implements OnInit {
           request.cbsTeamActivities!.push({
             description: desc,
             activityType: activity.activityType,
-            branch: branch
+            branch: branch || undefined
           });
           break;
         case 'Chat Communication':
@@ -438,7 +440,8 @@ export class DailyReportComponent implements OnInit {
           request.afpayCardRequests!.push({
             requestType: 'Issue',
             requestedBy: '',
-            requestDate: this.today
+            requestDate: this.reportForm.get('businessDate')?.value || this.today,
+            resolutionDetails: desc
           });
           break;
         case 'QRMIS Issue':
@@ -459,20 +462,39 @@ export class DailyReportComponent implements OnInit {
     
     this.loading = true;
     this.errorMessage = '';
+    this.successMessage = '';
     
     try {
       const report = await this.reportService.getReportByDate(this.selectedDate).toPromise();
       if (report) {
         this.currentReport = report;
+        // Clear form first, then load report data
+        this.tempActivities = [];
+        this.activityIdCounter = 1;
         this.loadFormFromReport(report);
       } else {
-        this.initializeForm();
+        // No report exists for this date - reset form for new report
+        this.currentReport = null;
+        this.resetForm();
         this.reportForm.patchValue({ businessDate: this.selectedDate });
+        const date = new Date(this.selectedDate);
+        const dayName = this.daysOfWeek[date.getDay() === 0 ? 6 : date.getDay() - 1];
+        this.selectedDay = dayName;
+        this.reportForm.patchValue({ dayOfWeek: dayName });
       }
     } catch (error: any) {
-      this.errorMessage = error.error?.message || 'Failed to load report';
-      this.initializeForm();
-      this.reportForm.patchValue({ businessDate: this.selectedDate });
+      // If 404 or no report found, initialize empty form
+      if (error.status === 404 || error.status === 0) {
+        this.currentReport = null;
+        this.resetForm();
+        this.reportForm.patchValue({ businessDate: this.selectedDate });
+        const date = new Date(this.selectedDate);
+        const dayName = this.daysOfWeek[date.getDay() === 0 ? 6 : date.getDay() - 1];
+        this.selectedDay = dayName;
+        this.reportForm.patchValue({ dayOfWeek: dayName });
+      } else {
+        this.errorMessage = error.error?.message || 'Failed to load report';
+      }
     } finally {
       this.loading = false;
     }
@@ -490,59 +512,123 @@ export class DailyReportComponent implements OnInit {
     this.selectedDay = dayName;
 
     // Convert all activities to temp activities format
+    // Clear existing activities first
     this.tempActivities = [];
     this.activityIdCounter = 1;
     
-    // Convert CBS Team Activities
-    report.cbsTeamActivities.forEach(activity => {
-      this.tempActivities.push({
-        id: this.activityIdCounter++,
-        activityType: activity.activityType || 'CBS Team Activity',
-        description: activity.description,
-        branch: activity.branch
+    // Convert CBS Team Activities (including all subtypes)
+    if (report.cbsTeamActivities && report.cbsTeamActivities.length > 0) {
+      report.cbsTeamActivities.forEach(activity => {
+        this.tempActivities.push({
+          id: this.activityIdCounter++,
+          activityType: activity.activityType || 'CBS Team Activity',
+          description: activity.description,
+          branch: activity.branch
+        });
       });
-    });
+    }
     
-    // Convert other activities
-    report.chatCommunications.forEach(chat => {
-      this.tempActivities.push({
-        id: this.activityIdCounter++,
-        activityType: 'Chat Communication',
-        description: chat.summary
+    // Convert Chat Communications
+    if (report.chatCommunications && report.chatCommunications.length > 0) {
+      report.chatCommunications.forEach(chat => {
+        this.tempActivities.push({
+          id: this.activityIdCounter++,
+          activityType: 'Chat Communication',
+          description: chat.summary || ''
+        });
       });
-    });
+    }
     
-    report.emailCommunications.forEach(email => {
-      this.tempActivities.push({
-        id: this.activityIdCounter++,
-        activityType: 'Email Communication',
-        description: email.summary
+    // Convert Email Communications
+    if (report.emailCommunications && report.emailCommunications.length > 0) {
+      report.emailCommunications.forEach(email => {
+        this.tempActivities.push({
+          id: this.activityIdCounter++,
+          activityType: 'Email Communication',
+          description: email.summary || email.subject || ''
+        });
       });
-    });
+    }
     
-    report.problemEscalations.forEach(escalation => {
-      this.tempActivities.push({
-        id: this.activityIdCounter++,
-        activityType: 'Problem Escalation',
-        description: escalation.reason
+    // Convert Problem Escalations
+    if (report.problemEscalations && report.problemEscalations.length > 0) {
+      report.problemEscalations.forEach(escalation => {
+        this.tempActivities.push({
+          id: this.activityIdCounter++,
+          activityType: 'Problem Escalation',
+          description: escalation.reason || ''
+        });
       });
-    });
+    }
     
-    report.pendingActivities.forEach(pending => {
-      this.tempActivities.push({
-        id: this.activityIdCounter++,
-        activityType: 'Pending Activity',
-        description: pending.description
+    // Convert Training & Capacity Building
+    if (report.trainingCapacityBuildings && report.trainingCapacityBuildings.length > 0) {
+      report.trainingCapacityBuildings.forEach(training => {
+        this.tempActivities.push({
+          id: this.activityIdCounter++,
+          activityType: 'Training & Capacity Building',
+          description: training.topic || ''
+        });
       });
-    });
+    }
     
-    report.meetings.forEach(meeting => {
-      this.tempActivities.push({
-        id: this.activityIdCounter++,
-        activityType: 'Meeting',
-        description: meeting.summary
+    // Convert Project Progress Updates
+    if (report.projectProgressUpdates && report.projectProgressUpdates.length > 0) {
+      report.projectProgressUpdates.forEach(project => {
+        this.tempActivities.push({
+          id: this.activityIdCounter++,
+          activityType: 'Project Progress Update',
+          description: project.progressDetail || ''
+        });
       });
-    });
+    }
+    
+    // Convert Pending Activities
+    if (report.pendingActivities && report.pendingActivities.length > 0) {
+      report.pendingActivities.forEach(pending => {
+        this.tempActivities.push({
+          id: this.activityIdCounter++,
+          activityType: 'Pending Activity',
+          description: pending.description || pending.title || ''
+        });
+      });
+    }
+    
+    // Convert Meetings
+    if (report.meetings && report.meetings.length > 0) {
+      report.meetings.forEach(meeting => {
+        this.tempActivities.push({
+          id: this.activityIdCounter++,
+          activityType: 'Meeting',
+          description: meeting.summary || meeting.topic || ''
+        });
+      });
+    }
+    
+    // Convert AFPay Card Requests
+    if (report.afpayCardRequests && report.afpayCardRequests.length > 0) {
+      report.afpayCardRequests.forEach(afpay => {
+        this.tempActivities.push({
+          id: this.activityIdCounter++,
+          activityType: 'AFPay Card Request',
+          description: afpay.resolutionDetails || ''
+        });
+      });
+    }
+    
+    // Convert QRMIS Issues
+    if (report.qrmisIssues && report.qrmisIssues.length > 0) {
+      report.qrmisIssues.forEach(qrmis => {
+        this.tempActivities.push({
+          id: this.activityIdCounter++,
+          activityType: 'QRMIS Issue',
+          description: qrmis.problemDescription || ''
+        });
+      });
+    }
+    
+    // Force change detection to ensure UI updates
+    this.cdr.detectChanges();
   }
 
   async saveDraft() {
@@ -562,23 +648,38 @@ export class DailyReportComponent implements OnInit {
 
     try {
       const request = this.convertTempActivitiesToBackendFormat();
+      const wasUpdate = !!this.currentReport?.id;
 
-      if (this.currentReport?.id) {
+      if (wasUpdate) {
+        // Update existing report
         const updatedReport = await this.reportService.updateReport(this.currentReport.id, request).toPromise();
         this.currentReport = updatedReport!;
-        this.successMessage = 'Report saved successfully';
+        this.successMessage = 'Report updated successfully';
         this.loadMyReports();
+        
         // Refresh view modal if it's open
         if (this.showViewModal && this.viewReportModal?.id === this.currentReport.id) {
           this.refreshViewModal();
         }
+        
+        // Reset form after successful update
+        setTimeout(() => {
+          this.resetForm();
+        }, 1500); // Give user time to see success message
       } else {
+        // Create new report
         const report = await this.reportService.createReport(request).toPromise();
         this.currentReport = report!;
         this.successMessage = 'Report saved successfully';
         this.loadMyReports();
+        
+        // Reset form after successful creation
+        setTimeout(() => {
+          this.resetForm();
+        }, 1500); // Give user time to see success message
       }
     } catch (error: any) {
+      console.error('Error saving report:', error);
       this.errorMessage = error.error?.message || 'Failed to save report';
     } finally {
       this.saving = false;
@@ -759,11 +860,39 @@ export class DailyReportComponent implements OnInit {
     }
   }
 
-  loadReportForEdit(report: DailyReport) {
-    this.currentReport = report;
-    this.selectedDate = report.businessDate;
-    this.loadFormFromReport(report);
-    this.setActiveTab('create');
+  async loadReportForEdit(report: DailyReport) {
+    this.loading = true;
+    this.errorMessage = '';
+    this.successMessage = '';
+    
+    try {
+      // Always fetch fresh data to ensure we have the latest version
+      const fullReport = await this.reportService.getReport(report.id!).toPromise();
+      if (fullReport) {
+        this.currentReport = fullReport;
+        this.selectedDate = fullReport.businessDate;
+        
+        // Clear existing form data first
+        this.tempActivities = [];
+        this.activityIdCounter = 1;
+        this.newActivityType = '';
+        this.newActivityDescription = '';
+        this.newActivityBranch = '';
+        this.editingActivityIndex = null;
+        
+        // Load the report data into the form
+        this.loadFormFromReport(fullReport);
+        this.setActiveTab('create');
+        
+        // Scroll to top of form
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }
+    } catch (error: any) {
+      console.error('Error loading report for edit:', error);
+      this.errorMessage = error.error?.message || 'Failed to load report for editing';
+    } finally {
+      this.loading = false;
+    }
   }
 
   async viewReport(report: DailyReport) {

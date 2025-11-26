@@ -5,6 +5,7 @@ import { environment } from '../../../environments/environment';
 import {
   DailyReport,
   CreateDailyReportRequest,
+  UpdateDailyReportRequest,
   ReviewReportRequest,
   DailyReportDashboard,
   PageResponse,
@@ -22,8 +23,24 @@ export class DailyReportService {
     return this.http.post<DailyReport>(this.baseUrl, request);
   }
 
-  updateReport(id: number, request: CreateDailyReportRequest): Observable<DailyReport> {
-    return this.http.put<DailyReport>(`${this.baseUrl}/${id}`, request);
+  updateReport(id: number, request: CreateDailyReportRequest | UpdateDailyReportRequest): Observable<DailyReport> {
+    // Convert CreateDailyReportRequest to UpdateDailyReportRequest by removing businessDate
+    const updateRequest: UpdateDailyReportRequest = {
+      cbsEndTime: request.cbsEndTime,
+      cbsStartTimeNextDay: request.cbsStartTimeNextDay,
+      reportingLine: request.reportingLine,
+      chatCommunications: request.chatCommunications,
+      emailCommunications: request.emailCommunications,
+      problemEscalations: request.problemEscalations,
+      trainingCapacityBuildings: request.trainingCapacityBuildings,
+      projectProgressUpdates: request.projectProgressUpdates,
+      cbsTeamActivities: request.cbsTeamActivities,
+      pendingActivities: request.pendingActivities,
+      meetings: request.meetings,
+      afpayCardRequests: request.afpayCardRequests,
+      qrmisIssues: request.qrmisIssues
+    };
+    return this.http.put<DailyReport>(`${this.baseUrl}/${id}`, updateRequest);
   }
 
   submitReport(id: number): Observable<DailyReport> {
