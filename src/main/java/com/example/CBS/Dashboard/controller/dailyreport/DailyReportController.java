@@ -64,7 +64,7 @@ public class DailyReportController {
     }
     
     @PostMapping("/{id}/review")
-    @PreAuthorize("hasRole('ROLE_ADMIN')")
+    @PreAuthorize("hasAnyRole('ROLE_ADMIN', 'ROLE_QUALITY_CONTROL')")
     public ResponseEntity<DailyReportDto> reviewReport(
             @PathVariable Long id,
             @RequestBody ReviewReportRequest request,
@@ -110,7 +110,7 @@ public class DailyReportController {
     }
     
     @GetMapping
-    @PreAuthorize("hasRole('ROLE_ADMIN')")
+    @PreAuthorize("hasAnyRole('ROLE_ADMIN', 'ROLE_QUALITY_CONTROL')")
     public ResponseEntity<Page<DailyReportDto>> getAllReports(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
@@ -127,7 +127,7 @@ public class DailyReportController {
     }
     
     @GetMapping("/dashboard")
-    @PreAuthorize("hasRole('ROLE_ADMIN')")
+    @PreAuthorize("hasAnyRole('ROLE_ADMIN', 'ROLE_QUALITY_CONTROL')")
     public ResponseEntity<DailyReportDashboardDto> getDashboard() {
         DailyReportDashboardDto dashboard = dailyReportService.getDashboard();
         return ResponseEntity.ok(dashboard);
@@ -227,7 +227,7 @@ public class DailyReportController {
     }
     
     @GetMapping("/download/combined")
-    @PreAuthorize("hasRole('ROLE_ADMIN')")
+    @PreAuthorize("hasAnyRole('ROLE_ADMIN', 'ROLE_QUALITY_CONTROL')")
     public ResponseEntity<Resource> downloadCombinedReport(
             @RequestParam(required = true) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date,
             @RequestParam(required = false) String cbsEndTime,
@@ -262,7 +262,7 @@ public class DailyReportController {
     }
     
     @GetMapping("/by-date/{date}")
-    @PreAuthorize("hasRole('ROLE_ADMIN')")
+    @PreAuthorize("hasAnyRole('ROLE_ADMIN', 'ROLE_QUALITY_CONTROL')")
     public ResponseEntity<List<DailyReportDto>> getReportsByDate(
             @PathVariable @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date) {
         List<DailyReportDto> reports = dailyReportService.getReportsByDate(date);

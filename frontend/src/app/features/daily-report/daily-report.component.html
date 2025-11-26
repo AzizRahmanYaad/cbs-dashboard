@@ -55,6 +55,16 @@
       </svg>
       <span>Dashboard</span>
     </button>
+    <button 
+      class="tab" 
+      [class.active]="activeTab === 'quality-control'"
+      (click)="setActiveTab('quality-control')"
+      *ngIf="isQualityControl">
+      <svg class="tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+      </svg>
+      <span>Quality Control</span>
+    </button>
   </div>
 
   <!-- Create/Edit Report Tab -->
@@ -202,8 +212,17 @@
           <div class="success-message" *ngIf="successMessage">{{ successMessage }}</div>
         </div>
         <div class="buttons-save">
-          <button type="button" class="btn-save-primary" (click)="saveDraft()" [disabled]="saving || tempActivities.length === 0">
-            {{ saving ? 'Saving...' : 'Save Report' }}
+          <button type="button" class="btn-save-draft" (click)="saveDraft()" [disabled]="saving || submitting">
+            <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"></path>
+            </svg>
+            {{ saving ? 'Saving...' : 'Save Draft' }}
+          </button>
+          <button type="button" class="btn-submit-primary" (click)="submitReport()" [disabled]="submitting || saving || tempActivities.length === 0">
+            <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+            </svg>
+            {{ submitting ? 'Submitting...' : 'Submit Report' }}
           </button>
         </div>
       </div>
@@ -828,6 +847,291 @@
           {{ downloading ? 'Downloading...' : 'Download PDF' }}
         </button>
         <button class="btn-close-premium" (click)="closeViewModal()">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Quality Control Tab -->
+  <div class="tab-content" *ngIf="activeTab === 'quality-control' && isQualityControl">
+    <div class="quality-control-container">
+      <div class="qc-header">
+        <div>
+          <h2 class="qc-title">Quality Control - Report Review</h2>
+          <p class="qc-subtitle">Review, confirm, and manage all submitted individual reports</p>
+        </div>
+        <button class="btn-refresh-premium" (click)="loadQualityControlReports()" [disabled]="qualityControlLoading">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+          </svg>
+          Refresh
+        </button>
+      </div>
+
+      <!-- Date Filter -->
+      <div class="qc-filter-section">
+        <div class="form-group">
+          <label class="label-primary">Filter Reports by Date *</label>
+          <input 
+            type="date" 
+            [(ngModel)]="qualityControlSelectedDate"
+            (change)="loadQualityControlReports()"
+            class="form-input-primary"
+            [ngModelOptions]="{standalone: true}">
+        </div>
+      </div>
+
+      <!-- Messages -->
+      <div class="messages" *ngIf="errorMessage || successMessage">
+        <div class="error-message" *ngIf="errorMessage">{{ errorMessage }}</div>
+        <div class="success-message" *ngIf="successMessage">{{ successMessage }}</div>
+      </div>
+
+      <!-- Reports List -->
+      <div class="qc-reports-section" *ngIf="!qualityControlLoading">
+        <div *ngIf="qualityControlReports.length > 0">
+          <div class="qc-reports-header">
+            <h3>Submitted Reports for {{ qualityControlSelectedDate | date:'fullDate' }}</h3>
+            <button 
+              class="btn-confirm-all" 
+              (click)="confirmAllReportsForDate()"
+              [disabled]="qualityControlLoading">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+              </svg>
+              Confirm All Reports
+            </button>
+          </div>
+
+          <div class="qc-reports-list">
+            <div *ngFor="let report of qualityControlReports" class="qc-report-card">
+              <div class="qc-report-header">
+                <div>
+                  <h4>{{ report.employeeFullName || report.employeeUsername || 'Employee ' + report.employeeId }}</h4>
+                  <p class="qc-report-date">{{ report.businessDate | date:'fullDate' }}</p>
+                </div>
+                <span [class]="'status-badge ' + getStatusColor(report.status)">
+                  {{ report.status }}
+                </span>
+              </div>
+
+              <div class="qc-report-actions">
+                <button class="btn-action-modern btn-view-modern" (click)="openReviewModal(report)" title="Review Report">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+                  </svg>
+                  <span>Review</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div *ngIf="qualityControlReports.length === 0 && !qualityControlLoading" class="no-data">
+          <p>No submitted reports found for the selected date.</p>
+        </div>
+      </div>
+
+      <div *ngIf="qualityControlLoading" class="loading-message">
+        <p>Loading reports...</p>
+      </div>
+
+      <!-- CBS Time and Report Line Configuration -->
+      <div class="qc-config-section" *ngIf="qualityControlReports.length > 0">
+        <h3 class="section-title">Team Report Configuration</h3>
+        <div class="qc-config-form">
+          <div class="form-row-simple">
+            <div class="form-group">
+              <label class="label-primary">CBS End Time (Current Day) *</label>
+              <input 
+                type="time" 
+                [(ngModel)]="qualityControlCbsEndTime"
+                class="form-input-primary"
+                [ngModelOptions]="{standalone: true}">
+            </div>
+            <div class="form-group">
+              <label class="label-primary">CBS Start Time (Next Day) *</label>
+              <input 
+                type="time" 
+                [(ngModel)]="qualityControlCbsStartTime"
+                class="form-input-primary"
+                [ngModelOptions]="{standalone: true}">
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="label-primary">Report Line Name</label>
+            <input 
+              type="text" 
+              [(ngModel)]="qualityControlReportLine"
+              class="form-input-primary"
+              placeholder="Enter report line name"
+              [ngModelOptions]="{standalone: true}">
+          </div>
+        </div>
+      </div>
+
+      <!-- Task Management -->
+      <div class="qc-tasks-section" *ngIf="qualityControlReports.length > 0">
+        <h3 class="section-title">Task Management for {{ qualityControlSelectedDate | date:'fullDate' }}</h3>
+        
+        <!-- Pending Tasks -->
+        <div class="qc-task-group">
+          <h4>Pending Tasks</h4>
+          <div class="task-input-group">
+            <input 
+              type="text" 
+              [(ngModel)]="newPendingTask"
+              class="form-input-primary"
+              placeholder="Enter pending task description"
+              (keyup.enter)="addPendingTask()"
+              [ngModelOptions]="{standalone: true}">
+            <button class="btn-add-task" (click)="addPendingTask()">Add</button>
+          </div>
+          <div class="task-list" *ngIf="pendingTasks.length > 0">
+            <div *ngFor="let task of pendingTasks; let i = index" class="task-item">
+              <span>{{ i + 1 }}. {{ task.description }}</span>
+              <button class="btn-remove-task" (click)="removePendingTask(i)">Remove</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Achievement Tasks -->
+        <div class="qc-task-group">
+          <h4>Achievement Tasks</h4>
+          <div class="task-input-group">
+            <input 
+              type="text" 
+              [(ngModel)]="newAchievementTask"
+              class="form-input-primary"
+              placeholder="Enter achievement task description"
+              (keyup.enter)="addAchievementTask()"
+              [ngModelOptions]="{standalone: true}">
+            <button class="btn-add-task" (click)="addAchievementTask()">Add</button>
+          </div>
+          <div class="task-list" *ngIf="achievementTasks.length > 0">
+            <div *ngFor="let task of achievementTasks; let i = index" class="task-item">
+              <span>{{ i + 1 }}. {{ task.description }}</span>
+              <button class="btn-remove-task" (click)="removeAchievementTask(i)">Remove</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Planned Tasks -->
+        <div class="qc-task-group">
+          <h4>Planned Tasks</h4>
+          <div class="task-input-group">
+            <input 
+              type="text" 
+              [(ngModel)]="newPlannedTask"
+              class="form-input-primary"
+              placeholder="Enter planned task description"
+              (keyup.enter)="addPlannedTask()"
+              [ngModelOptions]="{standalone: true}">
+            <button class="btn-add-task" (click)="addPlannedTask()">Add</button>
+          </div>
+          <div class="task-list" *ngIf="plannedTasks.length > 0">
+            <div *ngFor="let task of plannedTasks; let i = index" class="task-item">
+              <span>{{ i + 1 }}. {{ task.description }}</span>
+              <button class="btn-remove-task" (click)="removePlannedTask(i)">Remove</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Generate Team Report Button -->
+      <div class="qc-generate-section" *ngIf="qualityControlReports.length > 0">
+        <button 
+          class="btn-generate-team-report" 
+          (click)="generateTeamDailyReport()"
+          [disabled]="downloading || !qualityControlCbsEndTime || !qualityControlCbsStartTime">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+          </svg>
+          {{ downloading ? 'Generating...' : 'Generate Team Daily Report' }}
+        </button>
+      </div>
+    </div>
+
+    <!-- Review Modal -->
+    <div class="modal-overlay-premium" *ngIf="showReviewModal && selectedReportForReview" (click)="closeReviewModal()">
+      <div class="modal-content-premium qc-review-modal" (click)="$event.stopPropagation()">
+        <div class="modal-header-premium">
+          <div class="modal-title-section">
+            <h2 class="modal-title">Review Report - {{ selectedReportForReview.employeeFullName || selectedReportForReview.employeeUsername }}</h2>
+            <p class="modal-subtitle">{{ selectedReportForReview.businessDate | date:'fullDate' }}</p>
+          </div>
+          <button class="modal-close-premium" (click)="closeReviewModal()" aria-label="Close">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"></path>
+            </svg>
+          </button>
+        </div>
+
+        <div class="modal-body-premium">
+          <!-- CBS Time and Report Line -->
+          <div class="qc-review-config">
+            <h3>Report Configuration</h3>
+            <div class="form-row-simple">
+              <div class="form-group">
+                <label>CBS End Time</label>
+                <input type="time" [(ngModel)]="qualityControlCbsEndTime" class="form-input-primary" [ngModelOptions]="{standalone: true}">
+              </div>
+              <div class="form-group">
+                <label>CBS Start Time (Next Day)</label>
+                <input type="time" [(ngModel)]="qualityControlCbsStartTime" class="form-input-primary" [ngModelOptions]="{standalone: true}">
+              </div>
+            </div>
+            <div class="form-group">
+              <label>Report Line Name</label>
+              <input type="text" [(ngModel)]="qualityControlReportLine" class="form-input-primary" [ngModelOptions]="{standalone: true}">
+            </div>
+          </div>
+
+          <!-- Activities Review -->
+          <div class="qc-activities-review">
+            <h3>Activities Review</h3>
+            <div class="activities-list-premium">
+              <div *ngFor="let activity of getAllActivities(selectedReportForReview); let i = index" class="qc-activity-review-item">
+                <div class="activity-content">
+                  <div class="activity-header">
+                    <span class="activity-type-badge">{{ activity.activityName }}</span>
+                    <span *ngIf="confirmedActivities.has('activity-' + i)" class="confirmed-badge">✓ Confirmed</span>
+                  </div>
+                  <p class="activity-description">{{ activity.description }}</p>
+                  <div *ngIf="activity.branch" class="activity-meta">
+                    <span class="activity-branch-tag">🏢 {{ activity.branch }}</span>
+                  </div>
+                </div>
+                <div class="activity-actions">
+                  <button 
+                    class="btn-confirm-activity" 
+                    (click)="reviewReportActivity(selectedReportForReview, 'activity-' + i, 'confirm')"
+                    [class.confirmed]="confirmedActivities.has('activity-' + i)">
+                    {{ confirmedActivities.has('activity-' + i) ? 'Confirmed' : 'Confirm' }}
+                  </button>
+                  <button 
+                    class="btn-feedback-activity" 
+                    (click)="reviewReportActivity(selectedReportForReview, 'activity-' + i, 'feedback')">
+                    Feedback
+                  </button>
+                </div>
+                <div *ngIf="reviewFeedback['activity-' + i]" class="feedback-display">
+                  <strong>Feedback:</strong> {{ reviewFeedback['activity-' + i] }}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="modal-footer-premium">
+          <button 
+            class="btn-save-premium" 
+            (click)="updateReportForQualityControl(selectedReportForReview)"
+            [disabled]="qualityControlLoading">
+            {{ qualityControlLoading ? 'Saving...' : 'Save Changes' }}
+          </button>
+          <button class="btn-close-premium" (click)="closeReviewModal()">Close</button>
+        </div>
       </div>
     </div>
   </div>

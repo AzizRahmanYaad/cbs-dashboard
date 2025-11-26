@@ -37,7 +37,7 @@ export class DailyReportComponent implements OnInit {
   private fb = inject(FormBuilder);
   private cdr = inject(ChangeDetectorRef);
 
-  activeTab: 'create' | 'my-reports' | 'my-dashboard' | 'dashboard' = 'create';
+  activeTab: 'create' | 'my-reports' | 'my-dashboard' | 'dashboard' | 'quality-control' = 'create';
   
   reportForm!: FormGroup;
   currentReport: DailyReport | null = null;
@@ -71,6 +71,7 @@ export class DailyReportComponent implements OnInit {
   canApprove = false;
   isController = false;
   isCFO = false;
+  isQualityControl = false;
   
   // Download state
   downloading = false;
@@ -99,6 +100,10 @@ export class DailyReportComponent implements OnInit {
     if (this.canViewDashboard) {
       this.loadDashboard();
     }
+    // Load draft for today's date if it exists
+    if (this.activeTab === 'create') {
+      this.loadDraftForDate();
+    }
   }
 
   loadCurrentUserFullName() {
@@ -114,6 +119,7 @@ export class DailyReportComponent implements OnInit {
     this.canApprove = this.permissionService.canApproveReports();
     this.isController = this.permissionService.isController();
     this.isCFO = this.permissionService.isCFO();
+    this.isQualityControl = this.permissionService.isQualityControl();
   }
 
   initializeForm() {
@@ -342,7 +348,8 @@ export class DailyReportComponent implements OnInit {
       const dayName = this.daysOfWeek[date.getDay() === 0 ? 6 : date.getDay() - 1];
       this.selectedDay = dayName;
       this.reportForm.patchValue({ dayOfWeek: dayName });
-      this.loadReportByDate();
+      this.selectedDate = this.reportForm.get('businessDate')?.value;
+      this.loadDraftForDate();
     }
   }
 
@@ -500,6 +507,31 @@ export class DailyReportComponent implements OnInit {
     }
   }
 
+  // Load draft automatically when component initializes or date changes
+  async loadDraftForDate() {
+    if (!this.selectedDate) return;
+    
+    try {
+      const report = await this.reportService.getReportByDate(this.selectedDate).toPromise();
+      if (report && (report.status === 'DRAFT' || report.status === ReportStatus.DRAFT)) {
+        // Auto-load draft if it exists
+        this.currentReport = report;
+        this.tempActivities = [];
+        this.activityIdCounter = 1;
+        this.loadFormFromReport(report);
+        this.successMessage = 'Draft loaded automatically';
+        setTimeout(() => {
+          this.successMessage = '';
+        }, 3000);
+      }
+    } catch (error: any) {
+      // Silently fail if no draft exists - this is expected
+      if (error.status !== 404 && error.status !== 0) {
+        console.error('Error loading draft:', error);
+      }
+    }
+  }
+
   loadFormFromReport(report: DailyReport) {
     const date = new Date(report.businessDate);
     const dayName = this.daysOfWeek[date.getDay() === 0 ? 6 : date.getDay() - 1];
@@ -637,11 +669,6 @@ export class DailyReportComponent implements OnInit {
       return;
     }
 
-    if (this.tempActivities.length === 0) {
-      this.errorMessage = 'Please add at least one activity';
-      return;
-    }
-
     this.saving = true;
     this.errorMessage = '';
     this.successMessage = '';
@@ -651,38 +678,79 @@ export class DailyReportComponent implements OnInit {
       const reportId = this.currentReport?.id;
 
       if (reportId) {
-        // Update existing report
+        // Update existing report (keeps current status, or sets to DRAFT if needed)
         const updatedReport = await this.reportService.updateReport(reportId, request).toPromise();
         this.currentReport = updatedReport!;
-        this.successMessage = 'Report updated successfully';
+        this.successMessage = 'Draft saved successfully';
         this.loadMyReports();
         
         // Refresh view modal if it's open
         if (this.showViewModal && this.viewReportModal?.id === reportId) {
           this.refreshViewModal();
         }
-        
-        // Reset form after successful update
-        setTimeout(() => {
-          this.resetForm();
-        }, 1500); // Give user time to see success message
       } else {
-        // Create new report
+        // Create new report as DRAFT
         const report = await this.reportService.createReport(request).toPromise();
         this.currentReport = report!;
-        this.successMessage = 'Report saved successfully';
+        this.successMessage = 'Draft saved successfully';
         this.loadMyReports();
-        
-        // Reset form after successful creation
-        setTimeout(() => {
-          this.resetForm();
-        }, 1500); // Give user time to see success message
       }
     } catch (error: any) {
-      console.error('Error saving report:', error);
-      this.errorMessage = error.error?.message || 'Failed to save report';
+      console.error('Error saving draft:', error);
+      this.errorMessage = error.error?.message || 'Failed to save draft';
     } finally {
       this.saving = false;
+    }
+  }
+
+  async submitReport() {
+    if (this.reportForm.invalid) {
+      this.errorMessage = 'Please fill in all required fields';
+      return;
+    }
+
+    if (this.tempActivities.length === 0) {
+      this.errorMessage = 'Please add at least one activity before submitting';
+      return;
+    }
+
+    this.submitting = true;
+    this.errorMessage = '';
+    this.successMessage = '';
+
+    try {
+      // First ensure draft is saved
+      const request = this.convertTempActivitiesToBackendFormat();
+      let reportId = this.currentReport?.id;
+
+      if (!reportId) {
+        // Create new report first
+        const report = await this.reportService.createReport(request).toPromise();
+        this.currentReport = report!;
+        reportId = report!.id!;
+      } else {
+        // Update existing report
+        const updatedReport = await this.reportService.updateReport(reportId, request).toPromise();
+        this.currentReport = updatedReport!;
+      }
+
+      // Now submit the report
+      if (reportId) {
+        const submittedReport = await this.reportService.submitReport(reportId).toPromise();
+        this.currentReport = submittedReport!;
+        this.successMessage = 'Report submitted successfully';
+        this.loadMyReports();
+        
+        // Refresh view modal if it's open
+        if (this.showViewModal && this.viewReportModal?.id === reportId) {
+          this.refreshViewModal();
+        }
+      }
+    } catch (error: any) {
+      console.error('Error submitting report:', error);
+      this.errorMessage = error.error?.message || 'Failed to submit report';
+    } finally {
+      this.submitting = false;
     }
   }
 
@@ -846,7 +914,7 @@ export class DailyReportComponent implements OnInit {
     );
   }
 
-  setActiveTab(tab: 'create' | 'my-reports' | 'my-dashboard' | 'dashboard') {
+  setActiveTab(tab: 'create' | 'my-reports' | 'my-dashboard' | 'dashboard' | 'quality-control') {
     this.activeTab = tab;
     if (tab === 'my-reports') {
       // Small delay to ensure tab is visible before loading
@@ -856,6 +924,15 @@ export class DailyReportComponent implements OnInit {
     } else if (tab === 'my-dashboard') {
       setTimeout(() => {
         this.loadMyDashboard();
+      }, 100);
+    } else if (tab === 'create') {
+      // Load draft when switching to create tab
+      setTimeout(() => {
+        this.loadDraftForDate();
+      }, 100);
+    } else if (tab === 'quality-control') {
+      setTimeout(() => {
+        this.loadQualityControlReports();
       }, 100);
     }
   }
@@ -1281,4 +1358,218 @@ export class DailyReportComponent implements OnInit {
     if (maxCount === 0) return 0;
     return (count / maxCount) * 100;
   }
+
+  // Quality Control features
+  qualityControlSelectedDate = this.today;
+  qualityControlReports: DailyReport[] = [];
+  qualityControlLoading = false;
+  selectedReportForReview: DailyReport | null = null;
+  showReviewModal = false;
+  reviewFeedback: { [key: string]: string } = {};
+  confirmedActivities: Set<string> = new Set();
+  qualityControlCbsEndTime = '';
+  qualityControlCbsStartTime = '';
+  qualityControlReportLine = '';
+  
+  // Task management for Quality Control
+  pendingTasks: Array<{id: number, description: string, date: string}> = [];
+  achievementTasks: Array<{id: number, description: string, date: string}> = [];
+  plannedTasks: Array<{id: number, description: string, date: string}> = [];
+  newPendingTask = '';
+  newAchievementTask = '';
+  newPlannedTask = '';
+  private taskIdCounter = 1;
+
+  async loadQualityControlReports() {
+    if (!this.qualityControlSelectedDate) return;
+    
+    this.qualityControlLoading = true;
+    this.errorMessage = '';
+    
+    try {
+      const reports = await this.reportService.getReportsByDate(this.qualityControlSelectedDate).toPromise();
+      if (reports) {
+        // Filter to only show SUBMITTED reports
+        this.qualityControlReports = reports.filter(r => r.status === 'SUBMITTED' || r.status === ReportStatus.SUBMITTED);
+      } else {
+        this.qualityControlReports = [];
+      }
+    } catch (error: any) {
+      console.error('Error loading quality control reports:', error);
+      this.errorMessage = error.error?.message || 'Failed to load reports';
+      this.qualityControlReports = [];
+    } finally {
+      this.qualityControlLoading = false;
+    }
+  }
+
+  async reviewReportActivity(report: DailyReport, activityId: string, action: 'confirm' | 'feedback') {
+    if (action === 'confirm') {
+      this.confirmedActivities.add(activityId);
+    } else if (action === 'feedback') {
+      // Show feedback input modal or inline input
+      const feedback = prompt('Enter feedback for this activity:');
+      if (feedback) {
+        this.reviewFeedback[activityId] = feedback;
+      }
+    }
+  }
+
+  async updateReportForQualityControl(report: DailyReport) {
+    if (!report.id) return;
+    
+    this.qualityControlLoading = true;
+    try {
+      const updateRequest: UpdateDailyReportRequest = {
+        cbsEndTime: this.qualityControlCbsEndTime || report.cbsEndTime,
+        cbsStartTimeNextDay: this.qualityControlCbsStartTime || report.cbsStartTimeNextDay,
+        reportingLine: this.qualityControlReportLine || report.reportingLine,
+        chatCommunications: report.chatCommunications || [],
+        emailCommunications: report.emailCommunications || [],
+        problemEscalations: report.problemEscalations || [],
+        trainingCapacityBuildings: report.trainingCapacityBuildings || [],
+        projectProgressUpdates: report.projectProgressUpdates || [],
+        cbsTeamActivities: report.cbsTeamActivities || [],
+        pendingActivities: report.pendingActivities || [],
+        meetings: report.meetings || [],
+        afpayCardRequests: report.afpayCardRequests || [],
+        qrmisIssues: report.qrmisIssues || []
+      };
+      
+      const updated = await this.reportService.updateReport(report.id, updateRequest).toPromise();
+      if (updated) {
+        this.successMessage = 'Report updated successfully';
+        this.loadQualityControlReports();
+      }
+    } catch (error: any) {
+      this.errorMessage = error.error?.message || 'Failed to update report';
+    } finally {
+      this.qualityControlLoading = false;
+    }
+  }
+
+  addPendingTask() {
+    if (this.newPendingTask.trim()) {
+      this.pendingTasks.push({
+        id: this.taskIdCounter++,
+        description: this.newPendingTask.trim(),
+        date: this.qualityControlSelectedDate
+      });
+      this.newPendingTask = '';
+    }
+  }
+
+  addAchievementTask() {
+    if (this.newAchievementTask.trim()) {
+      this.achievementTasks.push({
+        id: this.taskIdCounter++,
+        description: this.newAchievementTask.trim(),
+        date: this.qualityControlSelectedDate
+      });
+      this.newAchievementTask = '';
+    }
+  }
+
+  addPlannedTask() {
+    if (this.newPlannedTask.trim()) {
+      this.plannedTasks.push({
+        id: this.taskIdCounter++,
+        description: this.newPlannedTask.trim(),
+        date: this.qualityControlSelectedDate
+      });
+      this.newPlannedTask = '';
+    }
+  }
+
+  removePendingTask(index: number) {
+    this.pendingTasks.splice(index, 1);
+  }
+
+  removeAchievementTask(index: number) {
+    this.achievementTasks.splice(index, 1);
+  }
+
+  removePlannedTask(index: number) {
+    this.plannedTasks.splice(index, 1);
+  }
+
+  async generateTeamDailyReport() {
+    if (!this.qualityControlSelectedDate) {
+      this.errorMessage = 'Please select a date';
+      return;
+    }
+
+    if (!this.qualityControlCbsEndTime || !this.qualityControlCbsStartTime) {
+      this.errorMessage = 'Please enter CBS Start Time and CBS End Time';
+      return;
+    }
+
+    this.downloading = true;
+    this.errorMessage = '';
+    
+    try {
+      const blob = await this.reportService.downloadCombinedReport(
+        this.qualityControlSelectedDate,
+        this.qualityControlCbsEndTime,
+        this.qualityControlCbsStartTime
+      ).toPromise();
+      
+      if (blob) {
+        const url = window.URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        const dateStr = this.qualityControlSelectedDate.split('T')[0];
+        link.download = `CBS_Team_Daily_Report_${dateStr}.pdf`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        window.URL.revokeObjectURL(url);
+        this.successMessage = 'Team Daily Report generated successfully';
+      }
+    } catch (error: any) {
+      this.errorMessage = error.error?.message || 'Failed to generate team report';
+    } finally {
+      this.downloading = false;
+    }
+  }
+
+  openReviewModal(report: DailyReport) {
+    this.selectedReportForReview = report;
+    this.showReviewModal = true;
+    this.qualityControlCbsEndTime = report.cbsEndTime || '';
+    this.qualityControlCbsStartTime = report.cbsStartTimeNextDay || '';
+    this.qualityControlReportLine = report.reportingLine || '';
+  }
+
+  closeReviewModal() {
+    this.showReviewModal = false;
+    this.selectedReportForReview = null;
+    this.reviewFeedback = {};
+    this.confirmedActivities.clear();
+  }
+
+  async confirmAllReportsForDate() {
+    if (!this.qualityControlSelectedDate) return;
+    
+    this.qualityControlLoading = true;
+    try {
+      // Confirm all reports for the selected date
+      for (const report of this.qualityControlReports) {
+        if (report.id) {
+          const reviewRequest: ReviewReportRequest = {
+            status: ReportStatus.APPROVED,
+            reviewComments: 'Confirmed by Quality Control'
+          };
+          await this.reportService.reviewReport(report.id, reviewRequest).toPromise();
+        }
+      }
+      this.successMessage = 'All reports confirmed successfully';
+      this.loadQualityControlReports();
+    } catch (error: any) {
+      this.errorMessage = error.error?.message || 'Failed to confirm reports';
+    } finally {
+      this.qualityControlLoading = false;
+    }
+  }
+
 }

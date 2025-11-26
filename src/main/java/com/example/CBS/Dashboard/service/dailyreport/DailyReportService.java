@@ -107,7 +107,7 @@ public class DailyReportService {
     }
     
     @Transactional
-    @PreAuthorize("hasRole('ROLE_ADMIN')")
+    @PreAuthorize("hasAnyRole('ROLE_ADMIN', 'ROLE_QUALITY_CONTROL')")
     public DailyReportDto reviewReport(Long reportId, Long reviewerId, ReviewReportRequest request) {
         DailyReport report = dailyReportRepository.findById(reportId)
             .orElseThrow(() -> new EntityNotFoundException("Report not found"));
@@ -199,7 +199,7 @@ public class DailyReportService {
     }
     
     @Transactional(readOnly = true)
-    @PreAuthorize("hasRole('ROLE_ADMIN')")
+    @PreAuthorize("hasAnyRole('ROLE_ADMIN', 'ROLE_QUALITY_CONTROL')")
     public Page<DailyReportDto> getAllReports(Pageable pageable, LocalDate startDate, LocalDate endDate, 
                                                Long employeeId, DailyReport.ReportStatus status) {
         Specification<DailyReport> spec = null;
@@ -232,7 +232,7 @@ public class DailyReportService {
     }
     
     @Transactional(readOnly = true)
-    @PreAuthorize("hasRole('ROLE_ADMIN')")
+    @PreAuthorize("hasAnyRole('ROLE_ADMIN', 'ROLE_QUALITY_CONTROL')")
     public DailyReportDashboardDto getDashboard() {
         DailyReportDashboardDto dashboard = new DailyReportDashboardDto();
         
@@ -647,9 +647,9 @@ public class DailyReportService {
         User user = userRepository.findById(userId).orElse(null);
         if (user == null) return false;
         
-        // Only ADMIN has supervisor access now (since we removed supervisor roles)
+        // ADMIN and QUALITY_CONTROL have supervisor access
         return user.getRoles().stream()
-            .anyMatch(role -> role.getName().equals("ROLE_ADMIN"));
+            .anyMatch(role -> role.getName().equals("ROLE_ADMIN") || role.getName().equals("ROLE_QUALITY_CONTROL"));
     }
 }
 

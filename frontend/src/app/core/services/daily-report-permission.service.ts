@@ -17,7 +17,8 @@ export class DailyReportPermissionService {
   // Role constants
   readonly ROLES = {
     INDIVIDUAL_REPORT: 'ROLE_INDIVIDUAL_REPORT', // Individual report access - full access to own reports
-    ADMIN: 'ROLE_ADMIN'
+    ADMIN: 'ROLE_ADMIN',
+    QUALITY_CONTROL: 'ROLE_QUALITY_CONTROL' // Quality Control - can view, review, and manage all submitted reports
   };
 
   /**
@@ -32,7 +33,8 @@ export class DailyReportPermissionService {
     // Primary role for daily report module
     return this.hasAnyRole([
       this.ROLES.INDIVIDUAL_REPORT,
-      this.ROLES.ADMIN
+      this.ROLES.ADMIN,
+      this.ROLES.QUALITY_CONTROL
     ]);
   }
 
@@ -76,12 +78,6 @@ export class DailyReportPermissionService {
     ]);
   }
 
-  /**
-   * Check if user can review reports (admin only)
-   */
-  canReviewReports(): boolean {
-    return this.hasAnyRole([this.ROLES.ADMIN]);
-  }
 
   /**
    * Check if user can approve reports (admin only)
@@ -98,10 +94,10 @@ export class DailyReportPermissionService {
   }
 
   /**
-   * Check if user can view all reports (not just their own) - admin only
+   * Check if user can view all reports (not just their own) - admin and quality control
    */
   canViewAllReports(): boolean {
-    return this.hasAnyRole([this.ROLES.ADMIN]);
+    return this.hasAnyRole([this.ROLES.ADMIN, this.ROLES.QUALITY_CONTROL]);
   }
 
   /**
@@ -119,10 +115,24 @@ export class DailyReportPermissionService {
   }
 
   /**
-   * Check if user can view dashboard/analytics - admin only
+   * Check if user can view dashboard/analytics - admin and quality control
    */
   canViewDashboard(): boolean {
-    return this.hasAnyRole([this.ROLES.ADMIN]);
+    return this.hasAnyRole([this.ROLES.ADMIN, this.ROLES.QUALITY_CONTROL]);
+  }
+
+  /**
+   * Check if user is Quality Control
+   */
+  isQualityControl(): boolean {
+    return this.hasAnyRole([this.ROLES.QUALITY_CONTROL]);
+  }
+
+  /**
+   * Check if user can review reports (admin and quality control)
+   */
+  canReviewReports(): boolean {
+    return this.hasAnyRole([this.ROLES.ADMIN, this.ROLES.QUALITY_CONTROL]);
   }
 
   /**
@@ -175,7 +185,7 @@ export class DailyReportPermissionService {
 
   /**
    * Get user's role level for Daily Report module
-   * Returns: 'individual_report' | 'admin' | null
+   * Returns: 'individual_report' | 'admin' | 'quality_control' | null
    */
   getUserRoleLevel(): string | null {
     const user = this.authService.currentUserValue;
@@ -185,6 +195,9 @@ export class DailyReportPermissionService {
 
     if (user.roles.includes(this.ROLES.ADMIN)) {
       return 'admin';
+    }
+    if (user.roles.includes(this.ROLES.QUALITY_CONTROL)) {
+      return 'quality_control';
     }
     if (user.roles.includes(this.ROLES.INDIVIDUAL_REPORT)) {
       return 'individual_report';

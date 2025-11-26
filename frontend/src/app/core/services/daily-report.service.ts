@@ -47,6 +47,11 @@ export class DailyReportService {
     return this.http.post<DailyReport>(`${this.baseUrl}/${id}/submit`, {});
   }
 
+  saveDraft(request: CreateDailyReportRequest): Observable<DailyReport> {
+    // Save draft uses the same create/update endpoints but with DRAFT status
+    return this.http.post<DailyReport>(this.baseUrl, request);
+  }
+
   reviewReport(id: number, request: ReviewReportRequest): Observable<DailyReport> {
     return this.http.post<DailyReport>(`${this.baseUrl}/${id}/review`, request);
   }
