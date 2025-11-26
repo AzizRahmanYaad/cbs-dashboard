@@ -144,7 +144,7 @@
 
         <!-- Activities List -->
         <div class="activities-list" *ngIf="tempActivities.length > 0">
-          <div *ngFor="let activity of tempActivities; let i = index" class="activity-row-item">
+          <div *ngFor="let activity of tempActivities; let i = index; trackBy: trackByActivityId" class="activity-row-item">
             <div class="activity-row-content">
               <span class="activity-number-small">{{ i + 1 }}</span>
               <div class="activity-details">

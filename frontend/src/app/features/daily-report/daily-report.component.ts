@@ -1,4 +1,4 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, inject, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, FormArray, Validators } from '@angular/forms';
 import { DailyReportService } from '../../core/services/daily-report.service';
@@ -35,6 +35,7 @@ export class DailyReportComponent implements OnInit {
   private permissionService = inject(DailyReportPermissionService);
   private authService = inject(AuthService);
   private fb = inject(FormBuilder);
+  private cdr = inject(ChangeDetectorRef);
 
   activeTab: 'create' | 'my-reports' | 'dashboard' = 'create';
   
@@ -250,8 +251,9 @@ export class DailyReportComponent implements OnInit {
   }
   
   addActivity() {
-    const activityType = this.newActivityType.trim();
-    const description = this.newActivityDescription.trim();
+    const activityType = this.newActivityType?.trim() || '';
+    const description = this.newActivityDescription?.trim() || '';
+    const branch = this.newActivityBranch?.trim() || '';
     
     if (!activityType) {
       this.errorMessage = 'Please select an activity type';
@@ -265,9 +267,12 @@ export class DailyReportComponent implements OnInit {
     
     if (this.editingActivityIndex !== null) {
       // Update existing activity
-      this.tempActivities[this.editingActivityIndex].activityType = activityType;
-      this.tempActivities[this.editingActivityIndex].description = description;
-      this.tempActivities[this.editingActivityIndex].branch = this.newActivityBranch || undefined;
+      const activity = this.tempActivities[this.editingActivityIndex];
+      activity.activityType = activityType;
+      activity.description = description;
+      activity.branch = branch || undefined;
+      
+      // Reset editing state
       this.editingActivityIndex = null;
       this.editingActivityType = '';
       this.editingActivityText = '';
@@ -278,10 +283,11 @@ export class DailyReportComponent implements OnInit {
         id: this.activityIdCounter++,
         activityType: activityType,
         description: description,
-        branch: this.newActivityBranch || undefined
+        branch: branch || undefined
       });
     }
     
+    // Clear form fields
     this.newActivityType = '';
     this.newActivityDescription = '';
     this.newActivityBranch = '';
@@ -290,12 +296,15 @@ export class DailyReportComponent implements OnInit {
   
   editActivity(index: number) {
     this.editingActivityIndex = index;
-    this.editingActivityType = this.tempActivities[index].activityType;
-    this.editingActivityText = this.tempActivities[index].description;
-    this.editingActivityBranch = this.tempActivities[index].branch || '';
-    this.newActivityType = this.tempActivities[index].activityType;
-    this.newActivityDescription = this.tempActivities[index].description;
-    this.newActivityBranch = this.tempActivities[index].branch || '';
+    const activity = this.tempActivities[index];
+    this.editingActivityType = activity.activityType;
+    this.editingActivityText = activity.description;
+    // Set form values - ensure branch is set properly
+    this.newActivityType = activity.activityType;
+    this.newActivityDescription = activity.description;
+    this.newActivityBranch = activity.branch || '';
+    // Force change detection to ensure select updates
+    this.cdr.detectChanges();
   }
   
   cancelEdit() {
@@ -303,6 +312,7 @@ export class DailyReportComponent implements OnInit {
     this.editingActivityType = '';
     this.editingActivityText = '';
     this.editingActivityBranch = '';
+    // Clear form fields
     this.newActivityType = '';
     this.newActivityDescription = '';
     this.newActivityBranch = '';
@@ -1023,5 +1033,10 @@ export class DailyReportComponent implements OnInit {
   // Get activities for a specific type
   getActivitiesForType(report: DailyReport | null, activityType: string): Array<{description: string, branch?: string, accountNumber?: string}> {
     return this.getGroupedActivities(report).get(activityType) || [];
+  }
+
+  // TrackBy function for activity list to ensure proper rendering
+  trackByActivityId(index: number, activity: { id: number; activityType: string; description: string; branch?: string }): number {
+    return activity.id;
   }
 }
