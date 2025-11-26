@@ -446,12 +446,21 @@ public class DailyReportService {
     }
     
     private void validateReport(DailyReport report) {
-        if (report.getCbsEndTime() == null || report.getCbsStartTimeNextDay() == null) {
-            throw new IllegalArgumentException("CBS Start/End Time is required");
-        }
+        // CBS Start/End Time is NOT required for individual users
+        // It will be set by Quality Control users during review
         
-        if (report.getCbsTeamActivities().isEmpty()) {
-            throw new IllegalArgumentException("At least one CBS Team Activity is required");
+        // Only validate that at least one activity exists
+        if (report.getCbsTeamActivities().isEmpty() 
+            && (report.getChatCommunications() == null || report.getChatCommunications().isEmpty())
+            && (report.getEmailCommunications() == null || report.getEmailCommunications().isEmpty())
+            && (report.getProblemEscalations() == null || report.getProblemEscalations().isEmpty())
+            && (report.getTrainingCapacityBuildings() == null || report.getTrainingCapacityBuildings().isEmpty())
+            && (report.getProjectProgressUpdates() == null || report.getProjectProgressUpdates().isEmpty())
+            && (report.getPendingActivities() == null || report.getPendingActivities().isEmpty())
+            && (report.getMeetings() == null || report.getMeetings().isEmpty())
+            && (report.getAfpayCardRequests() == null || report.getAfpayCardRequests().isEmpty())
+            && (report.getQrmisIssues() == null || report.getQrmisIssues().isEmpty())) {
+            throw new IllegalArgumentException("At least one activity is required");
         }
     }
     
