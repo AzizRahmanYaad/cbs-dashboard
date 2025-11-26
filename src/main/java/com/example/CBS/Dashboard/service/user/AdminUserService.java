@@ -223,9 +223,12 @@ public class AdminUserService {
             return "Basic dashboard access";
         }
         
-        // Daily Report specific role
+        // Daily Report specific roles
         if (roleName.equalsIgnoreCase("ROLE_INDIVIDUAL_REPORT")) {
             return "Full access to own daily reports (create, edit, view, download)";
+        }
+        if (roleName.equalsIgnoreCase("ROLE_QUALITY_CONTROL")) {
+            return "Quality Control - View, review, and manage all submitted individual reports";
         }
         
         if (roleName.startsWith("ROLE_")) {
@@ -258,6 +261,10 @@ public class AdminUserService {
                 System.out.println("DEBUG: Matched INDIVIDUAL_REPORT -> DAILY");
                 return "DAILY";
             }
+            if (rolePart.equals("QUALITY_CONTROL")) {
+                System.out.println("DEBUG: Matched QUALITY_CONTROL -> DAILY");
+                return "DAILY";
+            }
             if (rolePart.equals("DRILL_TESTING") || rolePart.startsWith("DRILL")) {
                 return "DRILL";
             }
@@ -274,12 +281,16 @@ public class AdminUserService {
                 return "MANAGER";
             }
             
-            // Handle compound roles - check if it contains REPORT for Daily Report module
+            // Handle compound roles - check if it contains REPORT or QUALITY for Daily Report module
             // But exclude REPORT_ADMIN to avoid conflicts
             if (rolePart.contains("_")) {
                 String[] parts = rolePart.split("_");
                 // If the role contains "REPORT" but is not "REPORT_ADMIN", it's likely a Daily Report role
                 if (rolePart.contains("REPORT") && !rolePart.equals("REPORT_ADMIN")) {
+                    return "DAILY";
+                }
+                // If the role contains "QUALITY", it's likely a Daily Report Quality Control role
+                if (rolePart.contains("QUALITY")) {
                     return "DAILY";
                 }
                 return parts[0];
