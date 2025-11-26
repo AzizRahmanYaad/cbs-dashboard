@@ -1255,6 +1255,25 @@ export class DailyReportComponent implements OnInit {
     return this.getGroupedActivities(report).get(activityType) || [];
   }
 
+  getActivityGroupEntries(report: DailyReport | null): Array<{type: string; activities: Array<{description: string, branch?: string, accountNumber?: string}>}> {
+    const grouped = this.getGroupedActivities(report);
+    return Array.from(grouped.entries()).map(([type, activities]) => ({ type, activities }));
+  }
+
+  getTotalActivities(report: DailyReport | null): number {
+    return this.getAllActivities(report).length;
+  }
+
+  getUserInitials(report: DailyReport | null): string {
+    const name = report?.employeeFullName || report?.employeeUsername || '';
+    if (!name) return 'NA';
+    const parts = name.trim().split(' ').filter(Boolean);
+    if (parts.length === 1) {
+      return parts[0].substring(0, 2).toUpperCase();
+    }
+    return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+  }
+
   // TrackBy function for activity list to ensure proper rendering
   trackByActivityId(index: number, activity: { id: number; activityType: string; description: string; branch?: string }): number {
     return activity.id;

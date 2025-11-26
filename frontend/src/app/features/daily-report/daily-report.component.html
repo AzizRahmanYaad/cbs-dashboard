@@ -905,22 +905,71 @@
           <div class="qc-reports-list">
             <div *ngFor="let report of qualityControlReports" class="qc-report-card">
               <div class="qc-report-header">
-                <div>
-                  <h4>{{ report.employeeFullName || report.employeeUsername || 'Employee ' + report.employeeId }}</h4>
-                  <p class="qc-report-date">{{ report.businessDate | date:'fullDate' }}</p>
+                <div class="qc-user-identity">
+                  <div class="qc-avatar">{{ getUserInitials(report) }}</div>
+                  <div>
+                    <p class="qc-meta-label">Submitted by</p>
+                    <h4>{{ report.employeeFullName || report.employeeUsername || 'Employee ' + report.employeeId }}</h4>
+                    <p class="qc-report-date">For {{ report.businessDate | date:'fullDate' }}</p>
+                  </div>
                 </div>
-                <span [class]="'status-badge ' + getStatusColor(report.status)">
-                  {{ report.status }}
-                </span>
+                <div class="qc-report-meta">
+                  <div class="qc-meta-block">
+                    <span class="qc-meta-label">Status</span>
+                    <span [class]="'status-badge ' + getStatusColor(report.status)">
+                      {{ report.status }}
+                    </span>
+                  </div>
+                  <div class="qc-meta-block">
+                    <span class="qc-meta-label">Total Activities</span>
+                    <span class="qc-meta-value">{{ getTotalActivities(report) }}</span>
+                  </div>
+                  <div class="qc-meta-block">
+                    <span class="qc-meta-label">Report ID</span>
+                    <span class="qc-meta-value">#{{ report.id }}</span>
+                  </div>
+                </div>
               </div>
 
-              <div class="qc-report-actions">
-                <button class="btn-action-modern btn-view-modern" (click)="openReviewModal(report)" title="Review Report">
+              <div class="qc-report-body" *ngIf="getActivityGroupEntries(report).length > 0; else noActivities">
+                <div class="qc-activity-groups">
+                  <div 
+                    *ngFor="let group of getActivityGroupEntries(report)" 
+                    class="qc-activity-group-panel">
+                    <div class="qc-activity-group-header">
+                      <div>
+                        <p class="qc-activity-group-name">{{ group.type }}</p>
+                        <span class="qc-activity-count">{{ group.activities.length }} {{ group.activities.length === 1 ? 'Entry' : 'Entries' }}</span>
+                      </div>
+                    </div>
+                    <ul class="qc-activity-list">
+                      <li *ngFor="let activity of group.activities; let i = index" class="qc-activity-item">
+                        <div class="qc-activity-index">{{ i + 1 }}</div>
+                        <div class="qc-activity-content">
+                          <p>{{ activity.description || 'No description provided.' }}</p>
+                          <div class="qc-activity-tags" *ngIf="activity.branch || activity.accountNumber">
+                            <span class="qc-tag" *ngIf="activity.branch">🏢 {{ activity.branch }}</span>
+                            <span class="qc-tag" *ngIf="activity.accountNumber">#{{ activity.accountNumber }}</span>
+                          </div>
+                        </div>
+                      </li>
+                    </ul>
+                  </div>
+                </div>
+              </div>
+              <ng-template #noActivities>
+                <div class="qc-report-body empty">
+                  <p class="no-activities">No activities recorded for this report.</p>
+                </div>
+              </ng-template>
+
+              <div class="qc-report-footer">
+                <button class="btn-action-modern btn-view-modern" (click)="openReviewModal(report)" title="Review and curate report">
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
                     <path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
                   </svg>
-                  <span>Review</span>
+                  <span>Review & Curate</span>
                 </button>
               </div>
             </div>
