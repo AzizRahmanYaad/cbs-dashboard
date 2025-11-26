@@ -54,6 +54,9 @@ export class DailyReportComponent implements OnInit {
   selectedDate = this.today;
   selectedDay = '';
   
+  // Current user's full name from session
+  currentUserFullName: string = '';
+  
   // Activity types for dropdown
   activityTypes = ACTIVITY_TYPES;
   
@@ -77,6 +80,7 @@ export class DailyReportComponent implements OnInit {
 
   ngOnInit() {
     this.checkPermissions();
+    this.loadCurrentUserFullName();
     this.initializeForm();
     if (this.isController) {
       this.initializeCombinedReportForm();
@@ -85,6 +89,12 @@ export class DailyReportComponent implements OnInit {
     if (this.canViewDashboard) {
       this.loadDashboard();
     }
+  }
+
+  loadCurrentUserFullName() {
+    this.authService.currentUser$.subscribe((user) => {
+      this.currentUserFullName = user?.fullName || user?.username || '';
+    });
   }
 
   checkPermissions() {
