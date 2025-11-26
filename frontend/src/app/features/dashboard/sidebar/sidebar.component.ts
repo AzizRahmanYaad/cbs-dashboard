@@ -53,7 +53,7 @@ export class SidebarComponent {
       label: 'Daily Report',
       icon: 'document-text',
       route: '/dashboard/daily-report',
-      requiredRoles: ['ROLE_INDIVIDUAL_REPORT', 'ROLE_ADMIN']
+      requiredRoles: ['ROLE_INDIVIDUAL_REPORT', 'ROLE_ADMIN', 'ROLE_QUALITY_CONTROL']
     },
     {
       label: 'User Management',

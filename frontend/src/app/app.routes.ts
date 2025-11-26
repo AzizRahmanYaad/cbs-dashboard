@@ -56,7 +56,8 @@ export const routes: Routes = [
         data: { 
           roles: [
             'ROLE_INDIVIDUAL_REPORT',
-            'ROLE_ADMIN'
+            'ROLE_ADMIN',
+            'ROLE_QUALITY_CONTROL'
           ] 
         }
       },
