@@ -93,7 +93,7 @@ export class DailyReportComponent implements OnInit {
 
   loadCurrentUserFullName() {
     this.authService.currentUser$.subscribe((user) => {
-      this.currentUserFullName = user?.fullName || user?.username || '';
+      this.currentUserFullName = user?.fullName || '';
     });
   }
 
@@ -600,7 +600,7 @@ export class DailyReportComponent implements OnInit {
         const link = document.createElement('a');
         link.href = url;
         const dateStr = report.businessDate.split('T')[0];
-        const employeeName = report.employeeUsername || 'report';
+        const employeeName = report.employeeFullName || report.employeeUsername || 'report';
         link.download = `Daily_Report_${employeeName}_${dateStr}.pdf`;
         document.body.appendChild(link);
         link.click();

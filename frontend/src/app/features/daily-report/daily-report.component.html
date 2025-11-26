@@ -8,7 +8,7 @@
           <path stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
         </svg>
         <span class="user-label">Prepared by:</span>
-        <span class="user-name-value">{{ currentUserFullName }}</span>
+        <span class="user-name-value">{{ currentUserFullName || 'Loading...' }}</span>
       </div>
     </div>
   </div>
@@ -368,10 +368,10 @@
             <h4>{{ dateKey | date:'fullDate' }}</h4>
             <div class="employee-list">
               <div *ngFor="let report of getReportsForDate(dateKey)" class="employee-item">
-                <span>{{ report.employeeUsername || 'Employee ' + report.employeeId }}</span>
+                <span>{{ report.employeeFullName || report.employeeUsername || 'Employee ' + report.employeeId }}</span>
                 <button 
                   class="btn-sm btn-primary" 
-                  (click)="downloadEmployeeReport(report.employeeId!, report.employeeUsername || 'Employee')"
+                  (click)="downloadEmployeeReport(report.employeeId!, report.employeeFullName || report.employeeUsername || 'Employee')"
                   [disabled]="downloading">
                   {{ downloading ? 'Downloading...' : 'Download' }}
                 </button>
@@ -449,7 +449,7 @@
           <div class="reports-list">
             <div *ngFor="let report of getReportsForDate(dateKey)" class="report-card">
               <div class="report-header">
-                <h3>{{ report.employeeUsername || 'Employee ' + report.employeeId }}</h3>
+                <h3>{{ report.employeeFullName || report.employeeUsername || 'Employee ' + report.employeeId }}</h3>
                 <span [class]="'status-badge ' + getStatusColor(report.status)">
                   {{ report.status }}
                 </span>
@@ -556,7 +556,7 @@
               </div>
               <div class="info-content">
                 <span class="info-label">Prepared By</span>
-                <span class="info-value">{{ viewReportModal.employeeFullName || viewReportModal.employeeUsername || 'N/A' }}</span>
+                <span class="info-value">{{ viewReportModal.employeeFullName || 'N/A' }}</span>
               </div>
             </div>
             

@@ -23,7 +23,7 @@
   <div class="header-right">
     <div class="status-card">
       <p class="status-label">Logged in as</p>
-      <p class="status-value">{{ currentUser?.fullName || currentUser?.username || 'Authenticated' }}</p>
+      <p class="status-value">{{ currentUser?.fullName || 'User' }}</p>
     </div>
 
     <button class="icon-button" aria-label="Notifications">
@@ -35,10 +35,10 @@
     <div class="user-menu-container">
       <button class="user-menu-button" (click)="toggleUserMenu()" aria-haspopup="menu">
         <div class="user-avatar">
-          <span>{{ (currentUser?.username || 'CFO').slice(0, 2) | uppercase }}</span>
+          <span>{{ getInitials(currentUser?.fullName || currentUser?.username || 'CFO') | uppercase }}</span>
         </div>
         <div class="user-info">
-          <span class="user-name">{{ currentUser?.fullName || currentUser?.username || 'CFO User' }}</span>
+          <span class="user-name">{{ currentUser?.fullName || 'User' }}</span>
           <span class="user-role">{{ currentUser?.roles?.[0] || 'Authorised Personnel' }}</span>
         </div>
         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="chevron">
@@ -48,7 +48,7 @@
 
       <div class="dropdown-menu" *ngIf="showUserMenu">
         <div class="dropdown-header">
-          <p class="dropdown-user-name">{{ currentUser?.fullName || currentUser?.username }}</p>
+          <p class="dropdown-user-name">{{ currentUser?.fullName || 'User' }}</p>
           <p class="dropdown-user-email">{{ currentUser?.email }}</p>
         </div>
         <div class="dropdown-divider"></div>
