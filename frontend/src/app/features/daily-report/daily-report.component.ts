@@ -7,6 +7,7 @@ import { AuthService } from '../../core/services/auth.service';
 import {
   DailyReport,
   CreateDailyReportRequest,
+  UpdateDailyReportRequest,
   ReviewReportRequest,
   ReportStatus,
   ChatCommunication,
@@ -513,7 +514,7 @@ export class DailyReportComponent implements OnInit {
     
     try {
       const report = await this.reportService.getReportByDate(this.selectedDate).toPromise();
-      if (report && (report.status === 'DRAFT' || report.status === ReportStatus.DRAFT)) {
+      if (report && report.status === ReportStatus.DRAFT) {
         // Auto-load draft if it exists
         this.currentReport = report;
         this.tempActivities = [];
@@ -1390,7 +1391,7 @@ export class DailyReportComponent implements OnInit {
       const reports = await this.reportService.getReportsByDate(this.qualityControlSelectedDate).toPromise();
       if (reports) {
         // Filter to only show SUBMITTED reports
-        this.qualityControlReports = reports.filter(r => r.status === 'SUBMITTED' || r.status === ReportStatus.SUBMITTED);
+        this.qualityControlReports = reports.filter(r => r.status === ReportStatus.SUBMITTED);
       } else {
         this.qualityControlReports = [];
       }
