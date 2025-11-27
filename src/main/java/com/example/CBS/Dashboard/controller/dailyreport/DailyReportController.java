@@ -180,9 +180,13 @@ public class DailyReportController {
             Long reportEmployeeId = report.getEmployee().getId();
             System.out.println("Download ownership check - Report Employee ID: " + reportEmployeeId + ", Current User ID: " + userId + ", Match: " + reportEmployeeId.equals(userId));
             
-            // Verify ownership - users can only download their own reports
-            // This applies to all users including those with IndividualReport role
-            if (!reportEmployeeId.equals(userId)) {
+            // Check if user has Quality Control or Admin role (can download any report)
+            User user = userRepository.findById(userId).orElse(null);
+            boolean hasQualityControlAccess = user != null && user.getRoles().stream()
+                .anyMatch(role -> role.getName().equals("ROLE_QUALITY_CONTROL") || role.getName().equals("ROLE_ADMIN"));
+            
+            // Verify ownership - users can only download their own reports unless they have Quality Control/Admin access
+            if (!reportEmployeeId.equals(userId) && !hasQualityControlAccess) {
                 return ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .header("X-Error-Message", "You can only download your own reports. Report belongs to employee ID: " + reportEmployeeId + ", but you are user ID: " + userId)
                     .build();

@@ -904,12 +904,22 @@
 
           <div class="qc-reports-list">
             <div *ngFor="let report of qualityControlReports" class="qc-report-card">
-              <div class="qc-user-heading">
-                {{ report.employeeFullName || report.employeeUsername || 'Employee ' + report.employeeId }}
+              <div class="qc-report-card-header">
+                <div>
+                  <div class="qc-user-heading">
+                    {{ report.employeeFullName || report.employeeUsername || 'Employee ' + report.employeeId }}
+                  </div>
+                  <p class="qc-user-subtitle">
+                    Submitted for {{ report.businessDate | date:'fullDate' }} · Report ID #{{ report.id }}
+                  </p>
+                </div>
+                <div class="qc-report-status-badge" [class.confirmed]="report.status === 'APPROVED'">
+                  <svg *ngIf="report.status === 'APPROVED'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"></path>
+                  </svg>
+                  {{ report.status === 'APPROVED' ? 'Confirmed' : report.status }}
+                </div>
               </div>
-              <p class="qc-user-subtitle">
-                Submitted for {{ report.businessDate | date:'fullDate' }} · Report ID #{{ report.id }}
-              </p>
 
               <ng-container *ngIf="getActivityGroupEntries(report).length > 0; else noActivities">
                 <div class="qc-report-body">
@@ -930,6 +940,62 @@
                   <p class="no-activities">No activities recorded for this report.</p>
                 </div>
               </ng-template>
+
+              <!-- Feedback Display -->
+              <div class="qc-feedback-display" *ngIf="report.reviewComments">
+                <div class="qc-feedback-header">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                  </svg>
+                  <strong>Quality Control Feedback:</strong>
+                </div>
+                <p class="qc-feedback-text">{{ report.reviewComments }}</p>
+              </div>
+
+              <!-- Action Buttons -->
+              <div class="qc-report-actions">
+                <button 
+                  class="btn-qc-view" 
+                  (click)="viewReport(report)"
+                  title="View Full Report">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+                  </svg>
+                  View Report
+                </button>
+                <button 
+                  class="btn-qc-confirm" 
+                  (click)="confirmQualityControlReport(report)"
+                  [disabled]="qualityControlLoading || report.status === 'APPROVED'"
+                  [class.confirmed]="report.status === 'APPROVED'"
+                  title="Confirm Report">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"></path>
+                  </svg>
+                  {{ report.status === 'APPROVED' ? 'Confirmed' : 'Confirm Report' }}
+                </button>
+                <button 
+                  class="btn-qc-feedback" 
+                  (click)="openFeedbackModal(report)"
+                  [disabled]="qualityControlLoading"
+                  title="Provide Feedback">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                  </svg>
+                  {{ report.reviewComments ? 'Edit Feedback' : 'Provide Feedback' }}
+                </button>
+                <button 
+                  class="btn-qc-download" 
+                  (click)="downloadMyReport(report)"
+                  [disabled]="downloading"
+                  title="Download Report">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
+                  </svg>
+                  Download
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -989,6 +1055,66 @@
           </svg>
           {{ downloading ? 'Generating...' : 'Generate Team Daily Report' }}
         </button>
+      </div>
+    </div>
+
+    <!-- Feedback Modal -->
+    <div class="modal-overlay-premium" *ngIf="showFeedbackModal" (click)="closeFeedbackModal()">
+      <div class="modal-content-premium qc-feedback-modal-premium" (click)="$event.stopPropagation()">
+        <div class="modal-header-premium">
+          <div class="modal-title-section">
+            <div class="modal-icon-wrapper">
+              <svg class="modal-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+              </svg>
+            </div>
+            <div>
+              <h2 class="modal-title">Provide Feedback</h2>
+              <p class="modal-subtitle" *ngIf="selectedReportForFeedback">
+                {{ selectedReportForFeedback.employeeFullName || selectedReportForFeedback.employeeUsername }} · 
+                {{ selectedReportForFeedback.businessDate | date:'fullDate' }}
+              </p>
+            </div>
+          </div>
+          <button class="modal-close-premium" (click)="closeFeedbackModal()" aria-label="Close">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"></path>
+            </svg>
+          </button>
+        </div>
+
+        <div class="modal-body-premium">
+          <div class="qc-feedback-form">
+            <div class="form-group">
+              <label class="label-primary">Feedback *</label>
+              <textarea 
+                [(ngModel)]="feedbackText"
+                class="form-input-primary feedback-textarea"
+                rows="6"
+                placeholder="Enter your feedback for this report..."
+                [ngModelOptions]="{standalone: true}"></textarea>
+            </div>
+            <div class="feedback-info">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+              </svg>
+              <p>This feedback will be visible to the employee and controller.</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="modal-footer-premium">
+          <button 
+            class="btn-save-premium" 
+            (click)="submitFeedback()"
+            [disabled]="qualityControlLoading || !feedbackText.trim()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"></path>
+            </svg>
+            {{ qualityControlLoading ? 'Submitting...' : 'Submit Feedback' }}
+          </button>
+          <button class="btn-close-premium" (click)="closeFeedbackModal()">Cancel</button>
+        </div>
       </div>
     </div>
 
@@ -1177,15 +1303,36 @@
         </div>
 
         <div class="modal-footer-premium">
-          <button 
-            class="btn-save-premium" 
-            (click)="updateReportForQualityControl(selectedReportForReview)"
-            [disabled]="qualityControlLoading">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"></path>
-            </svg>
-            {{ qualityControlLoading ? 'Saving...' : 'Save Changes' }}
-          </button>
+          <div class="modal-footer-actions">
+            <button 
+              class="btn-confirm-premium" 
+              (click)="confirmQualityControlReport(selectedReportForReview)"
+              [disabled]="qualityControlLoading || selectedReportForReview?.status === 'APPROVED'"
+              [class.confirmed]="selectedReportForReview?.status === 'APPROVED'">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"></path>
+              </svg>
+              {{ selectedReportForReview?.status === 'APPROVED' ? 'Confirmed' : 'Confirm Report' }}
+            </button>
+            <button 
+              class="btn-feedback-premium" 
+              (click)="openFeedbackModal(selectedReportForReview)"
+              [disabled]="qualityControlLoading">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+              </svg>
+              {{ selectedReportForReview?.reviewComments ? 'Edit Feedback' : 'Provide Feedback' }}
+            </button>
+            <button 
+              class="btn-save-premium" 
+              (click)="updateReportForQualityControl(selectedReportForReview)"
+              [disabled]="qualityControlLoading">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"></path>
+              </svg>
+              {{ qualityControlLoading ? 'Saving...' : 'Save Changes' }}
+            </button>
+          </div>
           <button class="btn-close-premium" (click)="closeReviewModal()">Close</button>
         </div>
       </div>

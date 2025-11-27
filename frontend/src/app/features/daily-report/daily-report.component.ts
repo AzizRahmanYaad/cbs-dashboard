@@ -1092,18 +1092,20 @@ export class DailyReportComponent implements OnInit {
   }
   
   async confirmReport(report: DailyReport) {
-    if (!this.isCFO) return;
+    if (!this.isCFO && !this.isQualityControl) return;
     
     this.loading = true;
     try {
       const reviewRequest = {
         status: ReportStatus.APPROVED,
-        reviewComments: 'Confirmed by CFO'
+        reviewComments: this.isQualityControl ? 'Confirmed by Quality Control' : 'Confirmed by CFO'
       };
       const updatedReport = await this.reportService.reviewReport(report.id!, reviewRequest).toPromise();
       this.successMessage = 'Report confirmed successfully';
       if (this.activeTab === 'dashboard') {
         this.loadReportsByDate(this.selectedDateForDownload);
+      } else if (this.activeTab === 'quality-control') {
+        this.loadQualityControlReports();
       } else {
         this.loadMyReports();
       }
@@ -1111,6 +1113,79 @@ export class DailyReportComponent implements OnInit {
       this.errorMessage = 'Failed to confirm report';
     } finally {
       this.loading = false;
+    }
+  }
+
+  // Quality Control specific confirmation method
+  async confirmQualityControlReport(report: DailyReport) {
+    if (!this.isQualityControl) return;
+    
+    this.qualityControlLoading = true;
+    this.errorMessage = '';
+    this.successMessage = '';
+    
+    try {
+      const reviewRequest: ReviewReportRequest = {
+        status: ReportStatus.APPROVED,
+        reviewComments: 'Confirmed by Quality Control'
+      };
+      const updatedReport = await this.reportService.reviewReport(report.id!, reviewRequest).toPromise();
+      this.successMessage = 'Report confirmed successfully';
+      // Reload reports to show updated status
+      await this.loadQualityControlReports();
+    } catch (error: any) {
+      console.error('Error confirming report:', error);
+      this.errorMessage = error.error?.message || 'Failed to confirm report';
+    } finally {
+      this.qualityControlLoading = false;
+    }
+  }
+
+  // Quality Control feedback method
+  showFeedbackModal = false;
+  selectedReportForFeedback: DailyReport | null = null;
+  feedbackText = '';
+
+  openFeedbackModal(report: DailyReport) {
+    this.selectedReportForFeedback = report;
+    this.feedbackText = report.reviewComments || '';
+    this.showFeedbackModal = true;
+  }
+
+  closeFeedbackModal() {
+    this.showFeedbackModal = false;
+    this.selectedReportForFeedback = null;
+    this.feedbackText = '';
+  }
+
+  async submitFeedback() {
+    if (!this.selectedReportForFeedback || !this.feedbackText.trim()) {
+      this.errorMessage = 'Please enter feedback text';
+      return;
+    }
+
+    this.qualityControlLoading = true;
+    this.errorMessage = '';
+    this.successMessage = '';
+
+    try {
+      const reviewRequest: ReviewReportRequest = {
+        status: this.selectedReportForFeedback.status, // Keep current status
+        reviewComments: this.feedbackText.trim()
+      };
+      const updatedReport = await this.reportService.reviewReport(
+        this.selectedReportForFeedback.id!, 
+        reviewRequest
+      ).toPromise();
+      this.successMessage = 'Feedback submitted successfully';
+      this.closeFeedbackModal();
+      // Reload reports to show updated feedback
+      await this.loadQualityControlReports();
+    } catch (error: any) {
+      console.error('Error submitting feedback:', error);
+      this.errorMessage = error.error?.message || 'Failed to submit feedback';
+    } finally {
+      this.qualityControlLoading = false;
     }
   }
 
@@ -1407,11 +1482,8 @@ export class DailyReportComponent implements OnInit {
     if (action === 'confirm') {
       this.confirmedActivities.add(activityId);
     } else if (action === 'feedback') {
-      // Show feedback input modal or inline input
-      const feedback = prompt('Enter feedback for this activity:');
-      if (feedback) {
-        this.reviewFeedback[activityId] = feedback;
-      }
+      // Open feedback modal for the report
+      this.openFeedbackModal(report);
     }
   }
 
