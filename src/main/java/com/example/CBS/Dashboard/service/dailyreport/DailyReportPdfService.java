@@ -32,15 +32,18 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @Service
 public class DailyReportPdfService {
 
     private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("dd-MMM-yyyy");
-    private static final DateTimeFormatter TIME_FORMATTER = DateTimeFormatter.ofPattern("hh:mm a");
+    private static final DateTimeFormatter TIME_FORMATTER = DateTimeFormatter.ofPattern("hh:mm a").withLocale(java.util.Locale.ENGLISH);
+    private static final DateTimeFormatter DATE_TIME_FORMATTER = DateTimeFormatter.ofPattern("dd/MM/yyyy");
 
     public byte[] generateEmployeeReportPdf(List<DailyReport> reports) throws IOException {
         if (reports == null || reports.isEmpty()) {
@@ -173,25 +176,36 @@ public class DailyReportPdfService {
         infoTable.setMarginBottom(15);
         infoTable.setBorder(new SolidBorder(new DeviceRgb(211, 78, 78), 2));
 
-        addStyledInfoRow(infoTable, "Prepared By:", getEmployeeNames(sampleReport));
+        // Always show "Prepared By: Aziz Rahman Zazai"
+        addStyledInfoRow(infoTable, "Prepared By:", "Aziz Rahman Zazai");
         if (sampleReport.getReportingLine() != null && !sampleReport.getReportingLine().isEmpty()) {
             addStyledInfoRow(infoTable, "Reporting Line:", sampleReport.getReportingLine());
         }
-        // Add CBS Time Tracking from Controller input
-        if (cbsEndTime != null) {
-            addStyledInfoRow(infoTable, "CBS End Time (Current Business Day):", cbsEndTime.toString());
-        }
+        // Add CBS Time Tracking with AM/PM format and date
+        // CBS Start is for the next business day
         if (cbsStartTimeNextDay != null) {
-            addStyledInfoRow(infoTable, "CBS Start Time (Next Business Day):", cbsStartTimeNextDay.toString());
+            java.time.LocalDate nextDay = businessDate.plusDays(1);
+            String cbsStartFormatted = formatCbsTime(cbsStartTimeNextDay, nextDay);
+            addStyledInfoRow(infoTable, "CBS Start:", cbsStartFormatted);
+        }
+        // CBS End is for the current business day
+        if (cbsEndTime != null) {
+            String cbsEndFormatted = formatCbsTime(cbsEndTime, businessDate);
+            addStyledInfoRow(infoTable, "CBS End:", cbsEndFormatted);
         }
 
         document.add(infoTable);
         document.add(new Paragraph("\n"));
     }
     
-    private String getEmployeeNames(DailyReport report) {
-        // This will be called with a sample report, but we'll collect all names in the content section
-        return "Team Members";
+    private String formatCbsTime(java.time.LocalTime time, java.time.LocalDate date) {
+        // Format time as "hh:mm AM/PM — dd/MM/yyyy" (e.g., "10:30 AM — 25/11/2025")
+        // Use uppercase AM/PM by formatting and then converting
+        String timeStr = time.format(DateTimeFormatter.ofPattern("hh:mm a").withLocale(java.util.Locale.ENGLISH));
+        // Ensure uppercase AM/PM
+        timeStr = timeStr.replace("am", "AM").replace("pm", "PM");
+        String dateStr = date.format(DATE_TIME_FORMATTER);
+        return timeStr + " — " + dateStr;
     }
     
     private void addStyledInfoRow(Table table, String label, String value) {
@@ -213,6 +227,8 @@ public class DailyReportPdfService {
     private void addCombinedReportContent(Document document, List<DailyReport> reports) {
         // Collect only CBS Team Activities from all employees
         // Exclude: "Allowing without check number", Meetings, QRMIS, Tickets, and other unrelated activities
+        // Use a Set to prevent duplicates based on activity description and employee
+        Set<String> seenActivities = new HashSet<>();
         List<ActivityWithEmployee> allActivities = new ArrayList<>();
         
         for (DailyReport report : reports) {
@@ -231,8 +247,18 @@ public class DailyReportPdfService {
                          activity.getActivityType().toLowerCase().contains("allowing without check number"))) {
                         continue; // Skip these activities
                     }
-                    // Only include CBS Team Activities
-                    allActivities.add(new ActivityWithEmployee(activity, employeeName));
+                    
+                    // Create unique key to prevent duplicates
+                    String uniqueKey = (activity.getActivityType() != null ? activity.getActivityType() : "") + "|" +
+                                      (activity.getDescription() != null ? activity.getDescription() : "") + "|" +
+                                      (activity.getBranch() != null ? activity.getBranch() : "") + "|" +
+                                      employeeName;
+                    
+                    // Only add if not already seen
+                    if (!seenActivities.contains(uniqueKey)) {
+                        seenActivities.add(uniqueKey);
+                        allActivities.add(new ActivityWithEmployee(activity, employeeName));
+                    }
                 }
             }
         }
@@ -304,16 +330,15 @@ public class DailyReportPdfService {
             .setBorder(new SolidBorder(new DeviceRgb(211, 78, 78), 2));
         document.add(sectionTitle);
         
-        // Create professional table with required fields only
-        Table activitiesTable = new Table(5).useAllAvailableWidth();
+        // Create professional table with 4 columns only (removed Account Number)
+        Table activitiesTable = new Table(4).useAllAvailableWidth();
         activitiesTable.setMarginBottom(20);
         activitiesTable.setBorder(new SolidBorder(new DeviceRgb(211, 78, 78), 2));
         
-        // Table headers with modern styling
+        // Table headers with modern styling - only 4 columns
         addStyledTableHeaderCbs(activitiesTable, "Activity Name");
         addStyledTableHeaderCbs(activitiesTable, "Activity Description");
         addStyledTableHeaderCbs(activitiesTable, "Branch Name");
-        addStyledTableHeaderCbs(activitiesTable, "Account Number");
         addStyledTableHeaderCbs(activitiesTable, "Employee Name");
         
         // Add activities to table
@@ -322,15 +347,16 @@ public class DailyReportPdfService {
                 ? item.activity.getActivityType()
                 : "CBS Team Activity";
             String description = item.activity.getDescription() != null ? item.activity.getDescription() : "";
-            String branch = item.activity.getBranch() != null ? item.activity.getBranch() : "";
-            String accountNumber = item.activity.getAccountNumber() != null ? item.activity.getAccountNumber() : "";
+            String branch = item.activity.getBranch() != null && !item.activity.getBranch().isEmpty()
+                ? item.activity.getBranch()
+                : "-";
             String employeeName = item.employeeName != null ? item.employeeName : "";
             
             addStyledTableCellCbs(activitiesTable, activityName);
             addStyledTableCellCbs(activitiesTable, description);
             addStyledTableCellCbs(activitiesTable, branch);
-            addStyledTableCellCbs(activitiesTable, accountNumber);
-            addStyledTableCellCbs(activitiesTable, employeeName);
+            // Employee Name with bold and highlighted styling
+            addStyledTableCellCbsBold(activitiesTable, employeeName);
         }
         
         document.add(activitiesTable);
@@ -353,6 +379,20 @@ public class DailyReportPdfService {
             .add(new Paragraph(text != null && !text.isEmpty() ? text : "-").setFontSize(10))
             .setPadding(8)
             .setBackgroundColor(ColorConstants.WHITE)
+            .setBorder(new SolidBorder(new DeviceRgb(229, 231, 235), 0.5f))
+            .setTextAlignment(TextAlignment.LEFT);
+        table.addCell(cell);
+    }
+    
+    private void addStyledTableCellCbsBold(Table table, String text) {
+        // Employee Name with bold and highlighted styling
+        Cell cell = new Cell()
+            .add(new Paragraph(text != null && !text.isEmpty() ? text : "-")
+                .setBold()
+                .setFontSize(10)
+                .setFontColor(new DeviceRgb(211, 78, 78))) // #D34E4E color for emphasis
+            .setPadding(8)
+            .setBackgroundColor(new DeviceRgb(254, 242, 242)) // Light red background for highlight
             .setBorder(new SolidBorder(new DeviceRgb(229, 231, 235), 0.5f))
             .setTextAlignment(TextAlignment.LEFT);
         table.addCell(cell);
