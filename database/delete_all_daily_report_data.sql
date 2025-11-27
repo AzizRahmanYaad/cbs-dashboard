@@ -73,3 +73,4 @@ SELECT
     'Users table is safe' as status
 FROM users;
 
+

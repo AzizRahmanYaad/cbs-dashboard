@@ -622,7 +622,11 @@ public class DailyReportService {
             throw new IllegalArgumentException("Date is required for combined report. Each day must be downloaded separately.");
         }
         
-        List<DailyReport> reports = dailyReportRepository.findByBusinessDate(specificDate);
+        // Include both SUBMITTED and APPROVED reports (confirmed reports should remain visible)
+        List<DailyReport> reports = dailyReportRepository.findByBusinessDate(specificDate).stream()
+            .filter(report -> report.getStatus() == DailyReport.ReportStatus.SUBMITTED 
+                || report.getStatus() == DailyReport.ReportStatus.APPROVED)
+            .collect(java.util.stream.Collectors.toList());
         
         if (reports.isEmpty()) {
             throw new IllegalArgumentException("No reports found for the specified date: " + specificDate);

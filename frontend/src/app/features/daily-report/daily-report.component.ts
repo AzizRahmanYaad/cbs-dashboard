@@ -1377,14 +1377,6 @@ export class DailyReportComponent implements OnInit {
   qualityControlCbsStartTime = '';
   qualityControlReportLine = '';
   
-  // Task management for Quality Control
-  pendingTasks: Array<{id: number, description: string, date: string}> = [];
-  achievementTasks: Array<{id: number, description: string, date: string}> = [];
-  plannedTasks: Array<{id: number, description: string, date: string}> = [];
-  newPendingTask = '';
-  newAchievementTask = '';
-  newPlannedTask = '';
-  private taskIdCounter = 1;
 
   async loadQualityControlReports() {
     if (!this.qualityControlSelectedDate) return;
@@ -1395,8 +1387,10 @@ export class DailyReportComponent implements OnInit {
     try {
       const reports = await this.reportService.getReportsByDate(this.qualityControlSelectedDate).toPromise();
       if (reports) {
-        // Filter to only show SUBMITTED reports
-        this.qualityControlReports = reports.filter(r => r.status === ReportStatus.SUBMITTED);
+        // Show both SUBMITTED and APPROVED reports (confirmed reports must remain visible)
+        this.qualityControlReports = reports.filter(r => 
+          r.status === ReportStatus.SUBMITTED || r.status === ReportStatus.APPROVED
+        );
       } else {
         this.qualityControlReports = [];
       }
@@ -1454,50 +1448,6 @@ export class DailyReportComponent implements OnInit {
     }
   }
 
-  addPendingTask() {
-    if (this.newPendingTask.trim()) {
-      this.pendingTasks.push({
-        id: this.taskIdCounter++,
-        description: this.newPendingTask.trim(),
-        date: this.qualityControlSelectedDate
-      });
-      this.newPendingTask = '';
-    }
-  }
-
-  addAchievementTask() {
-    if (this.newAchievementTask.trim()) {
-      this.achievementTasks.push({
-        id: this.taskIdCounter++,
-        description: this.newAchievementTask.trim(),
-        date: this.qualityControlSelectedDate
-      });
-      this.newAchievementTask = '';
-    }
-  }
-
-  addPlannedTask() {
-    if (this.newPlannedTask.trim()) {
-      this.plannedTasks.push({
-        id: this.taskIdCounter++,
-        description: this.newPlannedTask.trim(),
-        date: this.qualityControlSelectedDate
-      });
-      this.newPlannedTask = '';
-    }
-  }
-
-  removePendingTask(index: number) {
-    this.pendingTasks.splice(index, 1);
-  }
-
-  removeAchievementTask(index: number) {
-    this.achievementTasks.splice(index, 1);
-  }
-
-  removePlannedTask(index: number) {
-    this.plannedTasks.splice(index, 1);
-  }
 
   async generateTeamDailyReport() {
     if (!this.qualityControlSelectedDate) {

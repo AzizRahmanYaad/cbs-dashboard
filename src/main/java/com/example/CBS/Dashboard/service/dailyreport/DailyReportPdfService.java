@@ -211,95 +211,44 @@ public class DailyReportPdfService {
     }
     
     private void addCombinedReportContent(Document document, List<DailyReport> reports) {
-        // Collect all activities from all employees
+        // Collect only CBS Team Activities from all employees
+        // Exclude: "Allowing without check number", Meetings, QRMIS, Tickets, and other unrelated activities
         List<ActivityWithEmployee> allActivities = new ArrayList<>();
-        List<ActivityWithEmployee> withoutCheckNumberActivities = new ArrayList<>();
-        List<EmailCommunication> allEmails = new ArrayList<>();
-        List<ChatCommunication> allChats = new ArrayList<>();
-        List<PendingActivity> allPending = new ArrayList<>();
-        List<ProblemEscalation> allEscalations = new ArrayList<>();
-        List<Meeting> allMeetings = new ArrayList<>();
-        List<AfpayCardRequest> allAfpay = new ArrayList<>();
-        List<QrmisIssue> allQrmis = new ArrayList<>();
         
         for (DailyReport report : reports) {
-            String employeeName = report.getEmployee().getUsername();
+            // Get employee full name, fallback to username
+            String employeeName = report.getEmployee().getFullName() != null && !report.getEmployee().getFullName().isEmpty()
+                ? report.getEmployee().getFullName()
+                : report.getEmployee().getUsername();
             
-            // Collect CBS Team Activities with employee name
+            // Collect only CBS Team Activities with employee name
+            // Exclude "Allowing without check number" activities
             if (report.getCbsTeamActivities() != null) {
                 for (CbsTeamActivity activity : report.getCbsTeamActivities()) {
-                    // Separate "without check number" activities
+                    // Skip "without check number" activities
                     if (activity.getActivityType() != null && 
                         (activity.getActivityType().toLowerCase().contains("without check number") ||
                          activity.getActivityType().toLowerCase().contains("allowing without check number"))) {
-                        withoutCheckNumberActivities.add(new ActivityWithEmployee(activity, employeeName));
-                    } else {
-                        allActivities.add(new ActivityWithEmployee(activity, employeeName));
+                        continue; // Skip these activities
                     }
+                    // Only include CBS Team Activities
+                    allActivities.add(new ActivityWithEmployee(activity, employeeName));
                 }
             }
-            
-            // Collect other sections
-            if (report.getEmailCommunications() != null) {
-                allEmails.addAll(report.getEmailCommunications());
-            }
-            if (report.getChatCommunications() != null) {
-                allChats.addAll(report.getChatCommunications());
-            }
-            if (report.getPendingActivities() != null) {
-                allPending.addAll(report.getPendingActivities());
-            }
-            if (report.getProblemEscalations() != null) {
-                allEscalations.addAll(report.getProblemEscalations());
-            }
-            if (report.getMeetings() != null) {
-                allMeetings.addAll(report.getMeetings());
-            }
-            if (report.getAfpayCardRequests() != null) {
-                allAfpay.addAll(report.getAfpayCardRequests());
-            }
-            if (report.getQrmisIssues() != null) {
-                allQrmis.addAll(report.getQrmisIssues());
-            }
         }
         
-        // Add "Without Check Number" section first (as a separate table)
-        if (!withoutCheckNumberActivities.isEmpty()) {
-            addWithoutCheckNumberSection(document, withoutCheckNumberActivities);
-        }
-        
-        // Add merged CBS Team Activities section (excluding without check number)
+        // Add merged CBS Team Activities section with professional design
         if (!allActivities.isEmpty()) {
             addMergedCbsActivitiesSection(document, allActivities);
-        }
-        
-        // Add other merged sections
-        if (!allEmails.isEmpty()) {
-            addMergedEmailSection(document, allEmails);
-        }
-        
-        if (!allChats.isEmpty()) {
-            addMergedChatSection(document, allChats);
-        }
-        
-        if (!allPending.isEmpty()) {
-            addMergedPendingSection(document, allPending);
-        }
-        
-        if (!allEscalations.isEmpty()) {
-            addMergedEscalationSection(document, allEscalations);
-        }
-        
-        if (!allMeetings.isEmpty()) {
-            addMergedMeetingSection(document, allMeetings);
-        }
-        
-        if (!allAfpay.isEmpty()) {
-            addMergedAfpaySection(document, allAfpay);
-        }
-        
-        if (!allQrmis.isEmpty()) {
-            addMergedQrmisSection(document, allQrmis);
+        } else {
+            // No activities message
+            Paragraph noActivities = new Paragraph("No CBS Team Activities recorded for this report.")
+                .setFontSize(11)
+                .setFontColor(new DeviceRgb(156, 163, 175))
+                .setItalic()
+                .setTextAlignment(TextAlignment.CENTER)
+                .setMarginTop(20);
+            document.add(noActivities);
         }
     }
     
@@ -342,99 +291,71 @@ public class DailyReportPdfService {
     }
     
     private void addMergedCbsActivitiesSection(Document document, List<ActivityWithEmployee> activities) {
-        // Group activities by type
-        Map<String, List<ActivityWithEmployee>> activitiesByType = activities.stream()
-            .collect(Collectors.groupingBy(
-                item -> item.activity.getActivityType() != null && !item.activity.getActivityType().isEmpty() 
-                    ? item.activity.getActivityType() 
-                    : "CBS Team Activity"
-            ));
+        // Section Title - Professional CBS Team Activity Design
+        Paragraph sectionTitle = new Paragraph("CBS Team Activities")
+            .setBold()
+            .setFontSize(16)
+            .setMarginTop(20)
+            .setMarginBottom(15)
+            .setFontColor(new DeviceRgb(211, 78, 78)) // #D34E4E
+            .setTextAlignment(TextAlignment.CENTER)
+            .setBackgroundColor(new DeviceRgb(254, 242, 242)) // Light red background
+            .setPadding(12)
+            .setBorder(new SolidBorder(new DeviceRgb(211, 78, 78), 2));
+        document.add(sectionTitle);
         
-        // Display each activity type as a separate section
-        for (Map.Entry<String, List<ActivityWithEmployee>> entry : activitiesByType.entrySet()) {
-            String activityType = entry.getKey();
-            List<ActivityWithEmployee> typeActivities = entry.getValue();
+        // Create professional table with required fields only
+        Table activitiesTable = new Table(5).useAllAvailableWidth();
+        activitiesTable.setMarginBottom(20);
+        activitiesTable.setBorder(new SolidBorder(new DeviceRgb(211, 78, 78), 2));
+        
+        // Table headers with modern styling
+        addStyledTableHeaderCbs(activitiesTable, "Activity Name");
+        addStyledTableHeaderCbs(activitiesTable, "Activity Description");
+        addStyledTableHeaderCbs(activitiesTable, "Branch Name");
+        addStyledTableHeaderCbs(activitiesTable, "Account Number");
+        addStyledTableHeaderCbs(activitiesTable, "Employee Name");
+        
+        // Add activities to table
+        for (ActivityWithEmployee item : activities) {
+            String activityName = item.activity.getActivityType() != null && !item.activity.getActivityType().isEmpty()
+                ? item.activity.getActivityType()
+                : "CBS Team Activity";
+            String description = item.activity.getDescription() != null ? item.activity.getDescription() : "";
+            String branch = item.activity.getBranch() != null ? item.activity.getBranch() : "";
+            String accountNumber = item.activity.getAccountNumber() != null ? item.activity.getAccountNumber() : "";
+            String employeeName = item.employeeName != null ? item.employeeName : "";
             
-            Paragraph sectionTitle = new Paragraph(activityType)
-                .setBold()
-                .setFontSize(14)
-                .setMarginTop(15)
-                .setMarginBottom(10)
-                .setFontColor(new DeviceRgb(139, 69, 19)) // Brown
-                .setBackgroundColor(new DeviceRgb(245, 222, 179)) // Light brown background
-                .setPadding(10)
-                .setBorderBottom(new SolidBorder(new DeviceRgb(139, 69, 19), 3));
-            document.add(sectionTitle);
-            
-            String currentEmployee = null;
-            int index = 1;
-            boolean showNumbers = typeActivities.size() > 1;
-            
-            for (ActivityWithEmployee item : typeActivities) {
-                // If employee changed, add separator
-                if (currentEmployee != null && !currentEmployee.equals(item.employeeName)) {
-                    document.add(new Paragraph("")
-                        .setMarginBottom(5));
-                }
-                
-                // Add activity with numbering if multiple
-                String prefix = showNumbers ? index + ". " : "";
-                Paragraph activityPara = new Paragraph(prefix + item.activity.getDescription())
-                    .setFontSize(11)
-                    .setMarginBottom(3)
-                    .setMarginLeft(10);
-                document.add(activityPara);
-                
-                if (item.activity.getBranch() != null && !item.activity.getBranch().isEmpty()) {
-                    document.add(new Paragraph("   Branch: " + item.activity.getBranch())
-                        .setFontSize(10)
-                        .setMarginLeft(15)
-                        .setMarginBottom(2)
-                        .setFontColor(new DeviceRgb(101, 67, 33))); // Brown
-                }
-                if (item.activity.getAccountNumber() != null && !item.activity.getAccountNumber().isEmpty()) {
-                    document.add(new Paragraph("   Account Number: " + item.activity.getAccountNumber())
-                        .setFontSize(10)
-                        .setMarginLeft(15)
-                        .setMarginBottom(2)
-                        .setFontColor(new DeviceRgb(101, 67, 33))); // Brown
-                }
-                if (item.activity.getActionTaken() != null && !item.activity.getActionTaken().isEmpty()) {
-                    document.add(new Paragraph("   Action Taken: " + item.activity.getActionTaken())
-                        .setFontSize(10)
-                        .setMarginLeft(15)
-                        .setMarginBottom(2)
-                        .setFontColor(new DeviceRgb(101, 67, 33))); // Brown
-                }
-                if (item.activity.getFinalStatus() != null && !item.activity.getFinalStatus().isEmpty()) {
-                    document.add(new Paragraph("   Final Status: " + item.activity.getFinalStatus())
-                        .setFontSize(10)
-                        .setMarginLeft(15)
-                        .setMarginBottom(2)
-                        .setFontColor(new DeviceRgb(101, 67, 33))); // Brown
-                }
-                
-                // Check if next activity is from different employee
-                boolean isLast = typeActivities.indexOf(item) == typeActivities.size() - 1;
-                boolean nextIsDifferent = !isLast && 
-                    !item.employeeName.equals(typeActivities.get(typeActivities.indexOf(item) + 1).employeeName);
-                
-                if (isLast || nextIsDifferent) {
-                    // Add employee name in bold with brown color
-                    document.add(new Paragraph("   — " + item.employeeName)
-                        .setBold()
-                        .setFontSize(10)
-                        .setMarginLeft(15)
-                        .setMarginBottom(8)
-                        .setFontColor(new DeviceRgb(139, 69, 19))); // Brown
-                }
-                
-                currentEmployee = item.employeeName;
-                index++;
-            }
-            
-            document.add(new Paragraph("\n"));
+            addStyledTableCellCbs(activitiesTable, activityName);
+            addStyledTableCellCbs(activitiesTable, description);
+            addStyledTableCellCbs(activitiesTable, branch);
+            addStyledTableCellCbs(activitiesTable, accountNumber);
+            addStyledTableCellCbs(activitiesTable, employeeName);
         }
+        
+        document.add(activitiesTable);
+        document.add(new Paragraph("\n"));
+    }
+    
+    private void addStyledTableHeaderCbs(Table table, String text) {
+        Cell cell = new Cell()
+            .add(new Paragraph(text).setBold().setFontSize(11))
+            .setBackgroundColor(new DeviceRgb(211, 78, 78)) // #D34E4E
+            .setFontColor(ColorConstants.WHITE)
+            .setPadding(10)
+            .setTextAlignment(TextAlignment.CENTER)
+            .setBorder(new SolidBorder(new DeviceRgb(211, 78, 78), 0.5f));
+        table.addHeaderCell(cell);
+    }
+    
+    private void addStyledTableCellCbs(Table table, String text) {
+        Cell cell = new Cell()
+            .add(new Paragraph(text != null && !text.isEmpty() ? text : "-").setFontSize(10))
+            .setPadding(8)
+            .setBackgroundColor(ColorConstants.WHITE)
+            .setBorder(new SolidBorder(new DeviceRgb(229, 231, 235), 0.5f))
+            .setTextAlignment(TextAlignment.LEFT);
+        table.addCell(cell);
     }
     
     private void addMergedEmailSection(Document document, List<EmailCommunication> emails) {
