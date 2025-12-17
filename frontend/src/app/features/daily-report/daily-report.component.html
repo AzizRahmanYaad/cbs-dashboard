@@ -1307,12 +1307,12 @@
             <button 
               class="btn-confirm-premium" 
               (click)="confirmQualityControlReport(selectedReportForReview)"
-              [disabled]="qualityControlLoading || selectedReportForReview?.status === 'APPROVED'"
-              [class.confirmed]="selectedReportForReview?.status === 'APPROVED'">
+              [disabled]="qualityControlLoading || selectedReportForReview.status === 'APPROVED'"
+              [class.confirmed]="selectedReportForReview.status === 'APPROVED'">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"></path>
               </svg>
-              {{ selectedReportForReview?.status === 'APPROVED' ? 'Confirmed' : 'Confirm Report' }}
+              {{ selectedReportForReview.status === 'APPROVED' ? 'Confirmed' : 'Confirm Report' }}
             </button>
             <button 
               class="btn-feedback-premium" 
@@ -1321,7 +1321,7 @@
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
               </svg>
-              {{ selectedReportForReview?.reviewComments ? 'Edit Feedback' : 'Provide Feedback' }}
+              {{ selectedReportForReview.reviewComments ? 'Edit Feedback' : 'Provide Feedback' }}
             </button>
             <button 
               class="btn-save-premium" 
