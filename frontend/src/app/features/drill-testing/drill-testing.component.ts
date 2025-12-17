@@ -293,7 +293,7 @@ export class DrillTestingComponent implements OnInit, OnDestroy {
   }
 
   private getAssignableUsers(users: User[]): User[] {
-    return users.filter(user => !this.hasDrillTestAccess(user));
+    return users.filter(user => this.hasDrillTestAccess(user));
   }
 
   private hasDrillTestAccess(user: User): boolean {
