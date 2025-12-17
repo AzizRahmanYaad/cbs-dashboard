@@ -47,6 +47,7 @@ export class DrillTestingComponent implements OnInit, OnDestroy {
   executions: TestExecution[] = [];
   defects: Defect[] = [];
   users: User[] = [];
+  assignableUsers: User[] = [];
   report: TestReport | null = null;
   
   // Filtered/Paginated Data
@@ -277,6 +278,7 @@ export class DrillTestingComponent implements OnInit, OnDestroy {
     this.userService.getAllUsers().subscribe({
       next: (users: User[]) => {
         this.users = users;
+        this.assignableUsers = this.getAssignableUsers(users);
         this.errorMessages['users'] = '';
       },
       error: (err) => {
@@ -288,6 +290,19 @@ export class DrillTestingComponent implements OnInit, OnDestroy {
         }
       }
     });
+  }
+
+  private getAssignableUsers(users: User[]): User[] {
+    return users.filter(user => !this.hasDrillTestAccess(user));
+  }
+
+  private hasDrillTestAccess(user: User): boolean {
+    const roles = user.roles || [];
+    return roles.some(role =>
+      role === this.DRILL_TEST_ROLE ||
+      this.DRILL_TEST_ADMIN_ROLES.includes(role) ||
+      role === this.ADMIN_ROLE
+    );
   }
 
   loadReport(): void {

@@ -842,7 +842,7 @@
             <label>Assign To</label>
             <select formControlName="assignedToId" class="form-input">
               <option [value]="null">Unassigned</option>
-              <option *ngFor="let user of users" [value]="user.id">{{ user.username }}</option>
+              <option *ngFor="let user of assignableUsers" [value]="user.id">{{ user.username }}</option>
             </select>
           </div>
         </div>
@@ -920,7 +920,7 @@
             <label>Assign To</label>
             <select formControlName="assignedToId" class="form-input">
               <option [value]="null">Unassigned</option>
-              <option *ngFor="let user of users" [value]="user.id">{{ user.username }}</option>
+              <option *ngFor="let user of assignableUsers" [value]="user.id">{{ user.username }}</option>
             </select>
           </div>
         </div>
