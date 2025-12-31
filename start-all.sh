@@ -3,6 +3,21 @@
 echo "🚀 Starting CBS Dashboard - Full Stack Application"
 echo "=================================================="
 
+# Start PostgreSQL database first
+echo "🐘 Starting PostgreSQL database..."
+if [ -f "./start-database.sh" ]; then
+    chmod +x ./start-database.sh
+    ./start-database.sh
+    if [ $? -ne 0 ]; then
+        echo "❌ Failed to start database. Exiting."
+        exit 1
+    fi
+    echo ""
+else
+    echo "⚠️  start-database.sh not found. Make sure PostgreSQL is running manually."
+    echo ""
+fi
+
 # Start Spring Boot backend on port 8080 in background
 echo "📦 Starting Spring Boot backend on port 8080..."
 SPRING_PROFILES_ACTIVE=dev ./gradlew bootRun > /tmp/backend.log 2>&1 &

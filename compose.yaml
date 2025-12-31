@@ -1,9 +1,20 @@
 services:
   postgres:
     image: 'postgres:latest'
+    container_name: cbs-dashboard-postgres
     environment:
-      - 'POSTGRES_DB=mydatabase'
-      - 'POSTGRES_PASSWORD=secret'
-      - 'POSTGRES_USER=myuser'
+      - 'POSTGRES_DB=cbs_dashboard'
+      - 'POSTGRES_PASSWORD=admin123'
+      - 'POSTGRES_USER=cbs_user'
     ports:
-      - '5432'
+      - '5432:5432'
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U cbs_user -d cbs_dashboard"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  postgres_data:
