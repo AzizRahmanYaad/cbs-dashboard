@@ -31,7 +31,7 @@ elif [ -f "./docker-automation.sh" ]; then
     fi
 else
     echo "⚠️  Database automation scripts not found. Skipping database startup."
-    echo "   Make sure PostgreSQL is running manually on localhost:5442"
+    echo "   Make sure PostgreSQL is running manually on localhost:5443"
 fi
 
 echo ""

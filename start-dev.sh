@@ -24,7 +24,7 @@ elif [ -f "./start-database.sh" ]; then
         exit 1
     fi
 else
-    echo "⚠️  Database automation scripts not found. Make sure PostgreSQL is running manually on localhost:5442"
+    echo "⚠️  Database automation scripts not found. Make sure PostgreSQL is running manually on localhost:5443"
 fi
 
 echo ""

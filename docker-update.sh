@@ -179,6 +179,36 @@ check_docker_compose() {
     fi
 }
 
+# Function to check if port is available
+check_port_available() {
+    local port=$1
+    if command -v lsof &> /dev/null; then
+        ! lsof -i :$port &> /dev/null
+    elif command -v netstat &> /dev/null; then
+        ! netstat -tuln 2>/dev/null | grep -q ":$port "
+    elif command -v ss &> /dev/null; then
+        ! ss -tuln 2>/dev/null | grep -q ":$port "
+    else
+        # If no tools available, assume port is available
+        true
+    fi
+}
+
+# Function to find available port
+find_available_port() {
+    local start_port=5443
+    local max_port=5500
+    
+    for port in $(seq $start_port $max_port); do
+        if check_port_available $port; then
+            echo $port
+            return 0
+        fi
+    done
+    
+    return 1
+}
+
 # Function to start PostgreSQL
 start_postgres() {
     print_header "Starting PostgreSQL Database"
@@ -191,12 +221,39 @@ start_postgres() {
         return 0
     fi
     
+    # Check configured port (from compose.yaml)
+    CONFIGURED_PORT=$(grep -oP '\d+:\d+' compose.yaml | head -1 | cut -d: -f1)
+    
+    # Check if configured port is available
+    if ! check_port_available $CONFIGURED_PORT; then
+        print_warning "Port $CONFIGURED_PORT is already in use"
+        print_info "Looking for an available port..."
+        
+        AVAILABLE_PORT=$(find_available_port)
+        if [ -z "$AVAILABLE_PORT" ]; then
+            print_error "No available port found. Please free up a port or manually configure one."
+            return 1
+        fi
+        
+        print_warning "Port $CONFIGURED_PORT is in use. Switching to port $AVAILABLE_PORT"
+        print_info "Updating configuration files..."
+        
+        # Update compose.yaml
+        sed -i "s/${CONFIGURED_PORT}:5432/${AVAILABLE_PORT}:5432/g" compose.yaml
+        
+        # Update application.properties
+        sed -i "s/localhost:${CONFIGURED_PORT}/localhost:${AVAILABLE_PORT}/g" src/main/resources/application.properties
+        
+        print_success "Configuration updated to use port $AVAILABLE_PORT"
+        CONFIGURED_PORT=$AVAILABLE_PORT
+    fi
+    
     # Check if container exists but is stopped
     if docker ps -a --format '{{.Names}}' | grep -q "^cbs-dashboard-postgres$"; then
         print_info "Starting existing PostgreSQL container..."
         docker start cbs-dashboard-postgres
     else
-        print_info "Creating and starting PostgreSQL container..."
+        print_info "Creating and starting PostgreSQL container on port $CONFIGURED_PORT..."
         $COMPOSE_CMD up -d postgres
     fi
     
@@ -209,9 +266,11 @@ start_postgres() {
         if docker exec cbs-dashboard-postgres pg_isready -U cbs_user -d cbs_dashboard &> /dev/null 2>&1; then
             print_success "PostgreSQL is ready!"
             echo ""
+            # Get the actual port from compose.yaml
+            ACTUAL_PORT=$(grep -oP '\d+:\d+' compose.yaml | head -1 | cut -d: -f1)
             print_info "Database connection details:"
             echo "  Host: localhost"
-            echo "  Port: 5442"
+            echo "  Port: $ACTUAL_PORT"
             echo "  Database: cbs_dashboard"
             echo "  Username: cbs_user"
             echo "  Password: admin123"

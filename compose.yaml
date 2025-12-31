@@ -7,7 +7,7 @@ services:
       - 'POSTGRES_PASSWORD=admin123'
       - 'POSTGRES_USER=cbs_user'
     ports:
-      - '5442:5432'
+      - '5443:5432'
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:

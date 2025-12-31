@@ -23,7 +23,7 @@ chmod +x docker-update.sh start.sh
 
 That's it! The scripts will:
 - ✅ Check Docker installation
-- ✅ Start PostgreSQL automatically on port **5442**
+- ✅ Start PostgreSQL automatically on port **5443**
 - ✅ Start Spring Boot backend
 - ✅ Start Angular frontend
 
@@ -85,7 +85,7 @@ That's it! The scripts will:
 After starting:
 - **Frontend:** http://localhost:5000
 - **Backend API:** http://localhost:8090
-- **Database:** localhost:5442
+- **Database:** localhost:5443
 
 ## 🛑 Stopping Everything
 
@@ -123,11 +123,13 @@ sudo systemctl enable docker  # Auto-start on boot
 
 ### Port Already in Use
 
-If port 5442 is in use, check what's using it:
+If port 5443 is in use, check what's using it:
 ```bash
-sudo lsof -i :5442
+./check-port.sh 5443
+# or manually:
+sudo lsof -i :5443
 # or
-sudo netstat -tulpn | grep 5442
+sudo netstat -tulpn | grep 5443
 ```
 
 ## 📚 More Information

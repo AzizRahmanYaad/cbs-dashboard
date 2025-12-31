@@ -99,7 +99,7 @@ Shows an interactive menu with options:
 After running the script, PostgreSQL will be available at:
 
 - **Host:** localhost
-- **Port:** 5442 (external) → 5432 (internal container)
+- **Port:** 5443 (external) → 5432 (internal container)
 - **Database:** cbs_dashboard
 - **Username:** cbs_user
 - **Password:** admin123
@@ -152,13 +152,15 @@ Or run with sudo:
 sudo ./docker-update.sh
 ```
 
-### Port 5442 Already in Use
+### Port 5443 Already in Use
 
 Check what's using the port:
 ```bash
-sudo lsof -i :5442
+./check-port.sh 5443
+# or manually:
+sudo lsof -i :5443
 # or
-sudo netstat -tulpn | grep 5442
+sudo netstat -tulpn | grep 5443
 ```
 
 Stop the conflicting service or change the port in `compose.yaml`.

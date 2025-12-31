@@ -93,7 +93,7 @@ If you have PostgreSQL installed locally, make sure:
 
 The application is configured to connect to:
 - **Host:** localhost
-- **Port:** 5442
+- **Port:** 5443
 - **Database:** cbs_dashboard
 - **Username:** cbs_user
 - **Password:** admin123
@@ -104,7 +104,7 @@ These settings are in `src/main/resources/application.properties`.
 
 ### Connection Refused Error
 
-If you see `Connection to localhost:5442 refused`:
+If you see `Connection to localhost:5443 refused`:
 
 1. **Check if PostgreSQL is running:**
    ```bash
@@ -131,7 +131,7 @@ docker compose up -d postgres
 
 ### Port Already in Use
 
-If port 5442 is already in use:
+If port 5443 is already in use:
 1. Stop the existing service using that port
 2. Or modify `compose.yaml` to use a different port mapping (e.g., `5443:5432`)
 3. Update `application.properties` with the new port

@@ -103,7 +103,7 @@ start_postgres() {
             echo ""
             print_info "Database connection details:"
             echo "  Host: localhost"
-            echo "  Port: 5442"
+            echo "  Port: 5443"
             echo "  Database: cbs_dashboard"
             echo "  Username: cbs_user"
             echo "  Password: admin123"
