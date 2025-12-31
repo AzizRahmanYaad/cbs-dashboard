@@ -1,10 +1,59 @@
 # Database Setup Guide
 
-## Quick Start
+## Quick Start (Automated - Recommended)
 
-The application requires PostgreSQL to be running before starting the Spring Boot backend.
+**The easiest way to start everything:**
 
-### Option 1: Using Docker Compose (Recommended)
+```bash
+chmod +x start.sh docker-automation.sh
+./start.sh
+```
+
+This automatically:
+1. ✅ Checks Docker installation
+2. ✅ Starts PostgreSQL container
+3. ✅ Waits for database to be ready
+4. ✅ Starts the Spring Boot backend
+5. ✅ Starts the Angular frontend
+
+### Manual Control
+
+If you want more control, use the automation script directly:
+
+1. **Start the database:**
+   ```bash
+   chmod +x docker-automation.sh
+   ./docker-automation.sh start
+   ```
+
+2. **Check database status:**
+   ```bash
+   ./docker-automation.sh status
+   ```
+
+3. **View database logs:**
+   ```bash
+   ./docker-automation.sh logs
+   # Or follow logs in real-time:
+   ./docker-automation.sh logs -f
+   ```
+
+4. **Stop the database:**
+   ```bash
+   ./docker-automation.sh stop
+   ```
+
+5. **Restart the database:**
+   ```bash
+   ./docker-automation.sh restart
+   ```
+
+6. **Remove database (with all data):**
+   ```bash
+   ./docker-automation.sh remove
+   ```
+
+### Alternative: Using Individual Scripts
 
 1. **Start the database:**
    ```bash
@@ -44,7 +93,7 @@ If you have PostgreSQL installed locally, make sure:
 
 The application is configured to connect to:
 - **Host:** localhost
-- **Port:** 5432
+- **Port:** 5442
 - **Database:** cbs_dashboard
 - **Username:** cbs_user
 - **Password:** admin123
@@ -55,7 +104,7 @@ These settings are in `src/main/resources/application.properties`.
 
 ### Connection Refused Error
 
-If you see `Connection to localhost:5432 refused`:
+If you see `Connection to localhost:5442 refused`:
 
 1. **Check if PostgreSQL is running:**
    ```bash
@@ -82,9 +131,9 @@ docker compose up -d postgres
 
 ### Port Already in Use
 
-If port 5432 is already in use:
-1. Stop the existing PostgreSQL service
-2. Or modify `compose.yaml` to use a different port mapping (e.g., `5433:5432`)
+If port 5442 is already in use:
+1. Stop the existing service using that port
+2. Or modify `compose.yaml` to use a different port mapping (e.g., `5443:5432`)
 3. Update `application.properties` with the new port
 
 ## Creating Initial Tables
