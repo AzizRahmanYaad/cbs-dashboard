@@ -37,9 +37,9 @@ export class TeacherDashboardComponent implements OnInit {
   private fb = inject(FormBuilder);
 
   currentUser: User | null = null;
-  activeTab: 'programs' | 'sessions' | 'materials' | 'topics' | 'students' | 'attendance' = 'programs';
-  tabs: ('programs' | 'sessions' | 'materials' | 'topics' | 'students' | 'attendance')[] = 
-    ['programs', 'sessions', 'materials', 'topics', 'students', 'attendance'];
+  activeTab: 'overview' | 'programs' | 'sessions' | 'materials' | 'topics' | 'students' | 'attendance' = 'overview';
+  tabs: ('overview' | 'programs' | 'sessions' | 'materials' | 'topics' | 'students' | 'attendance')[] = 
+    ['overview', 'programs', 'sessions', 'materials', 'topics', 'students', 'attendance'];
   
   // Programs
   programs: TrainingProgram[] = [];
@@ -895,8 +895,9 @@ export class TeacherDashboardComponent implements OnInit {
         this.closeAttendanceModal();
         this.loadAttendance(this.selectedSessionForAttendance!.id);
       },
-      error: () => {
-        this.toastr.error('Failed to mark attendance');
+      error: (err) => {
+        const msg = err?.error?.message || err?.error?.error || err?.message || 'Failed to mark attendance';
+        this.toastr.error(msg);
         this.loading = false;
       }
     });
@@ -912,9 +913,63 @@ export class TeacherDashboardComponent implements OnInit {
     return control ? control.get(field) : null;
   }
 
+  // ---------- Overview analytics helpers ----------
+
+  get totalPrograms(): number {
+    return this.programs?.length || 0;
+  }
+
+  get totalStudents(): number {
+    return this.students?.length || 0;
+  }
+
+  get totalSessions(): number {
+    return this.sessions?.length || 0;
+  }
+
+  get upcomingSessions(): number {
+    const now = new Date();
+    return (this.sessions || []).filter(s => {
+      const start = new Date(s.startDateTime);
+      return !isNaN(start.getTime()) && start >= now;
+    }).length;
+  }
+
+  get completedPrograms(): number {
+    return (this.programs || []).filter(p => p.status === 'COMPLETED').length;
+  }
+
+  get ongoingPrograms(): number {
+    return (this.programs || []).filter(p => p.status === 'ONGOING').length;
+  }
+
+  get programCompletionRate(): number {
+    const total = this.totalPrograms;
+    if (!total) return 0;
+    return Math.round((this.completedPrograms / total) * 100);
+  }
+
+  get mostActivePrograms(): { title: string; sessions: number }[] {
+    const list = (this.programs || []).map(p => ({
+      title: p.trainingName || p.trainingNameName || p.title || 'Program',
+      sessions: p.sessionsCount || 0
+    }));
+    return list
+      .sort((a, b) => b.sessions - a.sessions)
+      .slice(0, 5);
+  }
+
+  get maxSessionsPerProgram(): number {
+    return this.mostActivePrograms.reduce((max, p) => Math.max(max, p.sessions), 0) || 1;
+  }
+
   switchTab(tab: typeof this.activeTab): void {
     this.activeTab = tab;
-    if (tab === 'sessions') {
+    if (tab === 'overview') {
+      this.loadPrograms();
+      this.loadSessions();
+      this.loadStudents();
+    } else if (tab === 'sessions') {
       this.loadSessions();
     } else if (tab === 'materials') {
       if (this.selectedProgram?.id) {

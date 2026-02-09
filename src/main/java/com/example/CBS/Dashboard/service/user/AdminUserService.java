@@ -9,6 +9,7 @@ import com.example.CBS.Dashboard.entity.Role;
 import com.example.CBS.Dashboard.entity.User;
 import com.example.CBS.Dashboard.mapper.UserMapper;
 import com.example.CBS.Dashboard.repository.RoleRepository;
+import com.example.CBS.Dashboard.repository.StudentTeacherRepository;
 import com.example.CBS.Dashboard.repository.UserRepository;
 import jakarta.persistence.EntityNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -38,6 +39,26 @@ public class AdminUserService {
 
     @Autowired
     private UserMapper userMapper;
+
+    @Autowired
+    private StudentTeacherRepository studentTeacherRepository;
+
+    /**
+     * Users that are not yet assigned as student or teacher (no row in student_teachers).
+     * Excludes users who already have any student_teachers record and optionally ADMIN.
+     * Use for dropdown when creating a new student or teacher.
+     */
+    @Transactional(readOnly = true)
+    public List<UserDto> getUsersAvailableForTraining() {
+        Set<Long> assignedUserIds = new HashSet<>(studentTeacherRepository.findAllAssignedUserIds());
+        return userRepository.findAll()
+                .stream()
+                .filter(user -> !assignedUserIds.contains(user.getId()))
+                .filter(user -> user.getRoles().stream()
+                        .noneMatch(role -> "ROLE_ADMIN".equals(role.getName())))
+                .map(userMapper::toDto)
+                .collect(Collectors.toList());
+    }
 
     @Transactional(readOnly = true)
     public List<UserDto> getAllUsers() {

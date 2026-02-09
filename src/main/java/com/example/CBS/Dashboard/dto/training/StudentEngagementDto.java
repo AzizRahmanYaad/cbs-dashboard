@@ -14,6 +14,8 @@ public class StudentEngagementDto {
     private String status;           // PRESENT, ABSENT, LATE, EXCUSED
     private String notes;
     private Double attendancePercent; // Overall for this session/program
-    /** Base64 signature image for attended students (PRESENT, LATE, EXCUSED). */
+    /** Base64 signature image recorded for this attendance (PRESENT or acknowledgment). */
     private String signatureData;
+    /** PRESENT when signed at attendance, ACKNOWLEDGMENT when signed later for materials (or null). */
+    private String signatureType;
 }

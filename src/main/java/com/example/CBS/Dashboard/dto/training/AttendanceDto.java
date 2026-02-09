@@ -24,4 +24,9 @@ public class AttendanceDto {
     private String markedByUsername;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
+    /** E-signature image (base64) for audit and reporting. */
+    private String signatureData;
+    /** PRESENT or ACKNOWLEDGMENT */
+    private String signatureType;
+    private LocalDateTime signedAt;
 }

@@ -49,11 +49,14 @@ public class TeacherReportService {
             List<Attendance> attendanceList = attendanceRepository.findBySessionIdAndAttendanceDateBetween(
                     session.getId(), startOfDay, endOfDay);
 
-            List<Attendance> attendedList = attendanceList.stream()
-                    .filter(a -> a.getStatus() == Attendance.AttendanceStatus.PRESENT
-                            || a.getStatus() == Attendance.AttendanceStatus.LATE
-                            || a.getStatus() == Attendance.AttendanceStatus.EXCUSED)
-                    .collect(Collectors.toList());
+        List<Attendance> attendedList = attendanceList.stream()
+                .filter(a ->
+                        a.getStatus() == Attendance.AttendanceStatus.PRESENT
+                                || a.getStatus() == Attendance.AttendanceStatus.LATE
+                                || a.getStatus() == Attendance.AttendanceStatus.EXCUSED
+                                || (a.getStatus() == Attendance.AttendanceStatus.ABSENT
+                                    && a.getSignatureType() == Attendance.SignatureType.ACKNOWLEDGMENT))
+                .collect(Collectors.toList());
 
             List<String> attendedNames = attendedList.stream()
                     .map(a -> a.getParticipant() != null ? a.getParticipant().getFullName() : null)
@@ -71,9 +74,16 @@ public class TeacherReportService {
                     if (seenParticipants.contains(pid)) continue;
                     seenParticipants.add(pid);
                     Hibernate.initialize(a.getParticipant());
-                    User u = userRepository.findById(pid).orElse(null);
-                    String sigData = u != null && u.getSignatureData() != null && !u.getSignatureData().isBlank()
-                            ? u.getSignatureData() : null;
+
+                    // Prefer the recorded attendance signature for this session; fall back to profile signature.
+                    String sigData = a.getSignatureData();
+                    if (sigData == null || sigData.isBlank()) {
+                        User u = userRepository.findById(pid).orElse(null);
+                        if (u != null && u.getSignatureData() != null && !u.getSignatureData().isBlank()) {
+                            sigData = u.getSignatureData();
+                        }
+                    }
+
                     signatures.add(new AttendeeSignatureDto(
                             pid,
                             a.getParticipant().getFullName(),
@@ -169,16 +179,25 @@ public class TeacherReportService {
             double pct = total > 0 ? (100.0 * stats[0] / total) : 100.0;
 
             String sigData = null;
-            boolean isAttended = "PRESENT".equals(status) || "LATE".equals(status) || "EXCUSED".equals(status);
-            if (isAttended) {
+            String sigType = null;
+            if (att != null && att.getSignatureData() != null && !att.getSignatureData().isBlank()) {
+                sigData = att.getSignatureData();
+                sigType = att.getSignatureType() != null ? att.getSignatureType().name() : null;
+            } else {
+                // Fallback to profile signature for legacy records
                 try {
                     User u = userRepository.findById(pid).orElse(null);
-                    sigData = u != null && u.getSignatureData() != null && !u.getSignatureData().isBlank()
-                            ? u.getSignatureData() : null;
-                    if (sigData != null) {
-                        attendedSignatures.add(new AttendeeSignatureDto(pid, e.getParticipant().getFullName(), sigData));
+                    if (u != null && u.getSignatureData() != null && !u.getSignatureData().isBlank()) {
+                        sigData = u.getSignatureData();
                     }
                 } catch (Exception ignored) { }
+            }
+
+            boolean isSignedParticipant =
+                    "PRESENT".equals(status) || "LATE".equals(status) || "EXCUSED".equals(status)
+                            || ("ABSENT".equals(status) && "ACKNOWLEDGMENT".equals(sigType));
+            if (isSignedParticipant && sigData != null) {
+                attendedSignatures.add(new AttendeeSignatureDto(pid, e.getParticipant().getFullName(), sigData));
             }
 
             engagement.add(new StudentEngagementDto(
@@ -188,7 +207,8 @@ public class TeacherReportService {
                     status,
                     notes,
                     Math.round(pct * 10) / 10.0,
-                    sigData));
+                    sigData,
+                    sigType));
         }
 
         List<String> contentCoverage = new ArrayList<>();

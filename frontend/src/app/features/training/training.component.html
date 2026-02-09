@@ -112,8 +112,203 @@
     </div>
   </div>
 
+  <!-- Advanced Reports Tab -->
+  <div *ngIf="activeTab === 'reports'" class="tab-content">
+    <div class="reports-grid">
+      <!-- Session-Based Report -->
+      <section class="report-card">
+        <h2 class="report-title">Session-Based Report</h2>
+        <p class="report-subtitle">
+          Select a session to view a detailed report including topic, training ID, description, attendance,
+          and student e-signatures. The PDF matches the official training sheet layout.
+        </p>
+        <form [formGroup]="reportForm" class="report-form">
+          <div class="report-row">
+            <div class="form-group">
+              <label>From *</label>
+              <input type="date" formControlName="fromDate" class="form-input">
+            </div>
+            <div class="form-group">
+              <label>To *</label>
+              <input type="date" formControlName="toDate" class="form-input">
+            </div>
+            <div class="form-group form-group--button">
+              <button type="button" class="btn-secondary" (click)="loadSessionReportRows()">
+                Load Sessions
+              </button>
+            </div>
+          </div>
+
+          <div class="report-row">
+            <div class="form-group">
+              <label>Training Session</label>
+              <select formControlName="sessionId" class="form-input">
+                <option [ngValue]="null">Select Session</option>
+                <option *ngFor="let row of sessionReportRows" [ngValue]="row.sessionId">
+                  {{ row.startDateTime | date:'dd-MMM-yyyy' }} · {{ row.programTitle }} – {{ row.sessionTopic }}
+                </option>
+              </select>
+            </div>
+            <div class="report-actions">
+              <button type="button" class="btn-secondary" (click)="viewSingleSessionReport()" [disabled]="reportsLoading">
+                View Report
+              </button>
+              <button type="button" class="btn-primary" (click)="downloadSingleSessionPdf()" [disabled]="pdfDownloading">
+                Download PDF
+              </button>
+            </div>
+          </div>
+        </form>
+
+        <!-- On-screen session report -->
+        <div *ngIf="selectedSessionReport" class="session-report-view">
+          <h3 class="session-report-title">
+            {{ selectedSessionReport.programTitle }} – {{ selectedSessionReport.sessionTopic }}
+          </h3>
+          <p class="session-report-meta">
+            Training ID: {{ selectedSessionReport.sessionId }} ·
+            Date: {{ selectedSessionReport.startDateTime | date:'dd-MMM-yyyy' }} ·
+            Instructor: {{ selectedSessionReport.instructorName || '—' }} ·
+            Method: {{ selectedSessionReport.sessionType || '—' }}
+          </p>
+
+          <div class="session-report-section">
+            <h4>Description / Content Coverage</h4>
+            <ul>
+              <li *ngFor="let item of selectedSessionReport.contentCoverage">{{ item }}</li>
+            </ul>
+          </div>
+
+          <div class="session-report-section">
+            <h4>Attendance Summary</h4>
+            <p>
+              Present: {{ selectedSessionReport.presentCount }} ·
+              Absent: {{ selectedSessionReport.absentCount }} ·
+              Late: {{ selectedSessionReport.lateCount }} ·
+              Excused: {{ selectedSessionReport.excusedCount }} ·
+              Total Enrolled: {{ selectedSessionReport.totalEnrolled }}
+            </p>
+          </div>
+
+          <div class="session-report-columns">
+            <div class="session-report-column">
+              <h4>Present Students (with signature)</h4>
+              <ul>
+                <ng-container *ngFor="let s of selectedSessionReport.studentEngagement">
+                  <li *ngIf="s.status === 'PRESENT' || s.status === 'LATE' || s.status === 'EXCUSED'">
+                    {{ s.fullName }} <span class="badge" *ngIf="s.signatureData">Signed</span>
+                  </li>
+                </ng-container>
+              </ul>
+            </div>
+            <div class="session-report-column">
+              <h4>Materials Acknowledgment (Absent / Excused)</h4>
+              <ul>
+                <ng-container *ngFor="let s of selectedSessionReport.studentEngagement">
+                  <li *ngIf="(s.status === 'ABSENT' || s.status === 'EXCUSED') && s.signatureType === 'ACKNOWLEDGMENT'">
+                    {{ s.fullName }} <span class="badge">Acknowledged</span>
+                  </li>
+                </ng-container>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Date-Range Report -->
+      <section class="report-card">
+        <h2 class="report-title">Date-Range Report</h2>
+        <p class="report-subtitle">
+          View aggregated session activity for a period. On-screen shows participation trends; the PDF includes
+          full training forms, attendance history, and e-signatures in a formal layout.
+        </p>
+
+        <form [formGroup]="reportForm" class="report-form">
+          <div class="report-row">
+            <div class="form-group">
+              <label>From *</label>
+              <input type="date" formControlName="fromDate" class="form-input">
+            </div>
+            <div class="form-group">
+              <label>To *</label>
+              <input type="date" formControlName="toDate" class="form-input">
+            </div>
+            <div class="report-actions">
+              <button type="button" class="btn-secondary" (click)="viewDateRangeReport()" [disabled]="reportsLoading">
+                View Report
+              </button>
+              <button type="button" class="btn-primary" (click)="downloadDateRangePdf()" [disabled]="pdfDownloading">
+                Download PDF
+              </button>
+            </div>
+          </div>
+        </form>
+
+        <!-- On-screen grouped report -->
+        <div *ngIf="groupedReport" class="grouped-report-view">
+          <h3 class="session-report-title">
+            {{ groupedReport.fromDate | date:'dd-MMM-yyyy' }} — {{ groupedReport.toDate | date:'dd-MMM-yyyy' }}
+          </h3>
+          <p class="session-report-meta">
+            Total Sessions: {{ groupedReport.totalSessions }} ·
+            Total Students: {{ groupedReport.totalStudents }} ·
+            Overall Participation: {{ groupedReport.overallParticipationRate | number:'1.1-1' }}%
+          </p>
+
+          <div class="session-report-section">
+            <h4>Sessions in Range</h4>
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Date</th>
+                  <th>Program</th>
+                  <th>Topic</th>
+                  <th>Instructor</th>
+                  <th>Method</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let s of groupedReport.sessionsByDate">
+                  <td>{{ s.startDateTime | date:'dd-MMM-yyyy' }}</td>
+                  <td>{{ s.programTitle }}</td>
+                  <td>{{ s.sessionTopic }}</td>
+                  <td>{{ s.instructorName }}</td>
+                  <td>{{ s.sessionType }}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div class="session-report-section">
+            <h4>Participation by Student</h4>
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Student</th>
+                  <th>Attended</th>
+                  <th>Total</th>
+                  <th>Rate %</th>
+                  <th>Trend</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let s of groupedReport.byStudent">
+                  <td>{{ s.fullName }}</td>
+                  <td>{{ s.sessionsAttended }}</td>
+                  <td>{{ s.totalSessions }}</td>
+                  <td>{{ s.attendancePercent | number:'1.1-1' }}</td>
+                  <td>{{ s.participationTrend }}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+    </div>
+  </div>
+
   <!-- Other Tabs Placeholder -->
-  <div *ngIf="activeTab !== 'programs'" class="tab-content">
+  <div *ngIf="activeTab !== 'programs' && activeTab !== 'reports'" class="tab-content">
     <div class="placeholder-message">
       <p>{{ activeTab | titlecase }} management coming soon!</p>
     </div>

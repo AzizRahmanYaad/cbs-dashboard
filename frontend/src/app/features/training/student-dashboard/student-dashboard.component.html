@@ -13,6 +13,9 @@
       [class.active]="activeTab === tab"
     >
       <ng-container [ngSwitch]="tab">
+        <svg *ngSwitchCase="'overview'" class="tab-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z" />
+        </svg>
         <svg *ngSwitchCase="'programs'" class="tab-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
           <path stroke-linecap="round" stroke-linejoin="round" d="M9 5.25h6A2.25 2.25 0 0 1 17.25 7.5v11.25H6.75V7.5A2.25 2.25 0 0 1 9 5.25z" />
           <path stroke-linecap="round" stroke-linejoin="round" d="M9.75 3.75h4.5V5.25h-4.5zM9 9h6" />
@@ -27,6 +30,9 @@
         <svg *ngSwitchCase="'attendance'" class="tab-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
           <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75 11.25 15 15 9.75M4.5 6.75h15M4.5 12h3m-3 5.25h3" />
         </svg>
+        <svg *ngSwitchCase="'signature'" class="tab-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.501 20.118a7.5 7.5 0 0 1 14.998-0A4.5 4.5 0 0 0 16.5 14h-9a4.5 4.5 0 0 0-1.999 6.118Z" />
+        </svg>
         <svg *ngSwitchCase="'progress'" class="tab-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
           <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 19.5h16.5M7.5 15.75 10.5 9l3 6 3-7.5" />
         </svg>
@@ -36,6 +42,101 @@
       </ng-container>
       <span>{{ tab | titlecase }}</span>
     </button>
+  </div>
+
+  <!-- Overview Tab -->
+  <div *ngIf="activeTab === 'overview' && !loading" class="tab-content overview-tab">
+    <section class="overview-hero">
+      <h2 class="overview-hero__title">Learning Overview</h2>
+      <p class="overview-hero__subtitle">
+        See a snapshot of your enrollments, upcoming sessions, and attendance.
+      </p>
+    </section>
+
+    <!-- Top stat tiles -->
+    <section class="analytics-grid">
+      <article class="stat-card-modern stat-card-modern--programs">
+        <div class="stat-card-modern__icon">
+          <span>🎓</span>
+        </div>
+        <div class="stat-card-modern__content">
+          <div class="stat-card-modern__label">Enrolled Programs</div>
+          <div class="stat-card-modern__value">{{ totalPrograms }}</div>
+        </div>
+      </article>
+
+      <article class="stat-card-modern stat-card-modern--sessions">
+        <div class="stat-card-modern__icon">
+          <span>📅</span>
+        </div>
+        <div class="stat-card-modern__content">
+          <div class="stat-card-modern__label">Total Sessions</div>
+          <div class="stat-card-modern__value">{{ totalSessions }}</div>
+        </div>
+      </article>
+
+      <article class="stat-card-modern stat-card-modern--attendance">
+        <div class="stat-card-modern__icon">
+          <span>✅</span>
+        </div>
+        <div class="stat-card-modern__content">
+          <div class="stat-card-modern__label">Attendance Rate</div>
+          <div class="stat-card-modern__value">{{ attendanceRate }}%</div>
+          <div class="stat-card-modern__trend">
+            {{ attendedSessions }} sessions attended
+          </div>
+        </div>
+      </article>
+    </section>
+
+    <!-- Timeline & messages style row -->
+    <section class="student-overview-grid">
+      <article class="chart-panel">
+        <header class="chart-panel__header">
+          <h3 class="chart-panel__title">Upcoming Sessions</h3>
+          <span class="chart-panel__badge">Next steps</span>
+        </header>
+        <div class="chart-panel__body">
+          <div class="chart-panel__empty" *ngIf="sessions.length === 0">
+            <div class="chart-panel__empty-icon">⏳</div>
+            <p>No upcoming sessions</p>
+            <span>Once sessions are scheduled, they will appear here.</span>
+          </div>
+          <ul *ngIf="sessions.length > 0" class="overview-session-list">
+            <li *ngFor="let session of sessions | slice:0:5" class="overview-session-row">
+              <div class="overview-session-row__date">
+                <span class="day">{{ session.startDateTime | date:'dd' }}</span>
+                <span class="meta">{{ session.startDateTime | date:'MMM' }}</span>
+              </div>
+              <div class="overview-session-row__content">
+                <div class="title">{{ session.programTitle || 'Session' }}</div>
+                <div class="subtitle">
+                  {{ session.location || 'Location TBD' }} ·
+                  {{ session.startDateTime | date:'shortTime' }}
+                </div>
+              </div>
+            </li>
+          </ul>
+        </div>
+      </article>
+
+      <article class="chart-panel chart-panel--secondary">
+        <header class="chart-panel__header">
+          <h3 class="chart-panel__title">Notifications</h3>
+          <span class="chart-panel__badge">Quick view</span>
+        </header>
+        <div class="chart-panel__body student-overview-messages">
+          <p class="hint" *ngIf="totalPrograms === 0">
+            Enroll into a training program to start receiving updates and reminders here.
+          </p>
+          <ul *ngIf="totalPrograms > 0">
+            <li>Stay up to date with your upcoming sessions.</li>
+            <li>Complete all required materials before each session.</li>
+            <li>Track your attendance and progress from this dashboard.</li>
+          </ul>
+        </div>
+      </article>
+    </section>
   </div>
 
   <!-- Loading Indicator -->
@@ -208,6 +309,9 @@
   <div *ngIf="activeTab === 'attendance' && !loading" class="tab-content space-y-4">
     <div class="card">
       <h2 class="card-header-title">My Attendance Records</h2>
+      <p class="text-sm text-gray-600 mb-4">
+        For <strong>Absent</strong> or <strong>Excused</strong> sessions you may review materials and sign to acknowledge. Your e-signature is required when marked <strong>Present</strong>.
+      </p>
       <div *ngIf="attendanceRecords.length === 0" class="empty-state">
         <span class="empty-state-icon" aria-hidden="true">📝</span>
         <p class="empty-state-title">No attendance records found</p>
@@ -221,6 +325,8 @@
               <th>Date</th>
               <th>Status</th>
               <th>Notes</th>
+              <th>Signed</th>
+              <th>Actions</th>
             </tr>
           </thead>
           <tbody>
@@ -233,9 +339,46 @@
                 </span>
               </td>
               <td>{{ attendance.notes || '-' }}</td>
+              <td>
+                <span *ngIf="attendance.signedAt" class="text-green-600 text-sm">{{ attendance.signedAt | date:'short' }}</span>
+                <span *ngIf="!attendance.signedAt" class="text-gray-400">—</span>
+              </td>
+              <td>
+                <button
+                  *ngIf="canAcknowledge(attendance)"
+                  type="button"
+                  class="btn-primary btn-sm"
+                  (click)="openAcknowledgeModal(attendance)"
+                >
+                  Review &amp; Sign
+                </button>
+                <span *ngIf="!canAcknowledge(attendance)" class="text-gray-400">—</span>
+              </td>
             </tr>
           </tbody>
         </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- My E-Signature Tab -->
+  <div *ngIf="activeTab === 'signature' && !loading" class="tab-content space-y-4">
+    <div class="card">
+      <h2 class="card-header-title">My E-Signature</h2>
+      <p class="text-sm text-gray-600 mb-4">
+        Create and save your digital signature. It will be used when a teacher marks you <strong>Present</strong> and when you acknowledge session materials for <strong>Absent</strong> or <strong>Excused</strong> sessions. All uses are stored for reporting and audit.
+      </p>
+      <div *ngIf="signatureLoading" class="flex justify-center py-8">
+        <div class="animate-spin rounded-full h-10 w-10 border-b-2 border-D34E4E"></div>
+      </div>
+      <div *ngIf="!signatureLoading">
+        <p *ngIf="hasSignature" class="text-sm text-green-700 mb-3">You have a saved signature. Draw below to replace it.</p>
+        <div class="signature-box mb-4">
+          <app-signature-pad #signaturePad></app-signature-pad>
+        </div>
+        <button type="button" class="btn-primary" (click)="saveSignature()" [disabled]="signatureLoading">
+          {{ hasSignature ? 'Update' : 'Save' }} E-Signature
+        </button>
       </div>
     </div>
   </div>
@@ -272,6 +415,45 @@
             </div>
           </div>
         </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Acknowledge (Review & Sign) Modal -->
+  <div *ngIf="showAcknowledgeModal && selectedAttendanceForAck" class="modal-overlay" (click)="closeAcknowledgeModal()">
+    <div class="modal-content modal-ack" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h2>Review &amp; Sign – Session Materials Acknowledgment</h2>
+        <button type="button" class="modal-close" (click)="closeAcknowledgeModal()">×</button>
+      </div>
+      <div class="modal-body">
+        <p class="text-sm text-gray-600 mb-3">
+          Session: <strong>{{ selectedAttendanceForAck.sessionTitle || ('Session #' + selectedAttendanceForAck.sessionId) }}</strong>
+          · Date: {{ selectedAttendanceForAck.attendanceDate | date:'short' }}
+        </p>
+        <p class="text-sm text-gray-700 mb-4">
+          Please review the session materials below, then sign to confirm acknowledgment. Your signature will be stored for audit purposes.
+        </p>
+        <div class="ack-materials mb-4" *ngIf="acknowledgeMaterials.length > 0">
+          <h3 class="font-semibold text-gray-800 mb-2">Session Materials</h3>
+          <ul class="list-disc pl-5 space-y-1">
+            <li *ngFor="let mat of acknowledgeMaterials" class="flex items-center gap-2">
+              <span>{{ mat.title }}</span>
+              <button type="button" class="btn-secondary btn-sm" (click)="openMaterialLink(mat)" *ngIf="mat.filePath">Open</button>
+            </li>
+          </ul>
+        </div>
+        <div *ngIf="acknowledgeMaterials.length === 0" class="text-sm text-gray-500 mb-4">No materials listed for this session.</div>
+        <div class="ack-signature">
+          <label class="block font-semibold text-gray-700 mb-2">Your signature (required)</label>
+          <app-signature-pad #ackSignaturePad></app-signature-pad>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn-secondary" (click)="closeAcknowledgeModal()">Cancel</button>
+        <button type="button" class="btn-primary" (click)="submitAcknowledge()" [disabled]="acknowledgeLoading">
+          {{ acknowledgeLoading ? 'Submitting...' : 'Submit Acknowledgment' }}
+        </button>
       </div>
     </div>
   </div>

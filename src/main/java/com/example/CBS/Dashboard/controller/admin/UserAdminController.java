@@ -45,6 +45,12 @@ public class UserAdminController {
         return ResponseEntity.ok(adminUserService.getAllUsers());
     }
 
+    /** Users not yet assigned as student or teacher; excludes ADMIN. For training admin dropdowns. */
+    @GetMapping("/users/available-for-training")
+    public ResponseEntity<List<UserDto>> getUsersAvailableForTraining() {
+        return ResponseEntity.ok(adminUserService.getUsersAvailableForTraining());
+    }
+
     @GetMapping("/users/{id}")
     public ResponseEntity<UserDto> findUserById(@PathVariable Long id) {
         return ResponseEntity.ok(adminUserService.getUserById(id));

@@ -1,5 +1,6 @@
 package com.example.CBS.Dashboard.controller.training;
 
+import com.example.CBS.Dashboard.dto.training.AcknowledgeAttendanceRequest;
 import com.example.CBS.Dashboard.dto.training.AttendanceDto;
 import com.example.CBS.Dashboard.dto.training.MarkAttendanceRequest;
 import com.example.CBS.Dashboard.service.training.AttendanceService;
@@ -17,9 +18,9 @@ import java.util.List;
 @RequestMapping("/api/training/attendance")
 @RequiredArgsConstructor
 public class AttendanceController {
-    
+
     private final AttendanceService attendanceService;
-    
+
     @PostMapping("/mark")
     @PreAuthorize("hasAnyRole('ROLE_TEACHER', 'ROLE_TRAINING_ADMIN', 'ROLE_ADMIN')")
     public ResponseEntity<Void> markAttendance(
@@ -43,5 +44,18 @@ public class AttendanceController {
     public ResponseEntity<List<AttendanceDto>> getAttendanceByParticipant(@PathVariable Long participantId) {
         List<AttendanceDto> attendances = attendanceService.getAttendanceByParticipant(participantId);
         return ResponseEntity.ok(attendances);
+    }
+
+    @PostMapping("/{id}/acknowledge")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<Void> acknowledgeAttendance(
+            @PathVariable Long id,
+            @Valid @RequestBody AcknowledgeAttendanceRequest request,
+            Authentication authentication) {
+        if (authentication == null || authentication.getName() == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+        attendanceService.acknowledgeAttendance(id, request.getSignatureData(), authentication.getName());
+        return ResponseEntity.ok().build();
     }
 }

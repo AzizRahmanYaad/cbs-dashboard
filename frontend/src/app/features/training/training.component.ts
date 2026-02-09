@@ -3,7 +3,17 @@ import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { TrainingService } from '../../core/services/training.service';
 import { MasterSetupService } from '../../core/services/master-setup.service';
-import { TrainingProgram, CreateTrainingProgramRequest, TrainingStatus, TrainingLevel, TrainingType, ExamType } from '../../core/models/training';
+import { 
+  TrainingProgram, 
+  CreateTrainingProgramRequest, 
+  TrainingStatus, 
+  TrainingLevel, 
+  TrainingType, 
+  ExamType,
+  SessionAttendanceReport,
+  SingleSessionReport,
+  DateBasedGroupedReport
+} from '../../core/models/training';
 import { TrainingTopic, TrainingName, TrainingCategory, Coordinator } from '../../core/models/master';
 
 @Component({
@@ -46,6 +56,14 @@ export class TrainingComponent implements OnInit {
   statusFilter: string | null = null;
   categoryFilter: string | null = null;
 
+  // Advanced Reports
+  reportForm: FormGroup;
+  sessionReportRows: SessionAttendanceReport[] = [];
+  selectedSessionReport: SingleSessionReport | null = null;
+  groupedReport: DateBasedGroupedReport | null = null;
+  reportsLoading = false;
+  pdfDownloading = false;
+
   constructor() {
     this.programForm = this.fb.group({
       // Required fields
@@ -63,6 +81,12 @@ export class TrainingComponent implements OnInit {
       hasArticleMaterial: [false],
       hasVideoMaterial: [false],
       hasSlideMaterial: [false]
+    });
+
+    this.reportForm = this.fb.group({
+      fromDate: [null, Validators.required],
+      toDate: [null, Validators.required],
+      sessionId: [null]
     });
   }
 
@@ -116,6 +140,128 @@ export class TrainingComponent implements OnInit {
           alert('Failed to load programs: ' + errorMsg);
         }
       });
+  }
+
+  // ------------------- Reports Tab Logic -------------------
+
+  setActiveTab(tab: typeof this.activeTab): void {
+    this.activeTab = tab;
+    if (tab === 'programs') {
+      this.loadPrograms();
+    } else if (tab === 'reports') {
+      // Initialize default date range: current month
+      if (!this.reportForm.get('fromDate')?.value || !this.reportForm.get('toDate')?.value) {
+        const today = new Date();
+        const firstOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+        this.reportForm.patchValue({
+          fromDate: firstOfMonth.toISOString().substring(0, 10),
+          toDate: today.toISOString().substring(0, 10)
+        }, { emitEvent: false });
+      }
+    }
+  }
+
+  private getReportDateRange(): { from: string; to: string } | null {
+    const from = this.reportForm.get('fromDate')?.value;
+    const to = this.reportForm.get('toDate')?.value;
+    if (!from || !to) {
+      alert('Please select both From and To dates.');
+      return null;
+    }
+    return { from, to };
+  }
+
+  loadSessionReportRows(): void {
+    const range = this.getReportDateRange();
+    if (!range) return;
+    this.reportsLoading = true;
+    this.trainingService.getTeacherSessionReports(range.from, range.to).subscribe({
+      next: rows => {
+        this.sessionReportRows = rows || [];
+        this.reportsLoading = false;
+      },
+      error: err => {
+        console.error('Error loading session reports', err);
+        alert(err.error?.message || 'Failed to load session reports');
+        this.reportsLoading = false;
+      }
+    });
+  }
+
+  viewSingleSessionReport(): void {
+    const sessionId = this.reportForm.get('sessionId')?.value;
+    if (!sessionId) {
+      alert('Please select a session to view its report.');
+      return;
+    }
+    this.reportsLoading = true;
+    this.trainingService.getSingleSessionReport(sessionId).subscribe({
+      next: report => {
+        this.selectedSessionReport = report;
+        this.reportsLoading = false;
+      },
+      error: err => {
+        console.error('Error loading single session report', err);
+        alert(err.error?.message || 'Failed to load session report');
+        this.reportsLoading = false;
+      }
+    });
+  }
+
+  downloadSingleSessionPdf(): void {
+    const sessionId = this.reportForm.get('sessionId')?.value;
+    if (!sessionId) {
+      alert('Please select a session to download its report.');
+      return;
+    }
+    this.pdfDownloading = true;
+    this.trainingService.downloadSingleSessionReportPdf(sessionId).subscribe({
+      next: blob => {
+        const url = window.URL.createObjectURL(blob);
+        window.open(url, '_blank');
+        this.pdfDownloading = false;
+      },
+      error: err => {
+        console.error('Error downloading single session pdf', err);
+        alert(err.error?.message || 'Failed to download session PDF');
+        this.pdfDownloading = false;
+      }
+    });
+  }
+
+  viewDateRangeReport(): void {
+    const range = this.getReportDateRange();
+    if (!range) return;
+    this.reportsLoading = true;
+    this.trainingService.getDateBasedGroupedReport(range.from, range.to).subscribe({
+      next: report => {
+        this.groupedReport = report;
+        this.reportsLoading = false;
+      },
+      error: err => {
+        console.error('Error loading date-range report', err);
+        alert(err.error?.message || 'Failed to load date-range report');
+        this.reportsLoading = false;
+      }
+    });
+  }
+
+  downloadDateRangePdf(): void {
+    const range = this.getReportDateRange();
+    if (!range) return;
+    this.pdfDownloading = true;
+    this.trainingService.downloadTeacherSessionReportsPdf(range.from, range.to).subscribe({
+      next: blob => {
+        const url = window.URL.createObjectURL(blob);
+        window.open(url, '_blank');
+        this.pdfDownloading = false;
+      },
+      error: err => {
+        console.error('Error downloading date-range pdf', err);
+        alert(err.error?.message || 'Failed to download date-range PDF');
+        this.pdfDownloading = false;
+      }
+    });
   }
 
   openProgramModal(program?: TrainingProgram): void {
@@ -302,7 +448,4 @@ export class TrainingComponent implements OnInit {
     return statusMap[status] || 'bg-gray-100 text-gray-800';
   }
 
-  setActiveTab(tab: 'programs' | 'sessions' | 'enrollments' | 'materials' | 'assessments' | 'reports'): void {
-    this.activeTab = tab;
-  }
 }

@@ -114,6 +114,253 @@
   margin-bottom: 1.5rem;
 }
 
+// ----- Overview analytics (mirrors Teacher Dashboard look) -----
+.overview-tab {
+  padding: 2.75rem 3rem;
+  background: radial-gradient(circle at top left, #e0f2fe 0%, #ffffff 45%, #f9fafb 100%);
+}
+
+.overview-hero {
+  margin-bottom: 3rem;
+  text-align: center;
+
+  &__title {
+    font-size: 2rem;
+    font-weight: 800;
+    color: #111827;
+    margin: 0 0 0.45rem 0;
+    letter-spacing: -0.6px;
+  }
+
+  &__subtitle {
+    font-size: 1.05rem;
+    color: #6b7280;
+    margin: 0;
+    font-weight: 500;
+  }
+}
+
+.analytics-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 1.75rem;
+  margin-bottom: 3rem;
+}
+
+.stat-card-modern {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+  padding: 1.5rem;
+  background: #ffffff;
+  border-radius: 16px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06), 0 1px 3px rgba(0, 0, 0, 0.04);
+  border: 1px solid rgba(0, 0, 0, 0.06);
+
+  &__icon {
+    width: 64px;
+    height: 64px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 14px;
+    flex-shrink: 0;
+    font-size: 1.5rem;
+  }
+
+  &__content {
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+    min-width: 0;
+  }
+
+  &__value {
+    font-size: 2.3rem;
+    font-weight: 800;
+    color: #111827;
+    line-height: 1.2;
+    letter-spacing: -0.5px;
+  }
+
+  &__label {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: #374151;
+  }
+
+  &__trend {
+    font-size: 0.8rem;
+    color: #9ca3af;
+    font-weight: 500;
+  }
+
+  &--programs .stat-card-modern__icon {
+    background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+    color: #fff;
+  }
+
+  &--sessions .stat-card-modern__icon {
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    color: #fff;
+  }
+
+  &--attendance .stat-card-modern__icon {
+    background: linear-gradient(135deg, #D34E4E 0%, #b83d3d 100%);
+    color: #fff;
+  }
+}
+
+.charts-grid,
+.student-overview-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 1.5rem;
+}
+
+.chart-panel {
+  background: #ffffff;
+  border-radius: 18px;
+  overflow: hidden;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.06), 0 2px 8px rgba(0, 0, 0, 0.04);
+  border: 1px solid rgba(0, 0, 0, 0.06);
+
+  &__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1.25rem 1.5rem;
+    background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+    border-bottom: 1px solid #e2e8f0;
+  }
+
+  &__title {
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: #111827;
+    margin: 0;
+    letter-spacing: -0.3px;
+  }
+
+  &__badge {
+    font-size: 0.75rem;
+    font-weight: 600;
+    padding: 0.35rem 0.75rem;
+    border-radius: 999px;
+    background: rgba(99, 102, 241, 0.12);
+    color: #4f46e5;
+  }
+
+  &--secondary .chart-panel__badge {
+    background: rgba(211, 78, 78, 0.12);
+    color: #b83d3d;
+  }
+
+  &__body {
+    padding: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  &__empty {
+    padding: 3rem 2rem;
+    text-align: center;
+    color: #9ca3af;
+
+    .chart-panel__empty-icon {
+      width: 48px;
+      height: 48px;
+      margin: 0 auto 1rem;
+      opacity: 0.5;
+      font-size: 2rem;
+    }
+
+    p {
+      font-size: 1rem;
+      font-weight: 600;
+      color: #6b7280;
+      margin: 0 0 0.25rem 0;
+    }
+
+    span {
+      font-size: 0.875rem;
+    }
+  }
+}
+
+.overview-session-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.overview-session-row {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.overview-session-row__date {
+  padding: 0.5rem 0.75rem;
+  border-radius: 0.9rem;
+  background: #111827;
+  color: white;
+  text-align: center;
+  min-width: 3rem;
+
+  .day {
+    display: block;
+    font-size: 1.1rem;
+    font-weight: 700;
+  }
+
+  .meta {
+    display: block;
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+  }
+}
+
+.overview-session-row__content {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+
+  .title {
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: #111827;
+  }
+
+  .subtitle {
+    font-size: 0.8rem;
+    color: #6b7280;
+  }
+}
+
+.student-overview-messages {
+  .hint {
+    font-size: 0.9rem;
+    color: #6b7280;
+  }
+
+  ul {
+    list-style: disc;
+    padding-left: 1.25rem;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+    font-size: 0.9rem;
+    color: #374151;
+  }
+}
+
 .table-shell {
   border-radius: 16px;
   overflow: hidden;
@@ -212,6 +459,22 @@
   font-size: 0.95rem;
   color: #6b7280;
   margin: 0;
+}
+
+.signature-box {
+  border: 2px solid #e5e7eb;
+  border-radius: 12px;
+  overflow: hidden;
+  max-width: 480px;
+}
+
+.modal-ack {
+  max-width: 560px;
+}
+
+.btn-sm {
+  padding: 0.5rem 1rem;
+  font-size: 0.875rem;
 }
 
 @media (max-width: 768px) {

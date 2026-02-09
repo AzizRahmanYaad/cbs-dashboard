@@ -13,6 +13,9 @@
       [class.active]="activeTab === tab"
     >
       <ng-container [ngSwitch]="tab">
+        <svg *ngSwitchCase="'overview'" class="tab-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z" />
+        </svg>
         <svg *ngSwitchCase="'programs'" class="tab-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
           <path stroke-linecap="round" stroke-linejoin="round" d="M9 5.25h6A2.25 2.25 0 0 1 17.25 7.5v11.25H6.75V7.5A2.25 2.25 0 0 1 9 5.25z" />
           <path stroke-linecap="round" stroke-linejoin="round" d="M9.75 3.75h4.5V5.25h-4.5zM9 9h6" />
@@ -40,6 +43,142 @@
       </ng-container>
       <span>{{ tab | titlecase }}</span>
     </button>
+  </div>
+
+  <!-- Overview Tab -->
+  <div *ngIf="activeTab === 'overview' && !loading" class="tab-content overview-tab">
+    <section class="overview-hero">
+      <h2 class="overview-hero__title">Training Performance Overview</h2>
+      <p class="overview-hero__subtitle">
+        High-level summary of your programs, sessions, and learner engagement.
+      </p>
+    </section>
+
+    <!-- Top analytics tiles -->
+    <section class="analytics-grid">
+      <article class="stat-card-modern stat-card-modern--programs">
+        <div class="stat-card-modern__icon">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 5.25h16.5M6 9.75h12M6 14.25h7.5M6 18.75h4.5" />
+          </svg>
+        </div>
+        <div class="stat-card-modern__content">
+          <div class="stat-card-modern__label">Active Programs</div>
+          <div class="stat-card-modern__value">{{ totalPrograms }}</div>
+          <div class="stat-card-modern__trend">
+            {{ ongoingPrograms }} ongoing · {{ completedPrograms }} completed
+          </div>
+        </div>
+      </article>
+
+      <article class="stat-card-modern stat-card-modern--sessions">
+        <div class="stat-card-modern__icon">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 5.25h16.5M8.25 9.75h7.5m-10.5 4.5h6m-6 4.5h10.5" />
+          </svg>
+        </div>
+        <div class="stat-card-modern__content">
+          <div class="stat-card-modern__label">Sessions</div>
+          <div class="stat-card-modern__value">{{ totalSessions }}</div>
+          <div class="stat-card-modern__trend">
+            {{ upcomingSessions }} upcoming in the schedule
+          </div>
+        </div>
+      </article>
+
+      <article class="stat-card-modern stat-card-modern--students">
+        <div class="stat-card-modern__icon">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M15 19.5a3 3 0 0 0-3-3H6.75A3.75 3.75 0 0 0 3 20.25V21h12v-1.5zM9 11.25a3 3 0 1 0-3-3 3 3 0 0 0 3 3zm7.5-.75a2.25 2.25 0 1 0-2.25-2.25A2.25 2.25 0 0 0 16.5 10.5z" />
+          </svg>
+        </div>
+        <div class="stat-card-modern__content">
+          <div class="stat-card-modern__label">Learners</div>
+          <div class="stat-card-modern__value">{{ totalStudents }}</div>
+          <div class="stat-card-modern__trend">
+            Across all assigned programs
+          </div>
+        </div>
+      </article>
+
+      <article class="stat-card-modern stat-card-modern--attendance">
+        <div class="stat-card-modern__icon">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75 11.25 15 15 9.75M4.5 6.75h15M4.5 12h3m-3 5.25h3" />
+          </svg>
+        </div>
+        <div class="stat-card-modern__content">
+          <div class="stat-card-modern__label">Program Completion</div>
+          <div class="stat-card-modern__value">{{ programCompletionRate }}%</div>
+          <div class="stat-card-modern__trend">
+            Based on completed vs total programs
+          </div>
+        </div>
+      </article>
+    </section>
+
+    <!-- Middle analytics panels -->
+    <section class="charts-grid">
+      <article class="chart-panel">
+        <header class="chart-panel__header">
+          <h3 class="chart-panel__title">Program Load by Activity</h3>
+          <span class="chart-panel__badge">Overview</span>
+        </header>
+        <div class="chart-panel__body">
+          <div class="chart-panel__empty" *ngIf="totalPrograms === 0">
+            <div class="chart-panel__empty-icon">📊</div>
+            <p>No programs yet</p>
+            <span>Create or assign programs to see analytics here.</span>
+          </div>
+          <ng-container *ngIf="totalPrograms > 0">
+            <div class="chart-bar-modern" *ngFor="let item of mostActivePrograms">
+              <div class="chart-bar-modern__meta">
+                <div class="chart-bar-modern__label">{{ item.title }}</div>
+                <div class="chart-bar-modern__value">{{ item.sessions }} sessions</div>
+              </div>
+              <div class="chart-bar-modern__track">
+                <div
+                  class="chart-bar-modern__fill"
+                  [style.width.%]="(item.sessions / maxSessionsPerProgram) * 100"
+                ></div>
+              </div>
+            </div>
+          </ng-container>
+        </div>
+      </article>
+
+      <article class="chart-panel chart-panel--secondary">
+        <header class="chart-panel__header">
+          <h3 class="chart-panel__title">Key Highlights</h3>
+          <span class="chart-panel__badge">Snapshot</span>
+        </header>
+        <div class="chart-panel__body">
+          <div class="dashboard-home__stats">
+            <div class="stat-card stat-card--programs">
+              <div class="stat-card__icon">🎓</div>
+              <div class="stat-card__body">
+                <div class="stat-card__value">{{ ongoingPrograms }}</div>
+                <div class="stat-card__label">Ongoing Programs</div>
+              </div>
+            </div>
+            <div class="stat-card stat-card--sessions">
+              <div class="stat-card__icon">📅</div>
+              <div class="stat-card__body">
+                <div class="stat-card__value">{{ upcomingSessions }}</div>
+                <div class="stat-card__label">Upcoming Sessions</div>
+              </div>
+            </div>
+            <div class="stat-card stat-card--students">
+              <div class="stat-card__icon">👥</div>
+              <div class="stat-card__body">
+                <div class="stat-card__value">{{ totalStudents }}</div>
+                <div class="stat-card__label">Active Learners</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </article>
+    </section>
   </div>
 
   <!-- Loading Indicator -->
@@ -959,7 +1098,8 @@
   <div *ngIf="showAttendanceModal && selectedSessionForAttendance" class="modal-overlay">
     <div class="modal-shell" style="max-width: 900px;">
       <h2 class="modal-title">Mark Attendance - {{ selectedSessionForAttendance.programTitle }}</h2>
-      <p class="text-sm text-gray-600 mb-4">{{ selectedSessionForAttendance.startDateTime | date:'short' }}</p>
+      <p class="text-sm text-gray-600 mb-1">{{ selectedSessionForAttendance.startDateTime | date:'short' }}</p>
+      <p class="text-xs text-amber-700 mb-4">When marking <strong>Present</strong>, the student’s saved e-signature is required and will be stored for audit. Students create it in <strong>Student Dashboard → My E-Signature</strong>.</p>
       
       <form [formGroup]="attendanceForm" (ngSubmit)="saveAttendance()">
         <div class="space-y-2 max-h-96 overflow-y-auto">

@@ -10,6 +10,10 @@ import java.util.List;
 
 @Repository
 public interface StudentTeacherRepository extends JpaRepository<StudentTeacher, Long> {
+
+    /** User IDs that already have a student_teachers record (student or teacher). */
+    @Query("SELECT st.user.id FROM StudentTeacher st")
+    List<Long> findAllAssignedUserIds();
     @Query("SELECT DISTINCT st FROM StudentTeacher st " +
            "LEFT JOIN FETCH st.user " +
            "LEFT JOIN FETCH st.createdBy " +

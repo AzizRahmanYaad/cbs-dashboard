@@ -49,8 +49,25 @@ public class Attendance {
     @UpdateTimestamp
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
-    
+
+    /** E-signature image (base64) stored when status is PRESENT or after student acknowledgment for ABSENT/EXCUSED. */
+    @Column(name = "signature_data", columnDefinition = "TEXT")
+    private String signatureData;
+
+    /** PRESENT = signature attached when teacher marked present; ACKNOWLEDGMENT = student signed after reviewing materials. */
+    @Enumerated(EnumType.STRING)
+    @Column(name = "signature_type", length = 20)
+    private SignatureType signatureType;
+
+    @Column(name = "signed_at")
+    private LocalDateTime signedAt;
+
     public enum AttendanceStatus {
         PRESENT, ABSENT, LATE, EXCUSED
+    }
+
+    public enum SignatureType {
+        PRESENT,   // Signature used when marked Present
+        ACKNOWLEDGMENT  // Student signed to acknowledge materials (Absent/Excused)
     }
 }

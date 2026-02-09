@@ -395,16 +395,10 @@ export class TrainingAdminSettingsComponent implements OnInit {
   }
 
   loadUsers(): void {
-    this.userService.getAllUsers().subscribe({
+    // Only users not yet assigned as student or teacher (and not admin) — for create student/teacher dropdowns
+    this.userService.getAvailableUsersForTraining().subscribe({
       next: (users) => {
-        // Filter out users who are already assigned to Student, Teacher, or Admin roles
-        this.users = users.filter(user => {
-          const userRoles = user.roles || [];
-          const hasStudentRole = userRoles.some(role => role === 'ROLE_STUDENT');
-          const hasTeacherRole = userRoles.some(role => role === 'ROLE_TEACHER');
-          const hasAdminRole = userRoles.some(role => role === 'ROLE_ADMIN');
-          return !hasStudentRole && !hasTeacherRole && !hasAdminRole;
-        });
+        this.users = users || [];
       },
       error: () => this.toastr.error('Failed to load users')
     });
@@ -625,6 +619,7 @@ export class TrainingAdminSettingsComponent implements OnInit {
         next: () => {
           this.toastr.success('Student deleted successfully');
           this.loadStudents();
+          this.loadUsers();
           this.loading = false;
           this.cancelDelete();
         },
@@ -639,6 +634,7 @@ export class TrainingAdminSettingsComponent implements OnInit {
         next: () => {
           this.toastr.success('Teacher deleted successfully');
           this.loadTeachers();
+          this.loadUsers();
           this.loading = false;
           this.cancelDelete();
         },
@@ -884,6 +880,25 @@ export class TrainingAdminSettingsComponent implements OnInit {
     this.currentPage = { programs: 1, students: 1, teachers: 1 };
     this.searchTerm = '';
     this.statusFilter = null;
+
+    // Always refresh lists when switching tabs so newly created users, students,
+    // and teachers appear without a full page reload.
+    if (tab === 'programs') {
+      this.loadPrograms();
+    } else if (tab === 'students') {
+      this.loadStudents();
+      this.loadUsers();
+    } else if (tab === 'teachers') {
+      this.loadTeachers();
+      this.loadUsers();
+    } else {
+      // For assignment tabs we still want up-to-date programs and people
+      this.loadPrograms();
+      this.loadStudents();
+      this.loadTeachers();
+      this.loadUsers();
+    }
+
     this.applyFilters();
   }
 

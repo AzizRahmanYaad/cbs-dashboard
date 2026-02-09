@@ -13,6 +13,11 @@ export interface Attendance {
   markedByUsername?: string;
   createdAt: string;
   updatedAt: string;
+  /** E-signature image (base64) for audit and reporting */
+  signatureData?: string;
+  /** PRESENT | ACKNOWLEDGMENT */
+  signatureType?: string;
+  signedAt?: string; // ISO datetime
 }
 
 export interface MarkAttendanceRequest {

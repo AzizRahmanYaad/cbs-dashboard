@@ -1,9 +1,11 @@
 <div class="training-admin-settings">
-  <header class="page-header">
-    <div>
+  <div class="admin-settings-header">
+    <div class="admin-settings-header__text">
       <h1 class="page-title">Training Admin Settings</h1>
+      <p class="page-subtitle">Manage programs, students, teachers, and assignments</p>
     </div>
-    <button *ngIf="activeTab === 'programs'" (click)="openProgramModal()" class="btn-add-new">
+    <div class="admin-settings-header__actions">
+      <button *ngIf="activeTab === 'programs'" (click)="openProgramModal()" class="btn-add-new">
       <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="icon">
         <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
       </svg>
@@ -22,7 +24,8 @@
       </svg>
       <span>Add New</span>
     </button>
-  </header>
+    </div>
+  </div>
 
   <!-- Tabs Navigation with Icons -->
   <div class="tabs-container">

@@ -1,4 +1,5 @@
 export const environment = {
   production: false,
-  apiUrl: 'http://72.61.116.191:8090'
+  // Use empty string so requests go to same origin and proxy (proxy.conf.json) forwards to backend — avoids CORS in dev.
+  apiUrl: ''
 };

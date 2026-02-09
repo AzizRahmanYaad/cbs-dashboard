@@ -15,7 +15,19 @@ public class WebConfig {
             @Override
             public void addCorsMappings(CorsRegistry registry) {
                 registry.addMapping("/**")
-                        .allowedOrigins("http://localhost:4200") // Angular URL
+                        .allowedOrigins(
+                                "http://localhost:4200",
+                                "http://127.0.0.1:4200",
+                                "http://localhost:5000",
+                                "http://127.0.0.1:5000",
+                                "http://72.61.116.191:4200",
+                                "http://72.61.116.191:5000",
+                                "http://72.61.116.191",
+                                "https://localhost:4200",
+                                "https://72.61.116.191:4200",
+                                "https://72.61.116.191:5000",
+                                "https://72.61.116.191"
+                        )
                         .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
                         .allowedHeaders("*")
                         .allowCredentials(true);

@@ -11,7 +11,10 @@ import {
   CreateTrainingMaterialRequest,
   Enrollment,
   Attendance,
-  MarkAttendanceRequest
+  MarkAttendanceRequest,
+  SessionAttendanceReport,
+  SingleSessionReport,
+  DateBasedGroupedReport
 } from '../models/training';
 
 @Injectable({
@@ -138,5 +141,62 @@ export class TrainingService {
 
   getAttendanceByParticipant(participantId: number): Observable<Attendance[]> {
     return this.http.get<Attendance[]>(`${this.baseUrl}/attendance/participant/${participantId}`);
+  }
+
+  /** Student acknowledges session materials for ABSENT/EXCUSED by applying e-signature. */
+  acknowledgeAttendance(attendanceId: number, signatureData: string): Observable<void> {
+    return this.http.post<void>(`${this.baseUrl}/attendance/${attendanceId}/acknowledge`, { signatureData });
+  }
+
+  // -------- Advanced Training Reports --------
+
+  /** Session-based report (full details, engagement, signatures) for a specific session. */
+  getSingleSessionReport(sessionId: number): Observable<SingleSessionReport> {
+    return this.http.get<SingleSessionReport>(`${this.baseUrl}/reports/session/${sessionId}`);
+  }
+
+  downloadSingleSessionReportPdf(sessionId: number): Observable<Blob> {
+    return this.http.get(`${this.baseUrl}/reports/session/${sessionId}/pdf`, {
+      responseType: 'blob',
+      headers: { 'Accept': 'application/pdf' }
+    });
+  }
+
+  /** Date-range teacher report: one row per session in the range. */
+  getTeacherSessionReports(from: string, to: string): Observable<SessionAttendanceReport[]> {
+    const params = new HttpParams()
+      .set('from', from)
+      .set('to', to);
+    return this.http.get<SessionAttendanceReport[]>(`${this.baseUrl}/reports/teacher`, { params });
+  }
+
+  downloadTeacherSessionReportsPdf(from: string, to: string): Observable<Blob> {
+    const params = new HttpParams()
+      .set('from', from)
+      .set('to', to);
+    return this.http.get(`${this.baseUrl}/reports/teacher/pdf`, {
+      params,
+      responseType: 'blob',
+      headers: { 'Accept': 'application/pdf' }
+    });
+  }
+
+  /** Aggregated date-range report (by student & sessions). */
+  getDateBasedGroupedReport(from: string, to: string): Observable<DateBasedGroupedReport> {
+    const params = new HttpParams()
+      .set('from', from)
+      .set('to', to);
+    return this.http.get<DateBasedGroupedReport>(`${this.baseUrl}/reports/teacher/grouped`, { params });
+  }
+
+  downloadDateBasedGroupedReportPdf(from: string, to: string): Observable<Blob> {
+    const params = new HttpParams()
+      .set('from', from)
+      .set('to', to);
+    return this.http.get(`${this.baseUrl}/reports/teacher/grouped/pdf`, {
+      params,
+      responseType: 'blob',
+      headers: { 'Accept': 'application/pdf' }
+    });
   }
 }

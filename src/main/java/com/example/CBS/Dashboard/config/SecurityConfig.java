@@ -2,6 +2,7 @@ package com.example.CBS.Dashboard.config;
 
 import com.example.CBS.Dashboard.security.JwtAuthenticationFilter;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -21,6 +22,8 @@ import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 import java.util.Arrays;
+import java.util.List;
+import java.util.stream.Collectors;
 
 @Configuration
 @EnableWebSecurity
@@ -32,6 +35,9 @@ public class SecurityConfig {
     
     @Autowired
     private UserDetailsService userDetailsService;
+    
+    @Value("${app.cors.allowed-origins:}")
+    private String allowedOriginsConfig;
     
     @Bean
     public PasswordEncoder passwordEncoder() {
@@ -73,13 +79,41 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOrigins(Arrays.asList("*"));
+        // Explicit origins only (no "*") when allowCredentials is true — required by browser CORS.
+        List<String> origins = defaultCorsOrigins();
+        if (allowedOriginsConfig != null && !allowedOriginsConfig.trim().isEmpty()) {
+            origins = Arrays.stream(allowedOriginsConfig.split(","))
+                    .map(String::trim)
+                    .filter(s -> !s.isEmpty())
+                    .collect(Collectors.toList());
+        }
+        configuration.setAllowedOrigins(origins);
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(Arrays.asList("*"));
         configuration.setExposedHeaders(Arrays.asList("Authorization"));
+        configuration.setAllowCredentials(true);
         
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", configuration);
         return source;
+    }
+    
+    private static List<String> defaultCorsOrigins() {
+        return Arrays.asList(
+                "http://localhost:4200",
+                "http://127.0.0.1:4200",
+                "http://localhost:4201",
+                "http://127.0.0.1:4201",
+                "http://localhost:5000",
+                "http://127.0.0.1:5000",
+                "http://72.61.116.191:4200",
+                "http://72.61.116.191:5000",
+                "http://72.61.116.191",
+                "https://localhost:4200",
+                "https://127.0.0.1:4200",
+                "https://72.61.116.191:4200",
+                "https://72.61.116.191:5000",
+                "https://72.61.116.191"
+        );
     }
 }

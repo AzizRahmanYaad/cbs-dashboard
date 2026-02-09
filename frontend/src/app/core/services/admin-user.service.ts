@@ -39,6 +39,11 @@ export class AdminUserService {
     return this.http.get<User[]>(`${this.baseUrl}/users/all`);
   }
 
+  /** Users not yet assigned as student or teacher; for training admin create-student/teacher dropdowns. */
+  getAvailableUsersForTraining(): Observable<User[]> {
+    return this.http.get<User[]>(`${this.baseUrl}/users/available-for-training`);
+  }
+
   getRoles(): Observable<Role[]> {
     return this.http.get<Role[]>(`${this.baseUrl}/roles`);
   }
