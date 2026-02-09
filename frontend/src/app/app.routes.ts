@@ -5,6 +5,10 @@ import { LoginComponent } from './features/auth/login/login.component';
 import { DashboardShellComponent } from './features/dashboard/dashboard-shell/dashboard-shell.component';
 import { HomeComponent } from './features/dashboard/home/home.component';
 import { TrainingComponent } from './features/training/training.component';
+import { TrainingAdminSettingsComponent } from './features/training/training-admin-settings/training-admin-settings.component';
+import { TrainingMasterSettingsComponent } from './features/training/training-master-settings/training-master-settings.component';
+import { TeacherDashboardComponent } from './features/training/teacher-dashboard/teacher-dashboard.component';
+import { StudentDashboardComponent } from './features/training/student-dashboard/student-dashboard.component';
 import { DrillTestingComponent } from './features/drill-testing/drill-testing.component';
 import { DailyReportComponent } from './features/daily-report/daily-report.component';
 import { UnauthorizedComponent } from './features/auth/unauthorized/unauthorized.component';
@@ -43,6 +47,26 @@ export const routes: Routes = [
         path: 'training',
         component: TrainingComponent,
         data: { roles: ['ROLE_TRAINING'] }
+      },
+      {
+        path: 'training/admin',
+        component: TrainingAdminSettingsComponent,
+        data: { roles: ['ROLE_TRAINING_ADMIN', 'ROLE_ADMIN'] }
+      },
+      {
+        path: 'training/master-settings',
+        component: TrainingMasterSettingsComponent,
+        data: { roles: ['ROLE_TRAINING_ADMIN', 'ROLE_ADMIN'] }
+      },
+      {
+        path: 'training/teacher-dashboard',
+        component: TeacherDashboardComponent,
+        data: { roles: ['ROLE_TEACHER', 'ROLE_TRAINING_ADMIN', 'ROLE_ADMIN'] }
+      },
+      {
+        path: 'training/student-dashboard',
+        component: StudentDashboardComponent,
+        data: { roles: ['ROLE_STUDENT', 'ROLE_TRAINING_ADMIN', 'ROLE_ADMIN'] }
       },
       {
         path: 'drill-testing',

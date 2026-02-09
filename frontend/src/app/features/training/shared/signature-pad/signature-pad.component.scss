@@ -1,0 +1,29 @@
+.signature-pad {
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  overflow: hidden;
+  background: #fff;
+
+  &__canvas {
+    display: block;
+    width: 100%;
+    height: 180px;
+    cursor: crosshair;
+  }
+
+  &__clear {
+    display: block;
+    width: 100%;
+    padding: 8px;
+    background: #f5f5f5;
+    border: none;
+    border-top: 1px solid #ddd;
+    cursor: pointer;
+    font-size: 13px;
+    color: #666;
+
+    &:hover {
+      background: #eee;
+    }
+  }
+}

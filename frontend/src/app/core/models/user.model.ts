@@ -6,4 +6,5 @@ export interface User {
   roles: string[];
   enabled?: boolean;
   createdAt?: string;
+  hasSignature?: boolean;
 }

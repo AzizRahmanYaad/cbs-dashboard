@@ -1,0 +1,278 @@
+<div class="student-dashboard-container">
+  <div class="student-header">
+    <h1 class="page-title">Student Dashboard</h1>
+    <p class="page-subtitle">View your enrolled programs, sessions, materials, attendance, and progress</p>
+  </div>
+
+  <!-- Tabs -->
+  <div class="tabs-container">
+    <button
+      *ngFor="let tab of tabs"
+      (click)="switchTab(tab)"
+      class="tab-button"
+      [class.active]="activeTab === tab"
+    >
+      <ng-container [ngSwitch]="tab">
+        <svg *ngSwitchCase="'programs'" class="tab-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M9 5.25h6A2.25 2.25 0 0 1 17.25 7.5v11.25H6.75V7.5A2.25 2.25 0 0 1 9 5.25z" />
+          <path stroke-linecap="round" stroke-linejoin="round" d="M9.75 3.75h4.5V5.25h-4.5zM9 9h6" />
+        </svg>
+        <svg *ngSwitchCase="'sessions'" class="tab-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 5.25h16.5M9 3.75v3M15 3.75v3M6.75 9.75h10.5v8.5a1.75 1.75 0 0 1-1.75 1.75H8.5a1.75 1.75 0 0 1-1.75-1.75z" />
+        </svg>
+        <svg *ngSwitchCase="'materials'" class="tab-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 5.25h11.25L19.5 9v9.75H4.5z" />
+          <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6M9 15h4" />
+        </svg>
+        <svg *ngSwitchCase="'attendance'" class="tab-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75 11.25 15 15 9.75M4.5 6.75h15M4.5 12h3m-3 5.25h3" />
+        </svg>
+        <svg *ngSwitchCase="'progress'" class="tab-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 19.5h16.5M7.5 15.75 10.5 9l3 6 3-7.5" />
+        </svg>
+        <svg *ngSwitchDefault class="tab-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 6.75h15M4.5 12h9.75M4.5 17.25h6" />
+        </svg>
+      </ng-container>
+      <span>{{ tab | titlecase }}</span>
+    </button>
+  </div>
+
+  <!-- Loading Indicator -->
+  <div *ngIf="loading" class="flex justify-center items-center py-12">
+    <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+  </div>
+
+  <!-- Programs Tab -->
+  <div *ngIf="activeTab === 'programs' && !loading" class="tab-content space-y-4">
+    <div class="card">
+      <h2 class="card-header-title">My Enrolled Programs</h2>
+      <div *ngIf="programs.length === 0" class="empty-state">
+        <span class="empty-state-icon" aria-hidden="true">🎓</span>
+        <p class="empty-state-title">No programs enrolled</p>
+        <p class="empty-state-text">Once you are enrolled into training programs, you will see them here.</p>
+      </div>
+      <div *ngIf="programs.length > 0" class="table-shell">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>Program Name</th>
+              <th>Topic</th>
+              <th>Date</th>
+              <th>Level</th>
+              <th>Category</th>
+              <th>Status</th>
+              <th>Sessions</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr 
+              *ngFor="let program of programs"
+              (click)="selectProgram(program)"
+              [style.background]="selectedProgram?.id === program.id ? 'linear-gradient(to right,#eff6ff,#ffffff)' : ''"
+            >
+              <td>
+                <div class="text-sm font-medium text-gray-900">{{ program.trainingName || program.trainingNameName || program.title }}</div>
+                <div class="text-sm text-gray-500" *ngIf="program.description">{{ program.description }}</div>
+              </td>
+              <td>{{ program.trainingTopicName || '-' }}</td>
+              <td>{{ program.trainingDate | date:'short' }}</td>
+              <td>{{ program.trainingLevel || '-' }}</td>
+              <td>{{ program.trainingCategoryName || '-' }}</td>
+              <td>
+                <span
+                  class="status-pill"
+                  [ngClass]="program.status === 'ONGOING' ? 'status-pill--ongoing' :
+                             program.status === 'COMPLETED' ? 'status-pill--completed' :
+                             'status-pill--default'"
+                >
+                  {{ program.status }}
+                </span>
+              </td>
+              <td>{{ program.sessionsCount || 0 }}</td>
+              <td>
+                <button (click)="selectProgram(program); $event.stopPropagation()" class="btn-primary">
+                  View Details
+                </button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Program Details -->
+    <div *ngIf="selectedProgram" class="card">
+      <h2 class="card-header-title">Program Details: {{ selectedProgram.title }}</h2>
+      <div class="grid grid-cols-2 gap-4 mb-4">
+        <div>
+          <label class="text-sm font-medium text-gray-700">Status</label>
+          <p class="text-gray-900">{{ selectedProgram.status }}</p>
+        </div>
+        <div>
+          <label class="text-sm font-medium text-gray-700">Sessions</label>
+          <p class="text-gray-900">{{ selectedProgram.sessionsCount || 0 }}</p>
+        </div>
+        <div>
+          <label class="text-sm font-medium text-gray-700">Training Level</label>
+          <p class="text-gray-900">{{ selectedProgram.trainingLevel || 'N/A' }}</p>
+        </div>
+        <div>
+          <label class="text-sm font-medium text-gray-700">Training Type</label>
+          <p class="text-gray-900">{{ selectedProgram.trainingType || 'N/A' }}</p>
+        </div>
+      </div>
+      <div *ngIf="selectedProgram.description" class="mt-4">
+        <label class="text-sm font-medium text-gray-700">Description</label>
+        <p class="text-gray-900">{{ selectedProgram.description }}</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Sessions Tab -->
+  <div *ngIf="activeTab === 'sessions' && !loading" class="tab-content space-y-4">
+    <div class="card">
+      <h2 class="card-header-title">Training Sessions</h2>
+      <div *ngIf="sessions.length === 0" class="empty-state">
+        <span class="empty-state-icon" aria-hidden="true">📅</span>
+        <p class="empty-state-title">No sessions found</p>
+        <p class="empty-state-text">Sessions for your enrolled programs will appear here.</p>
+      </div>
+      <div *ngIf="sessions.length > 0" class="table-shell">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>Program</th>
+              <th>Start Date</th>
+              <th>End Date</th>
+              <th>Location</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let session of sessions">
+              <td>{{ session.programTitle }}</td>
+              <td>{{ session.startDateTime | date:'short' }}</td>
+              <td>{{ session.endDateTime | date:'short' }}</td>
+              <td>{{ session.location || 'N/A' }}</td>
+              <td>
+                <span class="status-pill" [ngClass]="getStatusClass(session.status)">
+                  {{ session.status }}
+                </span>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Materials Tab -->
+  <div *ngIf="activeTab === 'materials' && !loading" class="tab-content space-y-4">
+    <div class="card">
+      <h2 class="card-header-title">Training Materials</h2>
+      <div *ngIf="!selectedProgram" class="empty-state">
+        <span class="empty-state-icon" aria-hidden="true">📂</span>
+        <p class="empty-state-title">Select a program</p>
+        <p class="empty-state-text">Choose a program from the Programs tab to view its materials.</p>
+      </div>
+      <div *ngIf="selectedProgram && materials.length === 0" class="empty-state">
+        <span class="empty-state-icon" aria-hidden="true">📄</span>
+        <p class="empty-state-title">No materials available</p>
+        <p class="empty-state-text">This program has no materials yet.</p>
+      </div>
+      <div *ngIf="selectedProgram && materials.length > 0" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div *ngFor="let material of materials" class="card">
+          <h3 class="font-semibold text-lg mb-2">{{ material.title }}</h3>
+          <p class="text-sm text-gray-600 mb-2" *ngIf="material.description">{{ material.description }}</p>
+          <div class="flex items-center justify-between mt-4">
+            <span class="status-pill" [ngClass]="material.isRequired ? 'status-pill--ongoing' : 'status-pill--default'">
+              {{ material.isRequired ? 'Required' : 'Optional' }}
+            </span>
+            <span class="text-xs text-gray-500">{{ material.materialType || 'N/A' }}</span>
+          </div>
+          <button 
+            *ngIf="material.filePath"
+            (click)="downloadMaterial(material)"
+            class="btn-primary mt-3 w-full"
+          >
+            Download
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Attendance Tab -->
+  <div *ngIf="activeTab === 'attendance' && !loading" class="tab-content space-y-4">
+    <div class="card">
+      <h2 class="card-header-title">My Attendance Records</h2>
+      <div *ngIf="attendanceRecords.length === 0" class="empty-state">
+        <span class="empty-state-icon" aria-hidden="true">📝</span>
+        <p class="empty-state-title">No attendance records found</p>
+        <p class="empty-state-text">Your attendance records will appear here once sessions are marked.</p>
+      </div>
+      <div *ngIf="attendanceRecords.length > 0" class="table-shell">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>Session</th>
+              <th>Date</th>
+              <th>Status</th>
+              <th>Notes</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let attendance of attendanceRecords">
+              <td>{{ attendance.sessionTitle || ('Session #' + attendance.sessionId) }}</td>
+              <td>{{ attendance.attendanceDate | date:'short' }}</td>
+              <td>
+                <span class="status-pill" [ngClass]="getStatusClass(attendance.status)">
+                  {{ attendance.status }}
+                </span>
+              </td>
+              <td>{{ attendance.notes || '-' }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Progress Tab -->
+  <div *ngIf="activeTab === 'progress' && !loading" class="tab-content space-y-4">
+    <div class="card">
+      <h2 class="card-header-title">My Progress</h2>
+      <div *ngIf="programs.length === 0" class="empty-state">
+        <span class="empty-state-icon" aria-hidden="true">📊</span>
+        <p class="empty-state-title">No programs to show progress</p>
+        <p class="empty-state-text">Enroll into programs to start tracking your training progress.</p>
+      </div>
+      <div *ngIf="programs.length > 0" class="space-y-4">
+        <div *ngFor="let program of programs" class="card">
+          <div class="flex justify-between items-start mb-2">
+            <h3 class="font-semibold text-lg">{{ program.trainingName || program.trainingNameName || program.title }}</h3>
+            <span class="status-pill" [ngClass]="getStatusClass(program.status)">
+              {{ program.status }}
+            </span>
+          </div>
+          <div class="grid grid-cols-3 gap-4 mt-4">
+            <div>
+              <label class="text-sm font-medium text-gray-700">Sessions</label>
+              <p class="text-gray-900">{{ program.sessionsCount || 0 }}</p>
+            </div>
+            <div>
+              <label class="text-sm font-medium text-gray-700">Enrollment Status</label>
+              <p class="text-gray-900">{{ getEnrollmentStatus(program.id) }}</p>
+            </div>
+            <div>
+              <label class="text-sm font-medium text-gray-700">Training Date</label>
+              <p class="text-gray-900">{{ program.trainingDate | date:'short' }}</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

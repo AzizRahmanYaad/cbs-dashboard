@@ -1,0 +1,1137 @@
+<div class="training-admin-settings">
+  <header class="page-header">
+    <div>
+      <h1 class="page-title">Training Admin Settings</h1>
+    </div>
+    <button *ngIf="activeTab === 'programs'" (click)="openProgramModal()" class="btn-add-new">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="icon">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+      </svg>
+      <span>Add New</span>
+    </button>
+    <button *ngIf="activeTab === 'students'" (click)="openStudentModal()" class="btn-add-new">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="icon">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5a3.75 3.75 0 1 1-3.75 3.75A3.75 3.75 0 0 1 12 4.5zM4.5 19.5A7.5 7.5 0 0 1 12 15a7.5 7.5 0 0 1 7.5 4.5" />
+      </svg>
+      <span>Add New</span>
+    </button>
+    <button *ngIf="activeTab === 'teachers'" (click)="openTeacherModal()" class="btn-add-new">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="icon">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M12 14.25c2.485 0 4.5-2.014 4.5-4.5S14.485 5.25 12 5.25 7.5 7.264 7.5 9.75s2.015 4.5 4.5 4.5z" />
+        <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 20.25a7.5 7.5 0 0 1 15 0" />
+      </svg>
+      <span>Add New</span>
+    </button>
+  </header>
+
+  <!-- Tabs Navigation with Icons -->
+  <div class="tabs-container">
+    <button
+      [class.active]="activeTab === 'programs'"
+      (click)="setActiveTab('programs')"
+      class="tab-button">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="tab-icon">
+        <path stroke-linecap="round" stroke-linejoin="round"
+              d="M9 5.25h6A2.25 2.25 0 0 1 17.25 7.5v11.25H6.75V7.5A2.25 2.25 0 0 1 9 5.25z" />
+        <path stroke-linecap="round" stroke-linejoin="round"
+              d="M9.75 3.75h4.5V5.25h-4.5zM9 9h6" />
+      </svg>
+      <span>Programs</span>
+    </button>
+    <button
+      [class.active]="activeTab === 'students'"
+      (click)="setActiveTab('students')"
+      class="tab-button">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="tab-icon">
+        <path stroke-linecap="round" stroke-linejoin="round"
+              d="M9.75 6.75a3 3 0 1 1-3 3 3 3 0 0 1 3-3zM16.5 8.25a2.25 2.25 0 1 1-2.25 2.25A2.25 2.25 0 0 1 16.5 8.25z" />
+        <path stroke-linecap="round" stroke-linejoin="round"
+              d="M4.5 19.5a4.5 4.5 0 0 1 9 0M14.25 19.5a4.125 4.125 0 0 1 4.125-4.125" />
+      </svg>
+      <span>Students</span>
+    </button>
+    <button
+      [class.active]="activeTab === 'teachers'"
+      (click)="setActiveTab('teachers')"
+      class="tab-button">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="tab-icon">
+        <path stroke-linecap="round" stroke-linejoin="round"
+              d="M12 3.75 4.5 7.5l7.5 3.75 7.5-3.75L12 3.75z" />
+        <path stroke-linecap="round" stroke-linejoin="round"
+              d="M4.5 12l7.5 3.75L19.5 12M4.5 16.5l7.5 3.75 7.5-3.75" />
+      </svg>
+      <span>Teachers</span>
+    </button>
+    <button
+      [class.active]="activeTab === 'assign-teachers'"
+      (click)="setActiveTab('assign-teachers')"
+      class="tab-button">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="tab-icon">
+        <path stroke-linecap="round" stroke-linejoin="round"
+              d="M15.75 9V5.25M15.75 5.25V3.75M15.75 5.25h1.5M15.75 5.25h-1.5" />
+        <path stroke-linecap="round" stroke-linejoin="round"
+              d="M9.75 6.75a3 3 0 1 1-3 3 3 3 0 0 1 3-3zM4.5 19.5a4.5 4.5 0 0 1 9 0" />
+      </svg>
+      <span>Assign Teachers</span>
+    </button>
+    <button
+      [class.active]="activeTab === 'assign-students'"
+      (click)="setActiveTab('assign-students')"
+      class="tab-button">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="tab-icon">
+        <path stroke-linecap="round" stroke-linejoin="round"
+              d="M12 4.5v6m0 0v6m0-6h6m-6 0H6" />
+        <path stroke-linecap="round" stroke-linejoin="round"
+              d="M4.5 19.5a4.5 4.5 0 0 1 9 0" />
+      </svg>
+      <span>Assign Students</span>
+    </button>
+  </div>
+
+  <!-- Programs Tab -->
+  <div *ngIf="activeTab === 'programs'" class="tab-content">
+    <!-- Sticky Toolbar -->
+    <div class="sticky-toolbar">
+      <div class="toolbar-filters">
+        <div class="search-wrapper">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="search-icon">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
+          </svg>
+          <input
+            type="text"
+            [(ngModel)]="searchTerm"
+            (input)="onSearchChange()"
+            placeholder="Search programs..."
+            class="search-input">
+        </div>
+        <!-- Department-based filter (UI only, no backend link yet) -->
+        <select [(ngModel)]="statusFilter" (change)="onFilterChange()" class="filter-select">
+          <option [value]="null">All Departments & Modules</option>
+          <option *ngFor="let dept of activeDepartments" [value]="'DEPT:' + dept.name">
+            Department: {{ dept.name }}
+          </option>
+          <option *ngFor="let module of activeTrainingModules" [value]="'MOD:' + module.name">
+            Module: {{ module.name }}
+          </option>
+        </select>
+        <button (click)="clearFilters()" class="btn-reset" *ngIf="searchTerm || statusFilter">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="icon-sm">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+          <span>Reset</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Skeleton Loader -->
+    <div class="table-container" *ngIf="skeletonLoading">
+      <div class="skeleton-loader">
+        <div class="skeleton-row" *ngFor="let i of [1,2,3,4,5]">
+          <div class="skeleton-cell"></div>
+          <div class="skeleton-cell"></div>
+          <div class="skeleton-cell"></div>
+          <div class="skeleton-cell"></div>
+          <div class="skeleton-cell"></div>
+          <div class="skeleton-cell skeleton-cell-small"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Data Table -->
+    <div class="table-container" *ngIf="!skeletonLoading">
+      <table class="master-table">
+        <thead>
+          <tr>
+            <th>Training Name</th>
+            <th>Department</th>
+            <th>Module</th>
+            <th>Category</th>
+            <th>Date</th>
+            <th>Level</th>
+            <th>Type</th>
+            <th>Exam</th>
+            <th>Materials</th>
+            <th class="actions-column">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let program of getPaginatedItems(filteredPrograms, 'programs')" class="table-row">
+            <td>{{ program.trainingName || program.trainingNameName || program.title }}</td>
+            <td>{{ program.departmentName || '-' }}</td>
+            <td>{{ program.trainingModuleName || '-' }}</td>
+            <td>{{ program.trainingCategoryName || '-' }}</td>
+            <td>{{ program.trainingDate | date:'short' }}</td>
+            <td>
+              <span class="badge badge-level">{{ program.trainingLevel || '-' }}</span>
+            </td>
+            <td>
+              <ng-container [ngSwitch]="program.trainingType">
+                <span *ngSwitchCase="'ONLINE'">Online</span>
+                <span *ngSwitchCase="'ON_JOB'">On Job</span>
+                <span *ngSwitchCase="'ON_SITE'">Both</span>
+                <span *ngSwitchDefault>{{ program.trainingType || '-' }}</span>
+              </ng-container>
+            </td>
+            <td>
+              <ng-container [ngSwitch]="program.examType">
+                <span *ngSwitchCase="'PRE_TRAINING_EXAM'">Pre-Training</span>
+                <span *ngSwitchCase="'POST_TRAINING_EXAM'">Post-Training</span>
+                <span *ngSwitchDefault>Not applicable</span>
+              </ng-container>
+            </td>
+            <td>
+              <span class="text-sm text-gray-600">
+                <ng-container *ngIf="program.hasArticleMaterial">Article</ng-container>
+                <ng-container *ngIf="program.hasArticleMaterial && (program.hasVideoMaterial || program.hasSlideMaterial)">, </ng-container>
+                <ng-container *ngIf="program.hasVideoMaterial">Video</ng-container>
+                <ng-container *ngIf="program.hasVideoMaterial && program.hasSlideMaterial">, </ng-container>
+                <ng-container *ngIf="program.hasSlideMaterial">Slide</ng-container>
+                <ng-container *ngIf="!program.hasArticleMaterial && !program.hasVideoMaterial && !program.hasSlideMaterial">
+                  Not applicable
+                </ng-container>
+              </span>
+            </td>
+            <td class="actions-column">
+              <div class="action-buttons">
+                <button (click)="openProgramView(program)" class="btn-icon" title="View">
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 12s2.25-6.75 9.75-6.75 9.75 6.75 9.75 6.75-2.25 6.75-9.75 6.75S2.25 12 2.25 12z" />
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 15.75a3.75 3.75 0 1 0 0-7.5 3.75 3.75 0 0 0 0 7.5z" />
+                  </svg>
+                </button>
+                <button (click)="openProgramModal(program)" class="btn-icon" title="Edit">
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10" />
+                  </svg>
+                </button>
+                <button (click)="deleteProgram(program)" class="btn-icon btn-danger" title="Delete">
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" />
+                  </svg>
+                </button>
+              </div>
+            </td>
+          </tr>
+          <tr *ngIf="filteredPrograms.length === 0 && !skeletonLoading">
+            <td colspan="10" class="empty-state-cell">
+              <div class="empty-state">
+                <span class="empty-state-icon" aria-hidden="true">📋</span>
+                <p class="empty-state-title">No programs found</p>
+                <p class="empty-state-text" *ngIf="searchTerm || statusFilter">Try adjusting your search or filters.</p>
+                <p class="empty-state-text" *ngIf="!searchTerm && !statusFilter">Create your first training program to get started.</p>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+
+      <!-- Pagination -->
+      <div class="pagination-container" *ngIf="totalPages.programs > 1 || filteredPrograms.length > 0">
+        <div class="pagination-info">
+          <span>Showing {{ (currentPage.programs - 1) * itemsPerPage + 1 }} - {{ Math.min(currentPage.programs * itemsPerPage, filteredPrograms.length) }} of {{ filteredPrograms.length }} records</span>
+        </div>
+        <div class="pagination-controls">
+          <select [(ngModel)]="itemsPerPage" (change)="changePageSize(+$any($event.target).value)" class="page-size-select">
+            <option [value]="10">10 per page</option>
+            <option [value]="25">25 per page</option>
+            <option [value]="50">50 per page</option>
+            <option [value]="100">100 per page</option>
+          </select>
+          <div class="pagination-buttons">
+            <button (click)="changePage(currentPage.programs - 1, 'programs')" [disabled]="currentPage.programs === 1" class="btn-pagination">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="icon-sm">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
+              </svg>
+            </button>
+            <span class="page-numbers">
+              <span *ngFor="let page of getPageNumbers('programs')">
+                <button
+                  *ngIf="page !== -1"
+                  (click)="changePage(page, 'programs')"
+                  [class.active]="page === currentPage.programs"
+                  class="page-number">
+                  {{ page }}
+                </button>
+                <span *ngIf="page === -1" class="page-ellipsis">...</span>
+              </span>
+            </span>
+            <button (click)="changePage(currentPage.programs + 1, 'programs')" [disabled]="currentPage.programs === totalPages.programs" class="btn-pagination">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="icon-sm">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
+              </svg>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Program View Modal -->
+  <div *ngIf="showProgramViewModal && viewProgram" class="modal-overlay" (click)="closeProgramView()">
+    <div class="modal-content modal-view" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h2>Program details</h2>
+        <button (click)="closeProgramView()" class="modal-close">×</button>
+      </div>
+      <div class="modal-body">
+        <div class="program-view-header">
+          <h3 class="program-title">
+            {{ viewProgram.trainingName || viewProgram.trainingNameName || viewProgram.title }}
+          </h3>
+          <div class="program-meta">
+            <span class="program-chip" *ngIf="viewProgram.trainingCategoryName">
+              {{ viewProgram.trainingCategoryName }}
+            </span>
+            <span class="program-chip" *ngIf="viewProgram.trainingLevel">
+              {{ viewProgram.trainingLevel }}
+            </span>
+            <span class="program-chip" *ngIf="viewProgram.trainingType">
+              {{ viewProgram.trainingType }}
+            </span>
+          </div>
+          <p class="program-date" *ngIf="viewProgram.trainingDate">
+            Scheduled on <strong>{{ viewProgram.trainingDate | date:'fullDate' }}</strong>
+          </p>
+        </div>
+
+        <div class="program-details-grid">
+          <div class="detail-item">
+            <div class="detail-label">Training Name</div>
+            <div class="detail-value">
+              {{ viewProgram.trainingName || viewProgram.trainingNameName || viewProgram.title || '-' }}
+            </div>
+          </div>
+          <div class="detail-item">
+            <div class="detail-label">Category</div>
+            <div class="detail-value">
+              {{ viewProgram.trainingCategoryName || '-' }}
+            </div>
+          </div>
+
+          <div class="detail-item">
+            <div class="detail-label">Department</div>
+            <div class="detail-value">
+              {{ viewProgram.departmentName || '-' }}
+            </div>
+          </div>
+          <div class="detail-item">
+            <div class="detail-label">Module</div>
+            <div class="detail-value">
+              {{ viewProgram.trainingModuleName || '-' }}
+            </div>
+          </div>
+
+          <div class="detail-item">
+            <div class="detail-label">Training Date</div>
+            <div class="detail-value">
+              {{ viewProgram.trainingDate ? (viewProgram.trainingDate | date:'mediumDate') : '-' }}
+            </div>
+          </div>
+          <div class="detail-item">
+            <div class="detail-label">Training Level</div>
+            <div class="detail-value">
+              {{ viewProgram.trainingLevel || '-' }}
+            </div>
+          </div>
+
+          <div class="detail-item">
+            <div class="detail-label">Training Type</div>
+            <div class="detail-value">
+              <ng-container [ngSwitch]="viewProgram.trainingType">
+                <span *ngSwitchCase="'ONLINE'">Online</span>
+                <span *ngSwitchCase="'ON_JOB'">On Job</span>
+                <span *ngSwitchCase="'ON_SITE'">Both</span>
+                <span *ngSwitchDefault>{{ viewProgram.trainingType || '-' }}</span>
+              </ng-container>
+            </div>
+          </div>
+          <div class="detail-item">
+            <div class="detail-label">Exam Type</div>
+            <div class="detail-value">
+              <ng-container [ngSwitch]="viewProgram.examType">
+                <span *ngSwitchCase="'PRE_TRAINING_EXAM'">Pre-Training Exam</span>
+                <span *ngSwitchCase="'POST_TRAINING_EXAM'">Post Training Exam</span>
+                <span *ngSwitchDefault>Not applicable</span>
+              </ng-container>
+            </div>
+          </div>
+
+          <div class="detail-item detail-item-full">
+            <div class="detail-label">Materials</div>
+            <div class="detail-value">
+              <ng-container *ngIf="viewProgram.hasArticleMaterial || viewProgram.hasVideoMaterial || viewProgram.hasSlideMaterial; else noMaterials">
+                <span class="material-chip" *ngIf="viewProgram.hasArticleMaterial">Article</span>
+                <span class="material-chip" *ngIf="viewProgram.hasVideoMaterial">Video</span>
+                <span class="material-chip" *ngIf="viewProgram.hasSlideMaterial">Slide</span>
+              </ng-container>
+              <ng-template #noMaterials>
+                <span class="text-gray-500">Not applicable</span>
+              </ng-template>
+            </div>
+          </div>
+
+          <div class="detail-item detail-item-full" *ngIf="viewProgram.description">
+            <div class="detail-label">Description</div>
+            <div class="detail-value">
+              {{ viewProgram.description }}
+            </div>
+          </div>
+
+          <div class="detail-item">
+            <div class="detail-label">Status</div>
+            <div class="detail-value">
+              {{ viewProgram.status || '-' }}
+            </div>
+          </div>
+          <div class="detail-item">
+            <div class="detail-label">Created On</div>
+            <div class="detail-value">
+              {{ viewProgram.createdAt ? (viewProgram.createdAt | date:'medium') : '-' }}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Students Tab -->
+  <div *ngIf="activeTab === 'students'" class="tab-content">
+    <!-- Sticky Toolbar -->
+    <div class="sticky-toolbar">
+      <div class="toolbar-filters">
+        <div class="search-wrapper">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="search-icon">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
+          </svg>
+          <input
+            type="text"
+            [(ngModel)]="searchTerm"
+            (input)="onSearchChange()"
+            placeholder="Search students..."
+            class="search-input">
+        </div>
+        <select [(ngModel)]="statusFilter" (change)="onFilterChange()" class="filter-select">
+          <option [value]="null">All Statuses</option>
+          <option value="active">Active</option>
+          <option value="inactive">Inactive</option>
+        </select>
+        <button (click)="clearFilters()" class="btn-reset" *ngIf="searchTerm || statusFilter">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="icon-sm">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+          <span>Reset</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Skeleton Loader -->
+    <div class="table-container" *ngIf="skeletonLoading">
+      <div class="skeleton-loader">
+        <div class="skeleton-row" *ngFor="let i of [1,2,3,4,5]">
+          <div class="skeleton-cell skeleton-cell-small"></div>
+          <div class="skeleton-cell"></div>
+          <div class="skeleton-cell"></div>
+          <div class="skeleton-cell"></div>
+          <div class="skeleton-cell"></div>
+          <div class="skeleton-cell"></div>
+          <div class="skeleton-cell"></div>
+          <div class="skeleton-cell skeleton-cell-small"></div>
+          <div class="skeleton-cell skeleton-cell-small"></div>
+          <div class="skeleton-cell skeleton-cell-small"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Data Table -->
+    <div class="table-container" *ngIf="!skeletonLoading">
+      <table class="master-table">
+        <thead>
+          <tr>
+            <th style="width: 30px;"></th>
+            <th>Username</th>
+            <th>Full Name</th>
+            <th>Email</th>
+            <th>Student ID</th>
+            <th>Employee ID</th>
+            <th>Department</th>
+            <th>Status</th>
+            <th>Assigned Programs</th>
+            <th class="actions-column">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <ng-container *ngFor="let student of getPaginatedItems(filteredStudents, 'students')">
+            <tr>
+              <td>
+                <button
+                  *ngIf="getStudentPrograms(student.userId || 0).length > 0"
+                  (click)="toggleStudentPrograms(student.userId || 0)"
+                  class="btn-icon"
+                  [title]="expandedStudentId === student.userId ? 'Collapse' : 'Expand'">
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" [style.transform]="expandedStudentId === student.userId ? 'rotate(90deg)' : 'rotate(0deg)'" style="transition: transform 0.2s;">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
+                  </svg>
+                </button>
+              </td>
+              <td>{{ student.username }}</td>
+              <td>{{ student.fullName || '-' }}</td>
+              <td>{{ student.email || '-' }}</td>
+              <td>{{ student.studentId || '-' }}</td>
+              <td>{{ student.employeeId || '-' }}</td>
+              <td>{{ student.department || '-' }}</td>
+              <td>
+                <span [class]="'status-badge ' + (student.isActive ? 'badge-active' : 'badge-inactive')">
+                  {{ student.isActive ? 'Active' : 'Inactive' }}
+                </span>
+              </td>
+              <td>
+                <span class="text-sm text-gray-600">
+                  {{ getStudentPrograms(student.userId || 0).length }} program(s)
+                </span>
+              </td>
+              <td class="actions-column">
+                <div class="action-buttons">
+                  <button (click)="openStudentModal(student)" class="btn-icon" title="Edit">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10" />
+                    </svg>
+                  </button>
+                  <button (click)="deleteStudent(student)" class="btn-icon btn-danger" title="Delete">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" />
+                    </svg>
+                  </button>
+                </div>
+              </td>
+            </tr>
+            <tr *ngIf="expandedStudentId === student.userId && getStudentPrograms(student.userId || 0).length > 0">
+              <td colspan="10" class="bg-gray-50 p-4">
+                <div class="programs-list">
+                  <h4 class="font-semibold mb-3 text-gray-700">Assigned Programs:</h4>
+                  <table class="w-full text-sm">
+                    <thead>
+                      <tr class="border-b">
+                        <th class="text-left p-2">Program Name</th>
+                        <th class="text-left p-2">Topic</th>
+                        <th class="text-left p-2">Date</th>
+                        <th class="text-left p-2">Level</th>
+                        <th class="text-left p-2">Status</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr *ngFor="let program of getStudentPrograms(student.userId || 0)" class="border-b hover:bg-gray-100">
+                        <td class="p-2">{{ program.trainingName || program.trainingNameName || program.title }}</td>
+                        <td class="p-2">{{ program.trainingTopicName || '-' }}</td>
+                        <td class="p-2">{{ program.trainingDate | date:'short' }}</td>
+                        <td class="p-2">{{ program.trainingLevel || '-' }}</td>
+                        <td class="p-2">
+                          <span [class]="'px-2 py-1 text-xs rounded ' + (program.status === 'ONGOING' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800')">
+                            {{ program.status }}
+                          </span>
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </td>
+            </tr>
+          </ng-container>
+          <tr *ngIf="filteredStudents.length === 0 && !skeletonLoading">
+            <td colspan="10" class="empty-state-cell">
+              <div class="empty-state">
+                <span class="empty-state-icon" aria-hidden="true">👨‍🎓</span>
+                <p class="empty-state-title">No students found</p>
+                <p class="empty-state-text" *ngIf="searchTerm || statusFilter">Try adjusting your search or filters.</p>
+                <p class="empty-state-text" *ngIf="!searchTerm && !statusFilter">Add students to assign them to programs.</p>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+
+      <!-- Pagination -->
+      <div class="pagination-container" *ngIf="totalPages.students > 1 || filteredStudents.length > 0">
+        <div class="pagination-info">
+          <span>Showing {{ (currentPage.students - 1) * itemsPerPage + 1 }} - {{ Math.min(currentPage.students * itemsPerPage, filteredStudents.length) }} of {{ filteredStudents.length }} records</span>
+        </div>
+        <div class="pagination-controls">
+          <select [(ngModel)]="itemsPerPage" (change)="changePageSize(+$any($event.target).value)" class="page-size-select">
+            <option [value]="10">10 per page</option>
+            <option [value]="25">25 per page</option>
+            <option [value]="50">50 per page</option>
+            <option [value]="100">100 per page</option>
+          </select>
+          <div class="pagination-buttons">
+            <button (click)="changePage(currentPage.students - 1, 'students')" [disabled]="currentPage.students === 1" class="btn-pagination">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="icon-sm">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
+              </svg>
+            </button>
+            <span class="page-numbers">
+              <span *ngFor="let page of getPageNumbers('students')">
+                <button
+                  *ngIf="page !== -1"
+                  (click)="changePage(page, 'students')"
+                  [class.active]="page === currentPage.students"
+                  class="page-number">
+                  {{ page }}
+                </button>
+                <span *ngIf="page === -1" class="page-ellipsis">...</span>
+              </span>
+            </span>
+            <button (click)="changePage(currentPage.students + 1, 'students')" [disabled]="currentPage.students === totalPages.students" class="btn-pagination">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="icon-sm">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
+              </svg>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Teachers Tab -->
+  <div *ngIf="activeTab === 'teachers'" class="tab-content">
+    <!-- Sticky Toolbar -->
+    <div class="sticky-toolbar">
+      <div class="toolbar-filters">
+        <div class="search-wrapper">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="search-icon">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
+          </svg>
+          <input
+            type="text"
+            [(ngModel)]="searchTerm"
+            (input)="onSearchChange()"
+            placeholder="Search teachers..."
+            class="search-input">
+        </div>
+        <select [(ngModel)]="statusFilter" (change)="onFilterChange()" class="filter-select">
+          <option [value]="null">All Statuses</option>
+          <option value="active">Active</option>
+          <option value="inactive">Inactive</option>
+        </select>
+        <button (click)="clearFilters()" class="btn-reset" *ngIf="searchTerm || statusFilter">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="icon-sm">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+          <span>Reset</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Skeleton Loader -->
+    <div class="table-container" *ngIf="skeletonLoading">
+      <div class="skeleton-loader">
+        <div class="skeleton-row" *ngFor="let i of [1,2,3,4,5]">
+          <div class="skeleton-cell skeleton-cell-small"></div>
+          <div class="skeleton-cell"></div>
+          <div class="skeleton-cell"></div>
+          <div class="skeleton-cell"></div>
+          <div class="skeleton-cell"></div>
+          <div class="skeleton-cell"></div>
+          <div class="skeleton-cell"></div>
+          <div class="skeleton-cell"></div>
+          <div class="skeleton-cell skeleton-cell-small"></div>
+          <div class="skeleton-cell skeleton-cell-small"></div>
+          <div class="skeleton-cell skeleton-cell-small"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Data Table -->
+    <div class="table-container" *ngIf="!skeletonLoading">
+      <table class="master-table">
+        <thead>
+          <tr>
+            <th style="width: 30px;"></th>
+            <th>Username</th>
+            <th>Full Name</th>
+            <th>Email</th>
+            <th>Employee ID</th>
+            <th>Department</th>
+            <th>Qualification</th>
+            <th>Specialization</th>
+            <th>Status</th>
+            <th>Assigned Programs</th>
+            <th class="actions-column">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <ng-container *ngFor="let teacher of getPaginatedItems(filteredTeachers, 'teachers')">
+            <tr>
+              <td>
+                <button
+                  *ngIf="getTeacherPrograms(teacher.userId || 0).length > 0"
+                  (click)="toggleTeacherPrograms(teacher.userId || 0)"
+                  class="btn-icon"
+                  [title]="expandedTeacherId === teacher.userId ? 'Collapse' : 'Expand'">
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" [style.transform]="expandedTeacherId === teacher.userId ? 'rotate(90deg)' : 'rotate(0deg)'" style="transition: transform 0.2s;">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
+                  </svg>
+                </button>
+              </td>
+              <td>{{ teacher.username }}</td>
+              <td>{{ teacher.fullName || '-' }}</td>
+              <td>{{ teacher.email || '-' }}</td>
+              <td>{{ teacher.employeeId || '-' }}</td>
+              <td>{{ teacher.department || '-' }}</td>
+              <td>{{ teacher.qualification || '-' }}</td>
+              <td>{{ teacher.specialization || '-' }}</td>
+              <td>
+                <span [class]="'status-badge ' + (teacher.isActive ? 'badge-active' : 'badge-inactive')">
+                  {{ teacher.isActive ? 'Active' : 'Inactive' }}
+                </span>
+              </td>
+              <td>
+                <span class="text-sm text-gray-600">
+                  {{ getTeacherPrograms(teacher.userId || 0).length }} program(s)
+                </span>
+              </td>
+              <td class="actions-column">
+                <div class="action-buttons">
+                  <button (click)="openTeacherModal(teacher)" class="btn-icon" title="Edit">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10" />
+                    </svg>
+                  </button>
+                  <button (click)="deleteTeacher(teacher)" class="btn-icon btn-danger" title="Delete">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" />
+                    </svg>
+                  </button>
+                </div>
+              </td>
+            </tr>
+            <tr *ngIf="expandedTeacherId === teacher.userId && getTeacherPrograms(teacher.userId || 0).length > 0">
+              <td colspan="11" class="bg-gray-50 p-4">
+                <div class="programs-list">
+                  <h4 class="font-semibold mb-3 text-gray-700">Assigned Programs:</h4>
+                  <table class="w-full text-sm">
+                    <thead>
+                      <tr class="border-b">
+                        <th class="text-left p-2">Program Name</th>
+                        <th class="text-left p-2">Topic</th>
+                        <th class="text-left p-2">Date</th>
+                        <th class="text-left p-2">Level</th>
+                        <th class="text-left p-2">Status</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr *ngFor="let program of getTeacherPrograms(teacher.userId || 0)" class="border-b hover:bg-gray-100">
+                        <td class="p-2">{{ program.trainingName || program.trainingNameName || program.title }}</td>
+                        <td class="p-2">{{ program.trainingTopicName || '-' }}</td>
+                        <td class="p-2">{{ program.trainingDate | date:'short' }}</td>
+                        <td class="p-2">{{ program.trainingLevel || '-' }}</td>
+                        <td class="p-2">
+                          <span [class]="'px-2 py-1 text-xs rounded ' + (program.status === 'ONGOING' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800')">
+                            {{ program.status }}
+                          </span>
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </td>
+            </tr>
+          </ng-container>
+          <tr *ngIf="filteredTeachers.length === 0 && !skeletonLoading">
+            <td colspan="11" class="empty-state-cell">
+              <div class="empty-state">
+                <span class="empty-state-icon" aria-hidden="true">👨‍🏫</span>
+                <p class="empty-state-title">No teachers found</p>
+                <p class="empty-state-text" *ngIf="searchTerm || statusFilter">Try adjusting your search or filters.</p>
+                <p class="empty-state-text" *ngIf="!searchTerm && !statusFilter">Add teachers to assign them to programs.</p>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+
+      <!-- Pagination -->
+      <div class="pagination-container" *ngIf="totalPages.teachers > 1 || filteredTeachers.length > 0">
+        <div class="pagination-info">
+          <span>Showing {{ (currentPage.teachers - 1) * itemsPerPage + 1 }} - {{ Math.min(currentPage.teachers * itemsPerPage, filteredTeachers.length) }} of {{ filteredTeachers.length }} records</span>
+        </div>
+        <div class="pagination-controls">
+          <select [(ngModel)]="itemsPerPage" (change)="changePageSize(+$any($event.target).value)" class="page-size-select">
+            <option [value]="10">10 per page</option>
+            <option [value]="25">25 per page</option>
+            <option [value]="50">50 per page</option>
+            <option [value]="100">100 per page</option>
+          </select>
+          <div class="pagination-buttons">
+            <button (click)="changePage(currentPage.teachers - 1, 'teachers')" [disabled]="currentPage.teachers === 1" class="btn-pagination">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="icon-sm">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
+              </svg>
+            </button>
+            <span class="page-numbers">
+              <span *ngFor="let page of getPageNumbers('teachers')">
+                <button
+                  *ngIf="page !== -1"
+                  (click)="changePage(page, 'teachers')"
+                  [class.active]="page === currentPage.teachers"
+                  class="page-number">
+                  {{ page }}
+                </button>
+                <span *ngIf="page === -1" class="page-ellipsis">...</span>
+              </span>
+            </span>
+            <button (click)="changePage(currentPage.teachers + 1, 'teachers')" [disabled]="currentPage.teachers === totalPages.teachers" class="btn-pagination">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="icon-sm">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
+              </svg>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Assign Teachers Tab -->
+  <div *ngIf="activeTab === 'assign-teachers'" class="tab-content">
+    <div class="assignment-form">
+      <h3>Assign Teacher to Program</h3>
+      <form [formGroup]="assignTeacherForm" (ngSubmit)="assignTeacher()">
+        <div class="form-row">
+          <div class="form-group">
+            <label>Program *</label>
+            <select formControlName="programId" class="form-input">
+              <option [value]="null">Select Program</option>
+              <option *ngFor="let program of programs" [value]="program.id">
+                {{ program.trainingName || program.trainingNameName || program.title }}
+              </option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Teacher *</label>
+            <select formControlName="teacherId" class="form-input">
+              <option [value]="null">Select Teacher</option>
+              <option *ngFor="let teacher of teachers" [value]="teacher.userId">
+                {{ teacher.username }} {{ teacher.fullName ? '(' + teacher.fullName + ')' : '' }}
+              </option>
+            </select>
+          </div>
+        </div>
+        <button type="submit" [disabled]="assignTeacherForm.invalid || loading" class="btn-primary">
+          Assign Teacher
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Assign Students Tab -->
+  <div *ngIf="activeTab === 'assign-students'" class="tab-content">
+    <div class="assignment-form assignment-card">
+      <h3>Assign Students to Program</h3>
+      <form [formGroup]="assignStudentForm" (ngSubmit)="assignStudents()">
+        <div class="form-group">
+          <label>Program *</label>
+          <select formControlName="programId" class="form-input">
+            <option [value]="null">Select Program</option>
+            <option *ngFor="let program of programs" [value]="program.id">
+              {{ program.trainingName || program.trainingNameName || program.title }}
+            </option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Select Students *</label>
+          <div class="student-list">
+            <div *ngFor="let student of students" class="student-item">
+              <label class="checkbox-label">
+                <input
+                  type="checkbox"
+                  [checked]="selectedStudents.includes(student.userId)"
+                  (change)="toggleStudentSelection(student.userId)">
+                <span>{{ student.username }} {{ student.fullName ? '(' + student.fullName + ')' : '' }}</span>
+              </label>
+            </div>
+          </div>
+        </div>
+        <button type="submit" [disabled]="assignStudentForm.invalid || selectedStudents.length === 0 || loading" class="btn-primary">
+          Assign Selected Students ({{ selectedStudents.length }})
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Program Modal -->
+  <div *ngIf="showProgramModal" class="modal-overlay" (click)="closeProgramModal()">
+    <div class="modal-content" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h2>{{ selectedProgram ? 'Edit Program' : 'New Program' }}</h2>
+        <button (click)="closeProgramModal()" class="modal-close">×</button>
+      </div>
+      <div class="modal-body">
+        <form [formGroup]="programForm" (ngSubmit)="saveProgram()">
+          <!-- Options from Training Master Settings -->
+          <p class="form-hint form-hint-section">Options below come from <strong>Training Master Settings</strong> (Departments, Modules, Names, Categories).</p>
+          <div class="form-section-divider">
+            <h3>Training Details</h3>
+          </div>
+          <!-- Row 1: Department & Module -->
+          <div class="form-row">
+            <div class="form-group">
+              <label>Department</label>
+              <select formControlName="departmentId" class="form-input">
+                <option [value]="null">Select Department</option>
+                <option *ngFor="let dept of activeDepartments" [value]="dept.id">
+                  {{ dept.name }}
+                </option>
+              </select>
+              <span class="form-hint">Managed in <strong>Training Master Settings → Departments</strong>.</span>
+            </div>
+            <div class="form-group">
+              <label>Module</label>
+              <select formControlName="trainingModuleId" class="form-input">
+                <option [value]="null">Select Module</option>
+                <option *ngFor="let module of activeTrainingModules" [value]="module.id">
+                  {{ module.name }}
+                </option>
+              </select>
+              <span class="form-hint">Managed in <strong>Training Master Settings → Modules</strong>.</span>
+            </div>
+          </div>
+          <!-- Row 2: Training Name & Category -->
+          <div class="form-row">
+            <div class="form-group">
+              <label>Training Name *</label>
+              <select formControlName="trainingNameId" class="form-input">
+                <option [value]="null">Select Training Name</option>
+                <option *ngFor="let name of activeTrainingNames" [value]="name.id">
+                  {{ name.name }}
+                </option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Training Category *</label>
+              <select formControlName="trainingCategoryId" class="form-input">
+                <option [value]="null">Select Category</option>
+                <option *ngFor="let category of activeTrainingCategories" [value]="category.id">
+                  {{ category.name }}
+                </option>
+              </select>
+            </div>
+          </div>
+          <!-- Row 3: Training Date & Level -->
+          <div class="form-row">
+            <div class="form-group">
+              <label>Training Date *</label>
+              <input type="date" formControlName="trainingDate" class="form-input" [class.ng-invalid]="programForm.get('trainingDate')?.invalid && programForm.get('trainingDate')?.touched">
+              <span *ngIf="programForm.get('trainingDate')?.invalid && programForm.get('trainingDate')?.touched" class="error-message">
+                Training date is required
+              </span>
+            </div>
+            <div class="form-group">
+              <label>Training Level *</label>
+              <select formControlName="trainingLevel" class="form-input" [class.ng-invalid]="programForm.get('trainingLevel')?.invalid && programForm.get('trainingLevel')?.touched">
+                <option [value]="null">Select Level</option>
+                <option value="BASIC">Basic</option>
+                <option value="INTERMEDIATE">Intermediate</option>
+                <option value="ADVANCED">Advanced</option>
+              </select>
+              <span *ngIf="programForm.get('trainingLevel')?.invalid && programForm.get('trainingLevel')?.touched" class="error-message">
+                Training level is required
+              </span>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Training Type *</label>
+              <div class="radio-group">
+                <label class="radio-label">
+                  <input type="radio" formControlName="trainingType" value="ONLINE">
+                  <span>Online</span>
+                </label>
+                <label class="radio-label">
+                  <input type="radio" formControlName="trainingType" value="ON_JOB">
+                  <span>On Job</span>
+                </label>
+                <label class="radio-label">
+                  <input type="radio" formControlName="trainingType" value="ON_SITE">
+                  <span>Both</span>
+                </label>
+              </div>
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Exam Type <span class="text-sm text-gray-500">(optional, defaults to Not applicable)</span></label>
+            <div class="radio-group">
+              <label class="radio-label">
+                <input type="radio" formControlName="examType" value="PRE_TRAINING_EXAM">
+                <span>Pre-Training Exam</span>
+              </label>
+              <label class="radio-label">
+                <input type="radio" formControlName="examType" value="POST_TRAINING_EXAM">
+                <span>Post Training Exam</span>
+              </label>
+            </div>
+            <span class="form-hint">
+              If no exam type is selected, this program will be treated as <strong>Not applicable</strong> for exams.
+            </span>
+          </div>
+          <div class="form-group">
+            <label>Materials <span class="text-sm text-gray-500">(leave all unchecked if not applicable)</span></label>
+            <div class="checkbox-group">
+              <label class="checkbox-label">
+                <input type="checkbox" formControlName="hasArticleMaterial">
+                <span>Article</span>
+              </label>
+              <label class="checkbox-label">
+                <input type="checkbox" formControlName="hasVideoMaterial">
+                <span>Video</span>
+              </label>
+              <label class="checkbox-label">
+                <input type="checkbox" formControlName="hasSlideMaterial">
+                <span>Slide</span>
+              </label>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" (click)="closeProgramModal()" class="btn-secondary">Cancel</button>
+            <button type="submit" [disabled]="programForm.invalid || loading" class="btn-primary">
+              {{ loading ? 'Saving...' : (selectedProgram ? 'Update' : 'Create') }}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Student Modal -->
+  <div *ngIf="showStudentModal" class="modal-overlay" (click)="closeStudentModal()">
+    <div class="modal-content" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h2>{{ selectedStudent ? 'Edit Student' : 'New Student' }}</h2>
+        <button (click)="closeStudentModal()" class="modal-close">×</button>
+      </div>
+      <div class="modal-body">
+        <form [formGroup]="studentForm" (ngSubmit)="saveStudent()">
+          <div class="form-group">
+            <label>User *</label>
+            <select formControlName="userId" class="form-input" [disabled]="!!selectedStudent" [class.ng-invalid]="studentForm.get('userId')?.invalid && studentForm.get('userId')?.touched">
+              <option [value]="null">Select User</option>
+              <option *ngFor="let user of users" [value]="user.id">
+                {{ user.username }} {{ user.fullName ? '(' + user.fullName + ')' : '' }}
+              </option>
+            </select>
+            <span *ngIf="studentForm.get('userId')?.invalid && studentForm.get('userId')?.touched" class="error-message">
+              User is required
+            </span>
+          </div>
+          <div class="form-group">
+            <label>Employee ID</label>
+            <input type="text" formControlName="employeeId" class="form-input">
+          </div>
+          <div class="form-group">
+            <label>Department</label>
+            <select formControlName="departmentId" class="form-input">
+              <option [value]="null">Select Department</option>
+              <option *ngFor="let dept of activeDepartments" [value]="dept.id">
+                {{ dept.name }}
+              </option>
+            </select>
+            <span class="form-hint">Managed in <strong>Training Master Settings → Departments</strong>.</span>
+          </div>
+          <div class="form-group">
+            <label>Phone</label>
+            <input type="text" formControlName="phone" class="form-input">
+          </div>
+          <div class="form-group">
+            <label class="checkbox-label">
+              <input type="checkbox" formControlName="isActive">
+              <span>Active</span>
+            </label>
+          </div>
+          <div class="modal-footer">
+            <button type="button" (click)="closeStudentModal()" class="btn-secondary">Cancel</button>
+            <button type="submit" [disabled]="studentForm.invalid || loading" class="btn-primary">
+              {{ loading ? 'Saving...' : (selectedStudent ? 'Update' : 'Create') }}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Teacher Modal -->
+  <div *ngIf="showTeacherModal" class="modal-overlay" (click)="closeTeacherModal()">
+    <div class="modal-content" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h2>{{ selectedTeacher ? 'Edit Teacher' : 'New Teacher' }}</h2>
+        <button (click)="closeTeacherModal()" class="modal-close">×</button>
+      </div>
+      <div class="modal-body">
+        <form [formGroup]="teacherForm" (ngSubmit)="saveTeacher()">
+          <div class="form-group">
+            <label>User *</label>
+            <select formControlName="userId" class="form-input" [disabled]="!!selectedTeacher" [class.ng-invalid]="teacherForm.get('userId')?.invalid && teacherForm.get('userId')?.touched">
+              <option [value]="null">Select User</option>
+              <option *ngFor="let user of users" [value]="user.id">
+                {{ user.username }} {{ user.fullName ? '(' + user.fullName + ')' : '' }}
+              </option>
+            </select>
+            <span *ngIf="teacherForm.get('userId')?.invalid && teacherForm.get('userId')?.touched" class="error-message">
+              User is required
+            </span>
+          </div>
+          <div class="form-group">
+            <label>Department</label>
+            <select formControlName="departmentId" class="form-input">
+              <option [value]="null">Not Applicable</option>
+              <option *ngFor="let dept of activeDepartments" [value]="dept.id">
+                {{ dept.name }}
+              </option>
+            </select>
+            <span class="form-hint">Managed in <strong>Training Master Settings → Departments</strong>.</span>
+          </div>
+          <div class="form-group">
+            <label>Phone</label>
+            <input type="text" formControlName="phone" class="form-input">
+          </div>
+          <div class="form-group">
+            <label>Qualification</label>
+            <input type="text" formControlName="qualification" class="form-input">
+          </div>
+          <div class="form-group">
+            <label>Specialization</label>
+            <input type="text" formControlName="specialization" class="form-input">
+          </div>
+          <div class="form-group">
+            <label class="checkbox-label">
+              <input type="checkbox" formControlName="isActive">
+              <span>Active</span>
+            </label>
+          </div>
+          <div class="modal-footer">
+            <button type="button" (click)="closeTeacherModal()" class="btn-secondary">Cancel</button>
+            <button type="submit" [disabled]="teacherForm.invalid || loading" class="btn-primary">
+              {{ loading ? 'Saving...' : (selectedTeacher ? 'Update' : 'Create') }}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Delete Confirmation Dialog -->
+  <div *ngIf="showDeleteConfirm" class="modal-overlay" (click)="cancelDelete()">
+    <div class="modal-content modal-confirm" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h2>Confirm Delete</h2>
+        <button (click)="cancelDelete()" class="modal-close">×</button>
+      </div>
+      <div class="modal-body">
+        <p class="confirm-message">{{ getDeleteMessage() }}</p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" (click)="cancelDelete()" class="btn-secondary">Cancel</button>
+        <button type="button" (click)="confirmDelete()" [disabled]="loading" class="btn-danger">
+          {{ loading ? 'Deleting...' : 'Delete' }}
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+

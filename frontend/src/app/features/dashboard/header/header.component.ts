@@ -1,5 +1,6 @@
 import { Component, inject, OnInit, HostListener, Output, EventEmitter } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { Router } from '@angular/router';
 import { AuthService } from '../../../core/services/auth.service';
 import { User } from '../../../core/models';
 
@@ -12,11 +13,16 @@ import { User } from '../../../core/models';
 })
 export class HeaderComponent implements OnInit {
   private authService = inject(AuthService);
+  private router = inject(Router);
 
   @Output() mobileMenuToggle = new EventEmitter<void>();
 
   currentUser: User | null = null;
   showUserMenu = false;
+  
+  get isTrainingAdmin(): boolean {
+    return this.authService.hasAnyRole(['ROLE_TRAINING_ADMIN', 'ROLE_ADMIN']);
+  }
   readonly logoPath = 'assets/DAB.png';
   readonly institutionName = 'Da Afghanistan Bank';
   readonly officeName = 'Chief Finance Office';
@@ -55,5 +61,10 @@ export class HeaderComponent implements OnInit {
       return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
     }
     return name.substring(0, 2).toUpperCase();
+  }
+
+  openTrainingMasterSettings(): void {
+    this.router.navigate(['/dashboard/training/master-settings']);
+    this.showUserMenu = false;
   }
 }

@@ -1,0 +1,14 @@
+<div class="signature-pad">
+  <canvas
+    #canvas
+    class="signature-pad__canvas"
+    (mousedown)="startDrawing($event)"
+    (mousemove)="draw($event)"
+    (mouseup)="stopDrawing()"
+    (mouseleave)="stopDrawing()"
+    (touchstart)="startDrawing($event)"
+    (touchmove)="draw($event)"
+    (touchend)="stopDrawing()"
+  ></canvas>
+  <button type="button" class="signature-pad__clear" (click)="clear()">Clear</button>
+</div>

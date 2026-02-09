@@ -24,6 +24,7 @@ public class UserMapper {
                         .collect(Collectors.toSet()))
                 .enabled(user.getEnabled())
                 .createdAt(user.getCreatedAt())
+                .hasSignature(user.getSignatureData() != null && !user.getSignatureData().isBlank())
                 .build();
     }
 }

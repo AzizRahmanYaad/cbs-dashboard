@@ -77,12 +77,38 @@ public class GlobalExceptionHandler {
     
     @ExceptionHandler(RuntimeException.class)
     public ResponseEntity<ErrorResponse> handleRuntimeException(RuntimeException ex) {
+        // Log the exception for debugging
+        System.err.println("RuntimeException caught: " + ex.getClass().getName());
+        System.err.println("Message: " + ex.getMessage());
+        ex.printStackTrace();
+        
+        // Ensure we always have a meaningful error message
+        String errorMessage = ex.getMessage();
+        if (errorMessage == null || errorMessage.trim().isEmpty()) {
+            errorMessage = ex.getClass().getSimpleName() + " occurred";
+            if (ex.getCause() != null && ex.getCause().getMessage() != null) {
+                errorMessage += ": " + ex.getCause().getMessage();
+            }
+        }
+        
+        // Determine appropriate status code based on exception type
+        HttpStatus status = HttpStatus.BAD_REQUEST;
+        if (ex.getMessage() != null) {
+            if (ex.getMessage().contains("Authentication required") || 
+                ex.getMessage().contains("Unauthorized") ||
+                ex.getMessage().contains("Access denied")) {
+                status = HttpStatus.UNAUTHORIZED;
+            } else if (ex.getMessage().contains("not found")) {
+                status = HttpStatus.NOT_FOUND;
+            }
+        }
+        
         ErrorResponse error = new ErrorResponse(
-                HttpStatus.BAD_REQUEST.value(),
-                ex.getMessage(),
+                status.value(),
+                errorMessage,
                 LocalDateTime.now()
         );
-        return new ResponseEntity<>(error, HttpStatus.BAD_REQUEST);
+        return new ResponseEntity<>(error, status);
     }
     
     @ExceptionHandler(Exception.class)

@@ -1,0 +1,5 @@
+# CBS Dashboard - Daily database backup at 12:00 PM (noon)
+# Install with: crontab scripts/cron-backup.txt
+# Or merge: (crontab -l 2>/dev/null; cat scripts/cron-backup.txt) | crontab -
+
+0 12 * * * /var/www/cbs-dashboard/cbs-dashboard/scripts/backup-database.sh >> /var/log/cbs-dashboard-backup.log 2>&1

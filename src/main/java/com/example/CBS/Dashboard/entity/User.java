@@ -47,4 +47,11 @@ public class User {
     @CreationTimestamp
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
+
+    /** E-signature: base64-encoded PNG data (data:image/png;base64,... or raw base64). */
+    @Column(name = "signature_data", columnDefinition = "TEXT")
+    private String signatureData;
+
+    @Column(name = "signature_created_at")
+    private LocalDateTime signatureCreatedAt;
 }

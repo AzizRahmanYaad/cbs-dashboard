@@ -1,0 +1,374 @@
+<div class="training-master-settings">
+  <div class="module-header">
+    <h1>Training Master Settings</h1>
+    <p class="subtitle">Manage training names, modules, departments, and categories for training programs</p>
+  </div>
+
+  <!-- Tabs Navigation -->
+  <div class="tabs-container">
+    <button 
+      [class.active]="activeTab === 'names'"
+      (click)="setActiveTab('names')"
+      class="tab-button">
+      Training Names
+    </button>
+    <button 
+      [class.active]="activeTab === 'modules'"
+      (click)="setActiveTab('modules')"
+      class="tab-button">
+      Modules
+    </button>
+    <button 
+      [class.active]="activeTab === 'departments'"
+      (click)="setActiveTab('departments')"
+      class="tab-button">
+      Departments
+    </button>
+    <button 
+      [class.active]="activeTab === 'categories'"
+      (click)="setActiveTab('categories')"
+      class="tab-button">
+      Categories
+    </button>
+  </div>
+
+  <!-- Training Names Tab -->
+  <div *ngIf="activeTab === 'names'" class="tab-content">
+    <div class="toolbar">
+      <button (click)="openTrainingNameModal()" class="btn-primary">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="icon">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+        </svg>
+        New Training Name
+      </button>
+    </div>
+
+    <div class="table-container" *ngIf="!loading">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Description</th>
+            <th>Status</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let name of trainingNames">
+            <td>{{ name.name }}</td>
+            <td>{{ name.description || '-' }}</td>
+            <td>
+              <span [class]="'status-badge ' + (name.isActive ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800')">
+                {{ name.isActive ? 'Active' : 'Inactive' }}
+              </span>
+            </td>
+            <td>
+              <div class="action-buttons">
+                <button (click)="openTrainingNameModal(name)" class="btn-icon" title="Edit">
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10" />
+                  </svg>
+                </button>
+                <button (click)="deleteTrainingName(name)" class="btn-icon btn-danger" title="Delete">
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" />
+                  </svg>
+                </button>
+              </div>
+            </td>
+          </tr>
+          <tr *ngIf="trainingNames.length === 0">
+            <td colspan="4" class="text-center text-gray-500 py-8">No training names found</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Modules Tab -->
+  <div *ngIf="activeTab === 'modules'" class="tab-content">
+    <div class="toolbar">
+      <button (click)="openTrainingModuleModal()" class="btn-primary">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="icon">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+        </svg>
+        New Module
+      </button>
+    </div>
+
+    <div class="table-container" *ngIf="!loading">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Description</th>
+            <th>Status</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let module of trainingModules">
+            <td>{{ module.name }}</td>
+            <td>{{ module.description || '-' }}</td>
+            <td>
+              <span [class]="'status-badge ' + (module.isActive ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800')">
+                {{ module.isActive ? 'Active' : 'Inactive' }}
+              </span>
+            </td>
+            <td>
+              <div class="action-buttons">
+                <button (click)="openTrainingModuleModal(module)" class="btn-icon" title="Edit">
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10" />
+                  </svg>
+                </button>
+                <button (click)="deleteTrainingModule(module)" class="btn-icon btn-danger" title="Delete">
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" />
+                  </svg>
+                </button>
+              </div>
+            </td>
+          </tr>
+          <tr *ngIf="trainingModules.length === 0">
+            <td colspan="4" class="text-center text-gray-500 py-8">No modules found</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Departments Tab -->
+  <div *ngIf="activeTab === 'departments'" class="tab-content">
+    <div class="toolbar">
+      <button (click)="openDepartmentModal()" class="btn-primary">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="icon">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+        </svg>
+        New Department
+      </button>
+    </div>
+
+    <div class="table-container" *ngIf="!loading">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Description</th>
+            <th>Status</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let department of departments">
+            <td>{{ department.name }}</td>
+            <td>{{ department.description || '-' }}</td>
+            <td>
+              <span [class]="'status-badge ' + (department.isActive ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800')">
+                {{ department.isActive ? 'Active' : 'Inactive' }}
+              </span>
+            </td>
+            <td>
+              <div class="action-buttons">
+                <button (click)="openDepartmentModal(department)" class="btn-icon" title="Edit">
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10" />
+                  </svg>
+                </button>
+                <button (click)="deleteDepartment(department)" class="btn-icon btn-danger" title="Delete">
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" />
+                  </svg>
+                </button>
+              </div>
+            </td>
+          </tr>
+          <tr *ngIf="departments.length === 0">
+            <td colspan="4" class="text-center text-gray-500 py-8">No departments found</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Categories Tab -->
+  <div *ngIf="activeTab === 'categories'" class="tab-content">
+    <div class="toolbar">
+      <button (click)="openCategoryModal()" class="btn-primary">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="icon">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+        </svg>
+        New Category
+      </button>
+    </div>
+
+    <div class="table-container" *ngIf="!loading">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Description</th>
+            <th>Status</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let category of categories">
+            <td>{{ category.name }}</td>
+            <td>{{ category.description || '-' }}</td>
+            <td>
+              <span [class]="'status-badge ' + (category.isActive ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800')">
+                {{ category.isActive ? 'Active' : 'Inactive' }}
+              </span>
+            </td>
+            <td>
+              <div class="action-buttons">
+                <button (click)="openCategoryModal(category)" class="btn-icon" title="Edit">
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10" />
+                  </svg>
+                </button>
+                <button (click)="deleteCategory(category)" class="btn-icon btn-danger" title="Delete">
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" />
+                  </svg>
+                </button>
+              </div>
+            </td>
+          </tr>
+          <tr *ngIf="categories.length === 0">
+            <td colspan="4" class="text-center text-gray-500 py-8">No categories found</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Topic Modal -->
+  <div *ngIf="showTrainingNameModal" class="modal-overlay" (click)="closeTrainingNameModal()">
+    <div class="modal-content" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h2>{{ selectedTrainingName ? 'Edit Training Name' : 'New Training Name' }}</h2>
+        <button (click)="closeTrainingNameModal()" class="modal-close">×</button>
+      </div>
+      <form [formGroup]="trainingNameForm" (ngSubmit)="saveTrainingName()" class="modal-body">
+        <div class="form-group">
+          <label>Training Name *</label>
+          <input type="text" formControlName="name" class="form-input" placeholder="Enter training name">
+        </div>
+        <div class="form-group">
+          <label>Description</label>
+          <textarea formControlName="description" rows="3" class="form-input" placeholder="Enter training name description"></textarea>
+        </div>
+        <div class="form-group">
+          <label class="checkbox-label">
+            <input type="checkbox" formControlName="isActive">
+            <span>Active</span>
+          </label>
+        </div>
+        <div class="modal-footer">
+          <button type="button" (click)="closeTrainingNameModal()" class="btn-secondary">Cancel</button>
+          <button type="submit" [disabled]="trainingNameForm.invalid || loading" class="btn-primary">
+            {{ loading ? 'Saving...' : (selectedTrainingName ? 'Update' : 'Create') }}
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Training Module Modal -->
+  <div *ngIf="showTrainingModuleModal" class="modal-overlay" (click)="closeTrainingModuleModal()">
+    <div class="modal-content" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h2>{{ selectedTrainingModule ? 'Edit Module' : 'New Module' }}</h2>
+        <button (click)="closeTrainingModuleModal()" class="modal-close">×</button>
+      </div>
+      <form [formGroup]="trainingModuleForm" (ngSubmit)="saveTrainingModule()" class="modal-body">
+        <div class="form-group">
+          <label>Module Name *</label>
+          <input type="text" formControlName="name" class="form-input" placeholder="Enter module name">
+        </div>
+        <div class="form-group">
+          <label>Description</label>
+          <textarea formControlName="description" rows="3" class="form-input" placeholder="Enter module description"></textarea>
+        </div>
+        <div class="form-group">
+          <label class="checkbox-label">
+            <input type="checkbox" formControlName="isActive">
+            <span>Active</span>
+          </label>
+        </div>
+        <div class="modal-footer">
+          <button type="button" (click)="closeTrainingModuleModal()" class="btn-secondary">Cancel</button>
+          <button type="submit" [disabled]="trainingModuleForm.invalid || loading" class="btn-primary">
+            {{ loading ? 'Saving...' : (selectedTrainingModule ? 'Update' : 'Create') }}
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Department Modal -->
+  <div *ngIf="showDepartmentModal" class="modal-overlay" (click)="closeDepartmentModal()">
+    <div class="modal-content" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h2>{{ selectedDepartment ? 'Edit Department' : 'New Department' }}</h2>
+        <button (click)="closeDepartmentModal()" class="modal-close">×</button>
+      </div>
+      <form [formGroup]="departmentForm" (ngSubmit)="saveDepartment()" class="modal-body">
+        <div class="form-group">
+          <label>Name *</label>
+          <input type="text" formControlName="name" class="form-input" placeholder="Enter department name">
+        </div>
+        <div class="form-group">
+          <label>Description</label>
+          <textarea formControlName="description" rows="3" class="form-input" placeholder="Enter department description"></textarea>
+        </div>
+        <div class="form-group">
+          <label class="checkbox-label">
+            <input type="checkbox" formControlName="isActive">
+            <span>Active</span>
+          </label>
+        </div>
+        <div class="modal-footer">
+          <button type="button" (click)="closeDepartmentModal()" class="btn-secondary">Cancel</button>
+          <button type="submit" [disabled]="departmentForm.invalid || loading" class="btn-primary">
+            {{ loading ? 'Saving...' : (selectedDepartment ? 'Update' : 'Create') }}
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Category Modal -->
+  <div *ngIf="showCategoryModal" class="modal-overlay" (click)="closeCategoryModal()">
+    <div class="modal-content" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h2>{{ selectedCategory ? 'Edit Category' : 'New Category' }}</h2>
+        <button (click)="closeCategoryModal()" class="modal-close">×</button>
+      </div>
+      <form [formGroup]="categoryForm" (ngSubmit)="saveCategory()" class="modal-body">
+        <div class="form-group">
+          <label>Name *</label>
+          <input type="text" formControlName="name" class="form-input" placeholder="Enter category name">
+        </div>
+        <div class="form-group">
+          <label>Description</label>
+          <textarea formControlName="description" rows="3" class="form-input" placeholder="Enter category description"></textarea>
+        </div>
+        <div class="form-group">
+          <label class="checkbox-label">
+            <input type="checkbox" formControlName="isActive">
+            <span>Active</span>
+          </label>
+        </div>
+        <div class="modal-footer">
+          <button type="button" (click)="closeCategoryModal()" class="btn-secondary">Cancel</button>
+          <button type="submit" [disabled]="categoryForm.invalid || loading" class="btn-primary">
+            {{ loading ? 'Saving...' : (selectedCategory ? 'Update' : 'Create') }}
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>

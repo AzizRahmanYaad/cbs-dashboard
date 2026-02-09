@@ -31,6 +31,9 @@ public class DataLoader implements CommandLineRunner {
                 "ROLE_ADMIN",
                 "ROLE_USER",
                 "ROLE_TRAINING",
+                "ROLE_TRAINING_ADMIN",
+                "ROLE_TEACHER",
+                "ROLE_STUDENT",
                 "ROLE_DRILL_TESTING",
                 "ROLE_INDIVIDUAL_REPORT"
         );

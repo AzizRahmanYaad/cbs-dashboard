@@ -9,6 +9,8 @@ interface MenuItem {
   route: string;
   children?: MenuItem[];
   requiredRoles?: string[];
+  /** Hide this item when user has any of these roles (e.g. Teachers/Students use their own panels) */
+  excludeRoles?: string[];
 }
 
 @Component({
@@ -35,13 +37,32 @@ export class SidebarComponent {
     {
       label: 'Dashboard',
       icon: 'home',
-      route: '/dashboard/home'
+      route: '/dashboard/home',
+      excludeRoles: ['ROLE_TEACHER', 'ROLE_STUDENT']
     },
     {
       label: 'Training Module',
       icon: 'academic-cap',
       route: '/dashboard/training',
       requiredRoles: ['ROLE_TRAINING']
+    },
+    {
+      label: 'Training Admin',
+      icon: 'cog-6-tooth',
+      route: '/dashboard/training/admin',
+      requiredRoles: ['ROLE_TRAINING_ADMIN', 'ROLE_ADMIN']
+    },
+    {
+      label: 'Teacher Dashboard',
+      icon: 'user-circle',
+      route: '/dashboard/training/teacher-dashboard',
+      requiredRoles: ['ROLE_TEACHER', 'ROLE_TRAINING_ADMIN', 'ROLE_ADMIN']
+    },
+    {
+      label: 'Student Dashboard',
+      icon: 'academic-cap',
+      route: '/dashboard/training/student-dashboard',
+      requiredRoles: ['ROLE_STUDENT', 'ROLE_TRAINING_ADMIN', 'ROLE_ADMIN']
     },
     {
       label: 'Drill Test',
@@ -76,6 +97,10 @@ export class SidebarComponent {
   }
 
   hasAccess(item: MenuItem): boolean {
-    return this.authService.hasAnyRole(item.requiredRoles ?? []);
+    if (item.excludeRoles?.length && this.authService.hasAnyRole(item.excludeRoles)) {
+      return false;
+    }
+    if (!item.requiredRoles?.length) return true;
+    return this.authService.hasAnyRole(item.requiredRoles);
   }
 }

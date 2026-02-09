@@ -27,4 +27,7 @@ public class UserDto {
     private Boolean enabled;
     
     private LocalDateTime createdAt;
+
+    /** Whether the user has a registered e-signature. */
+    private Boolean hasSignature;
 }

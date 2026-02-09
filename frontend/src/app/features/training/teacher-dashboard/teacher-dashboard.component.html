@@ -1,0 +1,994 @@
+<div class="teacher-dashboard-container">
+  <div class="teacher-header">
+    <h1 class="page-title">Teacher Dashboard</h1>
+    <p class="page-subtitle">Manage your programs, sessions, materials, topics, students, and attendance</p>
+  </div>
+
+  <!-- Tabs -->
+  <div class="tabs-container">
+    <button
+      *ngFor="let tab of tabs"
+      (click)="switchTab(tab)"
+      class="tab-button"
+      [class.active]="activeTab === tab"
+    >
+      <ng-container [ngSwitch]="tab">
+        <svg *ngSwitchCase="'programs'" class="tab-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M9 5.25h6A2.25 2.25 0 0 1 17.25 7.5v11.25H6.75V7.5A2.25 2.25 0 0 1 9 5.25z" />
+          <path stroke-linecap="round" stroke-linejoin="round" d="M9.75 3.75h4.5V5.25h-4.5zM9 9h6" />
+        </svg>
+        <svg *ngSwitchCase="'sessions'" class="tab-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 5.25h16.5M9 3.75v3M15 3.75v3M6.75 9.75h10.5v8.5a1.75 1.75 0 0 1-1.75 1.75H8.5a1.75 1.75 0 0 1-1.75-1.75z" />
+        </svg>
+        <svg *ngSwitchCase="'materials'" class="tab-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 5.25h11.25L19.5 9v9.75H4.5z" />
+          <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6M9 15h4" />
+        </svg>
+        <svg *ngSwitchCase="'topics'" class="tab-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 6.75h15M4.5 12h15M4.5 17.25h8.25" />
+        </svg>
+        <svg *ngSwitchCase="'students'" class="tab-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M9.75 6.75a3 3 0 1 1-3 3 3 3 0 0 1 3-3zM16.5 8.25a2.25 2.25 0 1 1-2.25 2.25A2.25 2.25 0 0 1 16.5 8.25z" />
+          <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 19.5a4.5 4.5 0 0 1 9 0M14.25 19.5a4.125 4.125 0 0 1 4.125-4.125" />
+        </svg>
+        <svg *ngSwitchCase="'attendance'" class="tab-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75 11.25 15 15 9.75M4.5 6.75h15M4.5 12h3m-3 5.25h3" />
+        </svg>
+        <svg *ngSwitchDefault class="tab-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 6.75h15M4.5 12h9.75M4.5 17.25h6" />
+        </svg>
+      </ng-container>
+      <span>{{ tab | titlecase }}</span>
+    </button>
+  </div>
+
+  <!-- Loading Indicator -->
+  <div *ngIf="loading" class="flex justify-center items-center py-12">
+    <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+  </div>
+
+  <!-- Programs Tab -->
+  <div *ngIf="activeTab === 'programs' && !loading" class="tab-content space-y-6">
+    <div class="card">
+      <h2 class="card-header-title">My Assigned Programs</h2>
+      <div *ngIf="programs.length === 0" class="empty-state">
+        <span class="empty-state-icon" aria-hidden="true">🎓</span>
+        <p class="empty-state-title">No programs assigned yet</p>
+        <p class="empty-state-text">When programs are assigned to you, they will appear here.</p>
+      </div>
+
+      <div *ngIf="programs.length > 0" class="programs-grid">
+        <article
+          *ngFor="let program of programs"
+          (click)="selectProgram(program)"
+          class="program-card"
+          [class.program-card--selected]="selectedProgram?.id === program.id"
+        >
+          <header class="program-card__header">
+            <div class="program-card__title-block">
+              <h3 class="program-card__title">
+                {{ program.trainingName || program.trainingNameName || program.title }}
+              </h3>
+              <p class="program-card__subtitle" *ngIf="program.trainingTopicName || program.trainingCategoryName">
+                {{ program.trainingTopicName || 'General Topic' }} · {{ program.trainingCategoryName || 'Uncategorized' }}
+              </p>
+            </div>
+            <div class="program-card__status">
+              <span
+                class="status-pill"
+                [ngClass]="program.status === 'ONGOING'
+                  ? 'status-pill--ongoing'
+                  : (program.status === 'COMPLETED' ? 'status-pill--completed' : 'status-pill--default')"
+              >
+                {{ program.status }}
+              </span>
+            </div>
+          </header>
+
+          <section class="program-card__metrics">
+            <div class="metric-tile">
+              <div class="metric-tile__icon metric-tile__icon--students">
+                👥
+              </div>
+              <div>
+                <div class="metric-tile__label">Students</div>
+                <div class="metric-tile__value">{{ program.enrollmentsCount || 0 }}</div>
+              </div>
+            </div>
+            <div class="metric-tile">
+              <div class="metric-tile__icon metric-tile__icon--sessions">
+                📅
+              </div>
+              <div>
+                <div class="metric-tile__label">Sessions</div>
+                <div class="metric-tile__value">{{ program.sessionsCount || 0 }}</div>
+              </div>
+            </div>
+            <div class="metric-tile">
+              <div class="metric-tile__icon metric-tile__icon--date">
+                🕒
+              </div>
+              <div>
+                <div class="metric-tile__label">Start Date</div>
+                <div class="metric-tile__value">
+                  {{ program.trainingDate ? (program.trainingDate | date:'mediumDate') : 'Not set' }}
+                </div>
+              </div>
+            </div>
+            <div class="metric-tile">
+              <div class="metric-tile__icon metric-tile__icon--level">
+                🎯
+              </div>
+              <div>
+                <div class="metric-tile__label">Level</div>
+                <div class="metric-tile__value">{{ program.trainingLevel || 'N/A' }}</div>
+              </div>
+            </div>
+          </section>
+
+          <footer class="program-card__footer">
+            <div class="program-card__meta">
+              <span *ngIf="program.trainingType" class="program-chip">
+                {{ program.trainingType }}
+              </span>
+              <span *ngIf="program.departmentName" class="program-chip program-chip--muted">
+                {{ program.departmentName }}
+              </span>
+            </div>
+            <button
+              type="button"
+              class="btn-secondary"
+              (click)="selectProgram(program); $event.stopPropagation()"
+            >
+              View Details
+            </button>
+          </footer>
+        </article>
+      </div>
+    </div>
+
+    <!-- Program Details -->
+    <div *ngIf="selectedProgram" class="card">
+      <h2 class="card-header-title">Program Details: {{ selectedProgram.title }}</h2>
+      <div class="grid grid-cols-2 gap-4">
+        <div>
+          <label class="form-label">Status</label>
+          <p>{{ selectedProgram.status }}</p>
+        </div>
+        <div>
+          <label class="form-label">Sessions</label>
+          <p>{{ selectedProgram.sessionsCount || 0 }}</p>
+        </div>
+        <div>
+          <label class="form-label">Students</label>
+          <p>{{ selectedProgram.enrollmentsCount || 0 }}</p>
+        </div>
+        <div>
+          <label class="form-label">Training Level</label>
+          <p>{{ selectedProgram.trainingLevel || 'N/A' }}</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Sessions Tab -->
+  <div *ngIf="activeTab === 'sessions' && !loading" class="tab-content space-y-4">
+    <div class="flex justify-between items-center mb-4">
+      <h2 class="card-header-title">Training Sessions</h2>
+      <button
+        (click)="openSessionModal()"
+        class="btn-primary"
+      >
+        + Create Session
+      </button>
+    </div>
+
+    <!-- Filters -->
+    <form [formGroup]="sessionFiltersForm" class="sessions-filters card">
+      <div class="sessions-filters__row">
+        <div class="sessions-filters__search">
+          <label class="form-label">Search</label>
+          <div class="sessions-filters__search-input">
+            <span class="sessions-filters__search-icon">
+              🔍
+            </span>
+            <input
+              type="text"
+              class="form-input"
+              placeholder="Search by program, location, status, or type"
+              formControlName="search"
+            >
+          </div>
+        </div>
+        <div class="sessions-filters__field">
+          <label class="form-label">Program</label>
+          <select class="form-input" formControlName="programId">
+            <option [ngValue]="null">All programs</option>
+            <option *ngFor="let program of programs" [ngValue]="program.id">
+              {{ program.trainingName || program.trainingNameName || program.title }}
+            </option>
+          </select>
+        </div>
+        <div class="sessions-filters__field">
+          <label class="form-label">Status</label>
+          <select class="form-input" formControlName="status">
+            <option value="">All statuses</option>
+            <option *ngFor="let s of (SessionStatus | keyvalue)" [value]="s.value">
+              {{ s.value | titlecase }}
+            </option>
+          </select>
+        </div>
+        <div class="sessions-filters__field">
+          <label class="form-label">Session Type</label>
+          <select class="form-input" formControlName="sessionType">
+            <option value="">All types</option>
+            <option value="In-Person">In-Person</option>
+            <option value="Virtual">Virtual</option>
+            <option value="Hybrid">Hybrid</option>
+          </select>
+        </div>
+      </div>
+      <div class="sessions-filters__row sessions-filters__row--compact">
+        <div class="sessions-filters__field">
+          <label class="form-label">From Date</label>
+          <input type="date" class="form-input" formControlName="fromDate">
+        </div>
+        <div class="sessions-filters__field">
+          <label class="form-label">To Date</label>
+          <input type="date" class="form-input" formControlName="toDate">
+        </div>
+      </div>
+    </form>
+
+    <div class="card sessions-card">
+      <div *ngIf="visibleSessions.length > 0" class="sessions-list">
+        <article *ngFor="let session of visibleSessions" class="session-row">
+          <div class="session-row__main">
+            <div class="session-row__date">
+              <div class="session-row__day">
+                {{ session.startDateTime | date:'dd' }}
+              </div>
+              <div class="session-row__date-meta">
+                <div class="session-row__month">
+                  {{ session.startDateTime | date:'MMM' }}
+                </div>
+                <div class="session-row__time">
+                  {{ session.startDateTime | date:'shortTime' }}
+                </div>
+              </div>
+            </div>
+
+            <div class="session-row__content">
+              <div class="session-row__title-block">
+                <h3 class="session-row__title">
+                  {{ session.programTitle || 'Untitled Program' }}
+                </h3>
+                <p class="session-row__subtitle">
+                  {{ session.sessionType || 'Session' }} ·
+                  {{ session.location || 'Location TBD' }}
+                </p>
+              </div>
+
+              <div class="session-row__metrics">
+                <div class="session-stat">
+                  <span class="session-stat__label">Students</span>
+                  <span class="session-stat__value">{{ session.enrollmentsCount || 0 }}</span>
+                </div>
+                <div class="session-stat">
+                  <span class="session-stat__label">Status</span>
+                  <span
+                    class="status-pill"
+                    [ngClass]="session.status === 'COMPLETED' ? 'status-pill--completed' :
+                               session.status === 'IN_PROGRESS' ? 'status-pill--pending' :
+                               'status-pill--default'"
+                  >
+                    {{ session.status }}
+                  </span>
+                </div>
+                <div class="session-stat">
+                  <span class="session-stat__label">Type</span>
+                  <span class="session-stat__chip">
+                    {{ session.sessionType || 'N/A' }}
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="session-row__actions">
+            <button (click)="openAttendanceModal(session)" class="btn-secondary" title="Mark attendance">
+              Attendance
+            </button>
+            <button (click)="editSession(session)" class="btn-icon" title="Edit session">
+              <svg class="icon-16" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.7" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487 19.5 7.125m-2.638-2.638L9.75 11.25 8.25 15.75l4.5-1.5 7.112-7.113a1.875 1.875 0 0 0-2.652-2.65z" />
+                <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 19.5h15" />
+              </svg>
+            </button>
+            <button (click)="openDeleteSessionModal(session)" class="btn-icon btn-icon--danger" title="Delete session">
+              <svg class="icon-16" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.7" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M6.75 7.5h10.5M9 7.5V5.25A1.5 1.5 0 0 1 10.5 3.75h3A1.5 1.5 0 0 1 15 5.25V7.5m-7.5 0h10.5M9.75 10.5v7.5M14.25 10.5v7.5M6.75 7.5l.75 12a1.5 1.5 0 0 0 1.5 1.5h6a1.5 1.5 0 0 0 1.5-1.5l.75-12" />
+              </svg>
+            </button>
+          </div>
+        </article>
+      </div>
+      <div *ngIf="sessions.length === 0" class="empty-state">
+        <span class="empty-state-icon" aria-hidden="true">📅</span>
+        <p class="empty-state-title">No sessions found</p>
+        <p class="empty-state-text">Create your first session to start scheduling training.</p>
+      </div>
+      <div *ngIf="sessions.length > 0 && visibleSessions.length === 0" class="empty-state">
+        <span class="empty-state-icon" aria-hidden="true">🔎</span>
+        <p class="empty-state-title">No sessions match your filters</p>
+        <p class="empty-state-text">Try adjusting the filters or clearing the search.</p>
+      </div>
+
+      <!-- Pagination -->
+      <div *ngIf="filteredSessions.length > 0" class="sessions-pagination">
+        <div class="sessions-pagination__info">
+          Showing
+          <span class="sessions-pagination__strong">
+            {{ (sessionPage - 1) * sessionPageSize + 1 }}
+          </span>
+          –
+          <span class="sessions-pagination__strong">
+            {{
+              (sessionPage * sessionPageSize) > filteredSessions.length
+                ? filteredSessions.length
+                : (sessionPage * sessionPageSize)
+            }}
+          </span>
+          of
+          <span class="sessions-pagination__strong">{{ filteredSessions.length }}</span>
+          sessions
+        </div>
+        <div class="sessions-pagination__controls">
+          <div class="sessions-pagination__page-size">
+            <span>Rows per page</span>
+            <select
+              class="form-input sessions-pagination__select"
+              [ngModel]="sessionPageSize"
+              (ngModelChange)="onSessionPageSizeChange($event)"
+            >
+              <option *ngFor="let size of sessionPageSizeOptions" [ngValue]="size">
+                {{ size }}
+              </option>
+            </select>
+          </div>
+          <div class="sessions-pagination__pages">
+            <button
+              type="button"
+              class="page-button"
+              [disabled]="sessionPage === 1"
+              (click)="prevSessionPage()"
+            >
+              ‹
+            </button>
+            <button
+              type="button"
+              class="page-button"
+              *ngFor="let page of sessionPageNumbers"
+              [class.page-button--active]="page === sessionPage"
+              (click)="goToSessionPage(page)"
+            >
+              {{ page }}
+            </button>
+            <button
+              type="button"
+              class="page-button"
+              [disabled]="sessionPage === sessionTotalPages"
+              (click)="nextSessionPage()"
+            >
+              ›
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Delete Session Confirm Modal -->
+  <div *ngIf="showDeleteSessionModal" class="modal-overlay">
+    <div class="modal-shell modal-shell--confirm">
+      <h2 class="modal-title">Delete Session</h2>
+      <p class="confirm-text">
+        Are you sure you want to delete this session?
+      </p>
+      <p class="confirm-subtext" *ngIf="sessionPendingDelete">
+        {{ sessionPendingDelete.programTitle || 'Untitled Program' }} ·
+        {{ sessionPendingDelete.startDateTime | date:'medium' }}
+      </p>
+      <div class="confirm-actions">
+        <button type="button" class="btn-secondary" (click)="closeDeleteSessionModal()">
+          Cancel
+        </button>
+        <button type="button" class="btn-primary" (click)="deleteSession()">
+          Delete
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Delete Material Confirm Modal -->
+  <div *ngIf="showDeleteMaterialModal" class="modal-overlay">
+    <div class="modal-shell modal-shell--confirm">
+      <h2 class="modal-title">Delete Material</h2>
+      <p class="confirm-text">
+        Are you sure you want to delete this material?
+      </p>
+      <p class="confirm-subtext" *ngIf="materialPendingDelete">
+        {{ materialPendingDelete.title }}
+      </p>
+      <div class="confirm-actions">
+        <button type="button" class="btn-secondary" (click)="closeDeleteMaterialModal()">
+          Cancel
+        </button>
+        <button type="button" class="btn-primary" (click)="deleteMaterial()">
+          Delete
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Materials Tab -->
+  <div *ngIf="activeTab === 'materials' && !loading" class="tab-content space-y-4">
+    <div class="flex justify-between items-center mb-4">
+      <h2 class="card-header-title">Training Materials</h2>
+      <button
+        (click)="openMaterialModal(selectedProgram?.id)"
+        class="btn-primary"
+      >
+        + Add Material
+      </button>
+    </div>
+
+    <div *ngIf="!selectedProgram" class="card">
+      <p class="text-sm text-gray-700">Please select a program from the Programs tab to manage materials.</p>
+    </div>
+
+    <div *ngIf="selectedProgram">
+      <!-- Materials Filters -->
+      <form [formGroup]="materialFiltersForm" class="sessions-filters card">
+        <div class="sessions-filters__row">
+          <div class="sessions-filters__search">
+            <label class="form-label">Search</label>
+            <div class="sessions-filters__search-input">
+              <span class="sessions-filters__search-icon">
+                🔍
+              </span>
+              <input
+                type="text"
+                class="form-input"
+                placeholder="Search by title, description, or link"
+                formControlName="search"
+              >
+            </div>
+          </div>
+          <div class="sessions-filters__field">
+            <label class="form-label">Type</label>
+            <select class="form-input" formControlName="materialType">
+              <option value="">All types</option>
+              <option *ngFor="let t of (MaterialType | keyvalue)" [value]="t.value">
+                {{ t.value }}
+              </option>
+            </select>
+          </div>
+          <div class="sessions-filters__field">
+            <label class="form-label">Status</label>
+            <select class="form-input" formControlName="status">
+              <option value="">All</option>
+              <option value="REQUIRED">Required</option>
+              <option value="OPTIONAL">Optional</option>
+            </select>
+          </div>
+        </div>
+        <div class="sessions-filters__row sessions-filters__row--compact">
+          <div class="sessions-filters__field">
+            <label class="form-label">From Date</label>
+            <input type="date" class="form-input" formControlName="fromDate">
+          </div>
+          <div class="sessions-filters__field">
+            <label class="form-label">To Date</label>
+            <input type="date" class="form-input" formControlName="toDate">
+          </div>
+        </div>
+      </form>
+
+      <!-- Materials List -->
+      <div class="card materials-card">
+        <div *ngIf="visibleMaterials.length > 0" class="materials-list">
+          <article *ngFor="let material of visibleMaterials" class="material-row">
+            <div class="material-row__main">
+              <div class="material-row__icon">
+                📄
+              </div>
+              <div class="material-row__content">
+                <div class="material-row__title-block">
+                  <h3 class="material-row__title">
+                    {{ material.title }}
+                  </h3>
+                  <p class="material-row__subtitle">
+                    {{ material.description || 'No description provided' }}
+                  </p>
+                </div>
+
+                <div class="material-row__metrics">
+                  <div class="session-stat">
+                    <span class="session-stat__label">Type</span>
+                    <span class="session-stat__value">{{ material.materialType || 'N/A' }}</span>
+                  </div>
+                  <div class="session-stat">
+                    <span class="session-stat__label">Status</span>
+                    <span class="status-pill" [ngClass]="material.isRequired ? 'status-pill--ongoing' : 'status-pill--default'">
+                      {{ material.isRequired ? 'Required' : 'Optional' }}
+                    </span>
+                  </div>
+                  <div class="session-stat">
+                    <span class="session-stat__label">Created</span>
+                    <span class="session-stat__value">
+                      {{ material.createdAt | date:'mediumDate' }}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="material-row__actions">
+              <button
+                type="button"
+                class="btn-secondary"
+                (click)="openMaterialLink(material)"
+                title="Open material link"
+              >
+                Open Link
+              </button>
+              <button (click)="editMaterial(material)" class="btn-icon" title="Edit material">
+                <svg class="icon-16" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.7" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487 19.5 7.125m-2.638-2.638L9.75 11.25 8.25 15.75l4.5-1.5 7.112-7.113a1.875 1.875 0 0 0-2.652-2.65z" />
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 19.5h15" />
+                </svg>
+              </button>
+              <button (click)="openDeleteMaterialModal(material)" class="btn-icon btn-icon--danger" title="Delete material">
+                <svg class="icon-16" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.7" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M6.75 7.5h10.5M9 7.5V5.25A1.5 1.5 0 0 1 10.5 3.75h3A1.5 1.5 0 0 1 15 5.25V7.5m-7.5 0h10.5M9.75 10.5v7.5M14.25 10.5v7.5M6.75 7.5l.75 12a1.5 1.5 0 0 0 1.5 1.5h6a1.5 1.5 0 0 0 1.5-1.5l.75-12" />
+                </svg>
+              </button>
+            </div>
+          </article>
+        </div>
+
+        <div *ngIf="materials.length === 0" class="empty-state">
+          <span class="empty-state-icon" aria-hidden="true">📂</span>
+          <p class="empty-state-title">No materials found</p>
+          <p class="empty-state-text">Add your first material for this program.</p>
+        </div>
+        <div *ngIf="materials.length > 0 && visibleMaterials.length === 0" class="empty-state">
+          <span class="empty-state-icon" aria-hidden="true">🔎</span>
+          <p class="empty-state-title">No materials match your filters</p>
+          <p class="empty-state-text">Try adjusting the filters or clearing the search.</p>
+        </div>
+
+        <!-- Materials Pagination -->
+        <div *ngIf="filteredMaterials.length > 0" class="sessions-pagination">
+          <div class="sessions-pagination__info">
+            Showing
+            <span class="sessions-pagination__strong">
+              {{ (materialPage - 1) * materialPageSize + 1 }}
+            </span>
+            –
+            <span class="sessions-pagination__strong">
+              {{
+                (materialPage * materialPageSize) > filteredMaterials.length
+                  ? filteredMaterials.length
+                  : (materialPage * materialPageSize)
+              }}
+            </span>
+            of
+            <span class="sessions-pagination__strong">{{ filteredMaterials.length }}</span>
+            materials
+          </div>
+          <div class="sessions-pagination__controls">
+            <div class="sessions-pagination__page-size">
+              <span>Rows per page</span>
+              <select
+                class="form-input sessions-pagination__select"
+                [ngModel]="materialPageSize"
+                (ngModelChange)="onMaterialPageSizeChange($event)"
+              >
+                <option *ngFor="let size of materialPageSizeOptions" [ngValue]="size">
+                  {{ size }}
+                </option>
+              </select>
+            </div>
+            <div class="sessions-pagination__pages">
+              <button
+                type="button"
+                class="page-button"
+                [disabled]="materialPage === 1"
+                (click)="prevMaterialPage()"
+              >
+                ‹
+              </button>
+              <button
+                type="button"
+                class="page-button"
+                *ngFor="let page of materialPageNumbers"
+                [class.page-button--active]="page === materialPage"
+                (click)="goToMaterialPage(page)"
+              >
+                {{ page }}
+              </button>
+              <button
+                type="button"
+                class="page-button"
+                [disabled]="materialPage === materialTotalPages"
+                (click)="nextMaterialPage()"
+              >
+                ›
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Topics Tab -->
+  <div *ngIf="activeTab === 'topics' && !loading" class="tab-content space-y-4">
+    <div class="flex justify-between items-center mb-4">
+      <h2 class="card-header-title">Course Topics</h2>
+      <button
+        (click)="openTopicModal()"
+        class="btn-primary"
+      >
+        + Add Topic
+      </button>
+    </div>
+
+    <div class="table-shell">
+      <table class="table">
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Description</th>
+            <th>Status</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let topic of topics">
+            <td>{{ topic.name }}</td>
+            <td>{{ topic.description || 'N/A' }}</td>
+            <td>
+              <span class="status-pill" [ngClass]="topic.isActive ? 'status-pill--ongoing' : 'status-pill--default'">
+                {{ topic.isActive ? 'Active' : 'Inactive' }}
+              </span>
+            </td>
+            <td>
+              <button (click)="openTopicModal(topic)" class="btn-icon" title="Edit topic">
+                ✏️
+              </button>
+              <button (click)="deleteTopic(topic)" class="btn-icon btn-icon--danger" title="Delete topic">
+                🗑
+              </button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+      <div *ngIf="topics.length === 0" class="empty-state">
+        <span class="empty-state-icon" aria-hidden="true">📚</span>
+        <p class="empty-state-title">No topics found</p>
+        <p class="empty-state-text">Add your first topic to define course content.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Students Tab -->
+  <div *ngIf="activeTab === 'students' && !loading" class="tab-content space-y-4">
+    <div class="card mb-2">
+      <h2 class="card-header-title">Student Management</h2>
+      <div *ngIf="!selectedProgramForStudents">
+        <p class="text-sm text-gray-700">
+          Please select a program from the Programs tab to manage students.
+        </p>
+      </div>
+    </div>
+
+    <div *ngIf="selectedProgramForStudents" class="card">
+      <h3 class="card-header-title">{{ selectedProgramForStudents.title }} - Students</h3>
+      
+      <div class="mb-4">
+        <h4 class="font-medium mb-2">Assign Students</h4>
+        <div class="student-list grid grid-cols-1 md:grid-cols-3 gap-2 max-h-60 overflow-y-auto border rounded p-2">
+          <label *ngFor="let student of students" class="flex items-center space-x-2">
+            <input
+              type="checkbox"
+              [checked]="selectedStudentIds.has(student.userId)"
+              (change)="toggleStudentAssignment(student.userId, $event)"
+            />
+            <span class="text-sm">{{ student.fullName || student.username }}</span>
+          </label>
+        </div>
+        <button
+          (click)="saveStudentAssignments()"
+          class="btn-primary mt-3"
+        >
+          Save Assignments
+        </button>
+      </div>
+
+      <div class="mt-6">
+        <h4 class="font-medium mb-2">Enrolled Students</h4>
+        <div class="table-shell">
+          <table class="table">
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>Email</th>
+                <th>Status</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let enrollment of programStudents">
+                <td>{{ enrollment.participantFullName || enrollment.participantUsername }}</td>
+                <td>{{ enrollment.participantEmail }}</td>
+                <td>
+                  <span class="status-pill" [ngClass]="enrollment.status === 'CONFIRMED' ? 'status-pill--ongoing' : 'status-pill--pending'">
+                    {{ enrollment.status }}
+                  </span>
+                </td>
+                <td>
+                  <button
+                    (click)="removeStudent(selectedProgramForStudents!.id, enrollment.participantId)"
+                    class="btn-icon btn-icon--danger"
+                    title="Remove student"
+                  >
+                    🗑
+                  </button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+          <div *ngIf="programStudents.length === 0" class="empty-state">
+            <span class="empty-state-icon" aria-hidden="true">👥</span>
+            <p class="empty-state-title">No students enrolled yet</p>
+            <p class="empty-state-text">Assign students above to enroll them in this program.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Attendance Tab -->
+  <div *ngIf="activeTab === 'attendance' && !loading" class="tab-content space-y-4">
+    <div class="mb-4">
+      <h2 class="card-header-title">Attendance Management</h2>
+      <p class="text-sm text-gray-600">Select a session to mark attendance</p>
+    </div>
+
+    <div class="table-shell">
+      <table class="table">
+        <thead>
+          <tr>
+            <th>Program</th>
+            <th>Start Date</th>
+            <th>Status</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let session of sessions">
+            <td>{{ session.programTitle }}</td>
+            <td>{{ session.startDateTime | date:'short' }}</td>
+            <td>
+              <span
+                class="status-pill"
+                [ngClass]="session.status === 'COMPLETED' ? 'status-pill--completed' :
+                           session.status === 'IN_PROGRESS' ? 'status-pill--pending' :
+                           'status-pill--default'"
+              >
+                {{ session.status }}
+              </span>
+            </td>
+            <td>
+              <button
+                (click)="openAttendanceModal(session)"
+                class="btn-primary"
+              >
+                Mark Attendance
+              </button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+      <div *ngIf="sessions.length === 0" class="empty-state">
+        <span class="empty-state-icon" aria-hidden="true">📝</span>
+        <p class="empty-state-title">No sessions available</p>
+        <p class="empty-state-text">Create sessions first before marking attendance.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Session Modal -->
+  <div *ngIf="showSessionModal" class="modal-overlay">
+    <div class="modal-shell modal-shell--session">
+      <h2 class="modal-title">{{ selectedSession ? 'Edit' : 'Create' }} Session</h2>
+      <form [formGroup]="sessionForm" (ngSubmit)="saveSession()">
+        <div class="space-y-4">
+          <div>
+            <label class="form-label">Program</label>
+            <select formControlName="programId" class="form-input">
+              <option value="">Select Program</option>
+              <option *ngFor="let program of programs" [value]="program.id">{{ program.title }}</option>
+            </select>
+            <span class="form-hint">Only programs assigned to you are listed.</span>
+          </div>
+          <div class="grid grid-cols-2 gap-4">
+            <div>
+              <label class="form-label">Start Date &amp; Time</label>
+              <input type="datetime-local" formControlName="startDateTime" class="form-input">
+            </div>
+            <div>
+              <label class="form-label">Status</label>
+              <select formControlName="status" class="form-input">
+                <option value="SCHEDULED">Scheduled</option>
+                <option value="IN_PROGRESS">In Progress</option>
+                <option value="COMPLETED">Completed</option>
+                <option value="CANCELLED">Cancelled</option>
+                <option value="POSTPONED">Postponed</option>
+              </select>
+            </div>
+          </div>
+          <div class="grid grid-cols-2 gap-4">
+            <div>
+              <label class="form-label">Location</label>
+              <input type="text" formControlName="location" class="form-input" placeholder="On-site room or venue">
+            </div>
+            <div>
+              <label class="form-label">Session Type</label>
+              <select formControlName="sessionType" class="form-input">
+                <option value="">Select Type</option>
+                <option value="In-Person">In-Person</option>
+                <option value="Virtual">Virtual</option>
+                <option value="Hybrid">Hybrid</option>
+              </select>
+            </div>
+          </div>
+          <div>
+            <label class="form-label">Session Link</label>
+            <input type="text" formControlName="sessionLink" class="form-input" placeholder="Meeting URL for online / hybrid sessions">
+          </div>
+          <div>
+            <label class="form-label">Notes</label>
+            <textarea formControlName="notes" rows="3" class="form-input" placeholder="Additional details or preparation notes"></textarea>
+          </div>
+        </div>
+        <div class="flex justify-end space-x-2 mt-6">
+          <button type="button" (click)="closeSessionModal()" class="btn-secondary">Cancel</button>
+          <button type="submit" class="btn-primary">Save</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Material Modal -->
+  <div *ngIf="showMaterialModal" class="modal-overlay">
+    <div class="modal-shell modal-shell--session">
+      <h2 class="modal-title">{{ selectedMaterial ? 'Edit' : 'Add' }} Material</h2>
+      <form [formGroup]="materialForm" (ngSubmit)="saveMaterial()">
+        <div class="space-y-4">
+          <div>
+            <label class="form-label">Program</label>
+            <select formControlName="programId" class="form-input">
+              <option value="">Select Program</option>
+              <option *ngFor="let program of programs" [value]="program.id">{{ program.title }}</option>
+            </select>
+          </div>
+          <div>
+            <label class="form-label">Title *</label>
+            <input type="text" formControlName="title" class="form-input">
+          </div>
+          <div>
+            <label class="form-label">Description</label>
+            <textarea formControlName="description" rows="3" class="form-input"></textarea>
+          </div>
+          <div>
+            <label class="form-label">Material Type</label>
+            <select formControlName="materialType" class="form-input">
+              <option value="">Select Type</option>
+              <option value="PDF">PDF</option>
+              <option value="Video">Video</option>
+              <option value="Document">Document</option>
+              <option value="Link">Link</option>
+              <option value="Presentation">Presentation</option>
+            </select>
+          </div>
+          <div>
+            <label class="form-label">Material Link (URL) *</label>
+            <input
+              type="url"
+              formControlName="linkUrl"
+              class="form-input material-link-input"
+              placeholder="https://example.com/training-resource"
+            >
+            <span class="form-hint">Add a link to a video, document, or external resource. File uploads are not required.</span>
+          </div>
+          <div class="flex items-center">
+            <input type="checkbox" formControlName="isRequired" class="mr-2">
+            <label class="text-sm font-medium text-gray-700">Required Material</label>
+          </div>
+          <div>
+            <label class="form-label">Display Order</label>
+            <input type="number" formControlName="displayOrder" class="form-input">
+          </div>
+        </div>
+        <div class="flex justify-end space-x-2 mt-6">
+          <button type="button" (click)="closeMaterialModal()" class="btn-secondary">Cancel</button>
+          <button type="submit" class="btn-primary">Save</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Topic Modal -->
+  <div *ngIf="showTopicModal" class="modal-overlay">
+    <div class="modal-shell">
+      <h2 class="modal-title">{{ selectedTopic ? 'Edit' : 'Add' }} Topic</h2>
+      <form [formGroup]="topicForm" (ngSubmit)="saveTopic()">
+        <div class="space-y-4">
+          <div>
+            <label class="form-label">Name *</label>
+            <input type="text" formControlName="name" class="form-input">
+          </div>
+          <div>
+            <label class="form-label">Description</label>
+            <textarea formControlName="description" rows="3" class="form-input"></textarea>
+          </div>
+        </div>
+        <div class="flex justify-end space-x-2 mt-6">
+          <button type="button" (click)="closeTopicModal()" class="btn-secondary">Cancel</button>
+          <button type="submit" class="btn-primary">Save</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Attendance Modal -->
+  <div *ngIf="showAttendanceModal && selectedSessionForAttendance" class="modal-overlay">
+    <div class="modal-shell" style="max-width: 900px;">
+      <h2 class="modal-title">Mark Attendance - {{ selectedSessionForAttendance.programTitle }}</h2>
+      <p class="text-sm text-gray-600 mb-4">{{ selectedSessionForAttendance.startDateTime | date:'short' }}</p>
+      
+      <form [formGroup]="attendanceForm" (ngSubmit)="saveAttendance()">
+        <div class="space-y-2 max-h-96 overflow-y-auto">
+          <div *ngFor="let enrollment of attendanceStudents" class="border rounded p-3">
+            <div class="flex items-center justify-between">
+              <div class="flex-1">
+                <p class="font-medium">{{ enrollment.participantFullName || enrollment.participantUsername }}</p>
+                <p class="text-sm text-gray-500">{{ enrollment.participantEmail }}</p>
+              </div>
+              <div class="flex items-center space-x-4">
+                <select [formControl]="getAttendanceControl(enrollment.participantId, 'status')" class="form-input">
+                  <option value="PRESENT">Present</option>
+                  <option value="ABSENT">Absent</option>
+                  <option value="LATE">Late</option>
+                  <option value="EXCUSED">Excused</option>
+                </select>
+                <input type="text" [formControl]="getAttendanceControl(enrollment.participantId, 'notes')" placeholder="Notes" class="form-input w-48">
+              </div>
+            </div>
+          </div>
+        </div>
+        <div *ngIf="attendanceStudents.length === 0" class="text-center py-8 text-gray-500">
+          No students enrolled for this session.
+        </div>
+        <div class="flex justify-end space-x-2 mt-6">
+          <button type="button" (click)="closeAttendanceModal()" class="btn-secondary">Cancel</button>
+          <button type="submit" [disabled]="attendanceStudents.length === 0" class="btn-primary">Save Attendance</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>

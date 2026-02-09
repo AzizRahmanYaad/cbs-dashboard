@@ -223,6 +223,20 @@ public class AdminUserService {
             return "Basic dashboard access";
         }
         
+        // Training specific roles
+        if (roleName.equalsIgnoreCase("ROLE_TEACHER")) {
+            return "Teacher - Access to teacher dashboard (manage programs, sessions, materials, students, attendance)";
+        }
+        if (roleName.equalsIgnoreCase("ROLE_STUDENT")) {
+            return "Student - Access to student dashboard (view enrolled programs, sessions, materials, attendance, progress)";
+        }
+        if (roleName.equalsIgnoreCase("ROLE_TRAINING_ADMIN")) {
+            return "Training Administrator - Full access to training module administration";
+        }
+        if (roleName.equalsIgnoreCase("ROLE_TRAINING")) {
+            return "Training Module - General training module access";
+        }
+        
         // Daily Report specific roles
         if (roleName.equalsIgnoreCase("ROLE_INDIVIDUAL_REPORT")) {
             return "Full access to own daily reports (create, edit, view, download)";
@@ -257,6 +271,15 @@ public class AdminUserService {
             String rolePart = normalizedRoleName.replace("ROLE_", "").toUpperCase().trim();
             
             // Handle specific role mappings - check exact matches first (most specific first)
+            if (rolePart.equals("TEACHER")) {
+                return "TRAINING";
+            }
+            if (rolePart.equals("STUDENT")) {
+                return "TRAINING";
+            }
+            if (rolePart.equals("TRAINING_ADMIN")) {
+                return "TRAINING";
+            }
             if (rolePart.equals("INDIVIDUAL_REPORT")) {
                 System.out.println("DEBUG: Matched INDIVIDUAL_REPORT -> DAILY");
                 return "DAILY";
