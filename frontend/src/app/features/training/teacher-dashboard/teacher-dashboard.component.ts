@@ -39,9 +39,9 @@ export class TeacherDashboardComponent implements OnInit {
   private fb = inject(FormBuilder);
 
   currentUser: User | null = null;
-  activeTab: 'overview' | 'programs' | 'sessions' | 'materials' | 'attendance' | 'reports' = 'overview';
-  tabs: ('overview' | 'programs' | 'sessions' | 'materials' | 'attendance' | 'reports')[] = 
-    ['overview', 'programs', 'sessions', 'materials', 'attendance', 'reports'];
+  activeTab: 'overview' | 'programs' | 'sessions' | 'materials' | 'students' | 'attendance' | 'reports' = 'overview';
+  tabs: ('overview' | 'programs' | 'sessions' | 'materials' | 'students' | 'attendance' | 'reports')[] = 
+    ['overview', 'programs', 'sessions', 'materials', 'students', 'attendance', 'reports'];
   
   // Programs
   programs: TrainingProgram[] = [];
@@ -719,6 +719,16 @@ export class TeacherDashboardComponent implements OnInit {
       this.toastr.warning('No link has been configured for this material.');
       return;
     }
+    // Fire-and-forget completion tracking for material engagement.
+    if (material.id != null) {
+      this.trainingService.confirmMaterialReview(material.id).subscribe({
+        error: (err) => {
+          // Do not block access to the resource if tracking fails.
+          // Optionally log to console for debugging.
+          console.warn('Failed to record material review for current user.', err);
+        }
+      });
+    }
     window.open(material.filePath, '_blank');
   }
 
@@ -848,6 +858,24 @@ export class TeacherDashboardComponent implements OnInit {
       return trimmed;
     }
     return `data:image/png;base64,${trimmed}`;
+  }
+
+  /**
+   * Returns the first available instructor e-signature for the currently
+   * displayed report context (single-session takes precedence over date-range).
+   * Used to visually surface the session's e-signature alongside on-screen reports.
+   */
+  get instructorReportSignature(): string | null {
+    if (this.singleSessionReport?.instructorSignatureData) {
+      return this.singleSessionReport.instructorSignatureData;
+    }
+    if (this.groupedReport?.sessionsByDate?.length) {
+      const withSig = this.groupedReport.sessionsByDate.find(
+        s => !!s.instructorSignatureData
+      );
+      return withSig?.instructorSignatureData || null;
+    }
+    return null;
   }
 
   private saveBlob(blob: Blob, filename: string): void {
@@ -1066,6 +1094,19 @@ export class TeacherDashboardComponent implements OnInit {
   getAttendanceControl(participantId: number, field: string): any {
     const control = this.attendanceForm.get(`student_${participantId}`);
     return control ? control.get(field) : null;
+  }
+
+  /**
+   * Quickly approves an absence by marking the student's status as EXCUSED
+   * for the current session. This is treated as an approved absence in
+   * downstream reports and analytics.
+   */
+  approveAbsenceForParticipant(participantId: number): void {
+    const statusControl = this.getAttendanceControl(participantId, 'status');
+    if (!statusControl) {
+      return;
+    }
+    statusControl.setValue('EXCUSED');
   }
 
   // ---------- Overview analytics helpers ----------

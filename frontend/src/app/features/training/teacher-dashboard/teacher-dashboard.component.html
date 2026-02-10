@@ -1297,6 +1297,21 @@
           </div>
         </div>
 
+        <!-- Instructor E-Signature for this session -->
+        <div
+          class="session-signatures session-signatures--instructor"
+          *ngIf="instructorReportSignature && getSignatureImageSrc(instructorReportSignature) as instructorSigSrc"
+        >
+          <span class="session-signatures__label">
+            Instructor E-Signature
+          </span>
+          <img
+            class="report-signature-img"
+            [src]="instructorSigSrc"
+            alt="Instructor e-signature"
+          />
+        </div>
+
         <h4 class="report-section-title">Attendance &amp; Engagement</h4>
         <div class="reports-table-wrapper" *ngIf="singleSessionReport.studentEngagement?.length">
           <table class="reports-table">
@@ -1472,6 +1487,21 @@
             </tbody>
           </table>
         </div>
+
+        <!-- Instructor E-Signature for this reporting window (if available) -->
+        <div
+          class="session-signatures session-signatures--instructor mt-4"
+          *ngIf="instructorReportSignature && getSignatureImageSrc(instructorReportSignature) as instructorSigSrc"
+        >
+          <span class="session-signatures__label">
+            Instructor E-Signature (for sessions in this period)
+          </span>
+          <img
+            class="report-signature-img"
+            [src]="instructorSigSrc"
+            alt="Instructor e-signature"
+          />
+        </div>
       </ng-container>
 
       <ng-template #groupedEmpty>
@@ -1624,7 +1654,9 @@
       </p>
       <p class="text-xs text-amber-700 mb-4">
         When marking <strong>Present</strong>, the student’s saved e-signature is required and will be stored for audit.
-        Students create it in <strong>Student Dashboard → My E-Signature</strong>.
+        Students create it in <strong>Student Dashboard → My E-Signature</strong>. Use the
+        <strong>Approve (Excuse)</strong> action or select <strong>Excused</strong> to record
+        approved absences for this session.
       </p>
 
       <form [formGroup]="attendanceForm" (ngSubmit)="saveAttendance()">
@@ -1639,6 +1671,7 @@
                   <th>Email</th>
                   <th>Status</th>
                   <th>Notes</th>
+                  <th class="text-right">Approval</th>
                 </tr>
               </thead>
               <tbody>
@@ -1668,6 +1701,22 @@
                       placeholder="Optional notes"
                       class="form-input form-input--sm"
                     >
+                  </td>
+                  <td class="text-right">
+                    <button
+                      type="button"
+                      class="btn-secondary btn-secondary--sm"
+                      *ngIf="getAttendanceControl(enrollment.participantId, 'status')?.value === 'ABSENT'"
+                      (click)="approveAbsenceForParticipant(enrollment.participantId)"
+                    >
+                      Approve (Excuse)
+                    </button>
+                    <span
+                      *ngIf="getAttendanceControl(enrollment.participantId, 'status')?.value === 'EXCUSED'"
+                      class="text-xs font-medium text-emerald-700"
+                    >
+                      Approved
+                    </span>
                   </td>
                 </tr>
               </tbody>

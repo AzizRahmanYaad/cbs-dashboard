@@ -256,8 +256,10 @@ start_database() {
     # Try to use docker-update.sh first
     if [ -f "./docker-update.sh" ]; then
         chmod +x ./docker-update.sh
-        ./docker-update.sh start-db
-        if [ $? -eq 0 ]; then
+        # Run via if-condition so failures do NOT trigger 'set -e' and abort
+        # the entire update script. We want to handle non‑zero exit codes
+        # gracefully and fall back to other strategies.
+        if ./docker-update.sh start-db; then
             print_success "Database started successfully"
             return 0
         fi
@@ -266,8 +268,9 @@ start_database() {
     # Try docker-automation.sh
     if [ -f "./docker-automation.sh" ]; then
         chmod +x ./docker-automation.sh
-        ./docker-automation.sh start
-        if [ $? -eq 0 ]; then
+        # Same pattern here – execute in an if-condition so a failure does
+        # not cause the whole script to exit immediately under 'set -e'.
+        if ./docker-automation.sh start; then
             print_success "Database started successfully"
             return 0
         fi

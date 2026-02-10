@@ -101,6 +101,29 @@ public class TrainingReportPdfService {
         String instructor = (row.getInstructorName() != null && !row.getInstructorName().isBlank()) ? row.getInstructorName() : "—";
         document.add(new Paragraph("[" + instructor + "]").setFontSize(10));
 
+        // Instructor e-signature for this session (if available)
+        if (row.getInstructorSignatureData() != null && !row.getInstructorSignatureData().isBlank()) {
+            document.add(new Paragraph("Instructor E-Signature:").setBold().setFontSize(11).setMarginTop(8).setMarginBottom(4));
+            try {
+                String base64 = row.getInstructorSignatureData().trim();
+                if (base64.contains(",")) {
+                    base64 = base64.substring(base64.indexOf(",") + 1).trim();
+                }
+                byte[] imgBytes = Base64.getDecoder().decode(base64);
+                if (imgBytes != null && imgBytes.length > 0) {
+                    Image img = new Image(ImageDataFactory.create(imgBytes));
+                    img.setWidth(100);
+                    img.setHeight(40);
+                    img.setHorizontalAlignment(HorizontalAlignment.LEFT);
+                    document.add(img);
+                } else {
+                    document.add(new Paragraph("Signature on file").setFontSize(9));
+                }
+            } catch (Exception ignored) {
+                document.add(new Paragraph("Signature on file").setFontSize(9));
+            }
+        }
+
         // Training Method
         document.add(new Paragraph("Training Method:").setBold().setFontSize(11).setMarginTop(8).setMarginBottom(4));
         String method = (row.getSessionType() != null && !row.getSessionType().isBlank()) ? row.getSessionType() : "—";
@@ -297,6 +320,30 @@ public class TrainingReportPdfService {
         document.add(new Paragraph("Instructor: " + (report.getInstructorName() != null ? report.getInstructorName() : "—")).setFontSize(10));
         document.add(new Paragraph("Method: " + (report.getSessionType() != null ? report.getSessionType() : "—")).setFontSize(10).setMarginBottom(12));
 
+        // Instructor e-signature for this session (if available)
+        if (report.getInstructorSignatureData() != null && !report.getInstructorSignatureData().isBlank()) {
+            document.add(new Paragraph("Instructor E-Signature:").setBold().setFontSize(11).setMarginBottom(4));
+            try {
+                String base64 = report.getInstructorSignatureData().trim();
+                if (base64.contains(",")) {
+                    base64 = base64.substring(base64.indexOf(",") + 1).trim();
+                }
+                byte[] imgBytes = Base64.getDecoder().decode(base64);
+                if (imgBytes != null && imgBytes.length > 0) {
+                    Image img = new Image(ImageDataFactory.create(imgBytes));
+                    img.setWidth(100);
+                    img.setHeight(40);
+                    img.setHorizontalAlignment(HorizontalAlignment.LEFT);
+                    document.add(img);
+                } else {
+                    document.add(new Paragraph("Signature on file").setFontSize(9));
+                }
+            } catch (Exception ignored) {
+                document.add(new Paragraph("Signature on file").setFontSize(9));
+            }
+            document.add(new Paragraph(""));
+        }
+
         // Content Coverage
         document.add(new Paragraph("Content Coverage:").setBold().setFontSize(11).setMarginBottom(6));
         if (report.getContentCoverage() != null) {
@@ -357,6 +404,39 @@ public class TrainingReportPdfService {
         document.add(new Paragraph(String.format("Total Sessions: %d | Total Students: %d | Overall Participation Rate: %.1f%%",
                 report.getTotalSessions(), report.getTotalStudents(), report.getOverallParticipationRate()))
                 .setFontSize(10).setMarginBottom(16));
+
+        // Instructor e-signature for the consolidated period (first available session signature)
+        String instructorSignatureData = null;
+        if (report.getSessionsByDate() != null) {
+            for (SessionAttendanceReportDto s : report.getSessionsByDate()) {
+                if (s.getInstructorSignatureData() != null && !s.getInstructorSignatureData().isBlank()) {
+                    instructorSignatureData = s.getInstructorSignatureData();
+                    break;
+                }
+            }
+        }
+        if (instructorSignatureData != null && !instructorSignatureData.isBlank()) {
+            document.add(new Paragraph("Instructor E-Signature").setBold().setFontSize(11).setMarginBottom(4));
+            try {
+                String base64 = instructorSignatureData.trim();
+                if (base64.contains(",")) {
+                    base64 = base64.substring(base64.indexOf(",") + 1).trim();
+                }
+                byte[] imgBytes = Base64.getDecoder().decode(base64);
+                if (imgBytes != null && imgBytes.length > 0) {
+                    Image img = new Image(ImageDataFactory.create(imgBytes));
+                    img.setWidth(100);
+                    img.setHeight(40);
+                    img.setHorizontalAlignment(HorizontalAlignment.LEFT);
+                    document.add(img);
+                } else {
+                    document.add(new Paragraph("Signature on file").setFontSize(9));
+                }
+            } catch (Exception ignored) {
+                document.add(new Paragraph("Signature on file").setFontSize(9));
+            }
+            document.add(new Paragraph(""));
+        }
 
         // Section: By Student
         document.add(new Paragraph("Participation by Student").setBold().setFontSize(12).setMarginBottom(8));

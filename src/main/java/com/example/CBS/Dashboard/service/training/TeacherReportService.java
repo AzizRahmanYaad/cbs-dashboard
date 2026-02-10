@@ -133,6 +133,25 @@ public class TeacherReportService {
             if (instructorName == null && session.getProgram() != null && session.getProgram().getInstructor() != null) {
                 instructorName = session.getProgram().getInstructor().getFullName();
             }
+
+            // Resolve instructor e-signature for this session (if available)
+            String instructorSignatureData = null;
+            try {
+                User instructorUser = null;
+                if (session.getInstructor() != null) {
+                    instructorUser = session.getInstructor();
+                } else if (session.getProgram() != null && session.getProgram().getInstructor() != null) {
+                    instructorUser = session.getProgram().getInstructor();
+                }
+                if (instructorUser != null) {
+                    Hibernate.initialize(instructorUser);
+                    if (instructorUser.getSignatureData() != null && !instructorUser.getSignatureData().isBlank()) {
+                        instructorSignatureData = instructorUser.getSignatureData();
+                    }
+                }
+            } catch (Exception ignored) {
+                // If anything fails we still return the report row without instructor signature
+            }
             String sessionType = (session.getSessionType() != null && !session.getSessionType().isBlank())
                     ? session.getSessionType() : "—";
             String notes = (session.getNotes() != null && !session.getNotes().isBlank()) ? session.getNotes() : null;
@@ -146,6 +165,7 @@ public class TeacherReportService {
                     attendedNames,
                     signatures,
                     instructorName,
+                    instructorSignatureData,
                     sessionType,
                     notes));
         }
@@ -262,6 +282,25 @@ public class TeacherReportService {
         if (instructorName == null && session.getProgram() != null && session.getProgram().getInstructor() != null) {
             instructorName = session.getProgram().getInstructor().getFullName();
         }
+
+        // Resolve instructor e-signature for this session (if available)
+        String instructorSignatureData = null;
+        try {
+            User instructorUser = null;
+            if (session.getInstructor() != null) {
+                instructorUser = session.getInstructor();
+            } else if (session.getProgram() != null && session.getProgram().getInstructor() != null) {
+                instructorUser = session.getProgram().getInstructor();
+            }
+            if (instructorUser != null) {
+                Hibernate.initialize(instructorUser);
+                if (instructorUser.getSignatureData() != null && !instructorUser.getSignatureData().isBlank()) {
+                    instructorSignatureData = instructorUser.getSignatureData();
+                }
+            }
+        } catch (Exception ignored) {
+            // If anything fails we still return the report without instructor signature
+        }
         String sessionType = (session.getSessionType() != null && !session.getSessionType().isBlank()) ? session.getSessionType() : "—";
         String notesVal = (session.getNotes() != null && !session.getNotes().isBlank()) ? session.getNotes() : null;
 
@@ -271,6 +310,7 @@ public class TeacherReportService {
                 topic,
                 session.getStartDateTime(),
                 instructorName,
+                instructorSignatureData,
                 sessionType,
                 notesVal,
                 contentCoverage,

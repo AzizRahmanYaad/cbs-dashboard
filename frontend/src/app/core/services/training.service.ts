@@ -131,6 +131,15 @@ export class TrainingService {
     return this.http.delete<void>(`${this.baseUrl}/materials/${id}`);
   }
 
+  // Material review / completion tracking
+  confirmMaterialReview(materialId: number): Observable<void> {
+    return this.http.post<void>(`${this.baseUrl}/materials/${materialId}/review`, {});
+  }
+
+  getReviewedMaterialIds(): Observable<number[]> {
+    return this.http.get<number[]>(`${this.baseUrl}/materials/reviewed`);
+  }
+
   // Attendance APIs
   markAttendance(request: MarkAttendanceRequest): Observable<void> {
     return this.http.post<void>(`${this.baseUrl}/attendance/mark`, request);

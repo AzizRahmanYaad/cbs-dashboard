@@ -16,6 +16,8 @@ public class SingleSessionReportDto {
     private String sessionTopic;
     private LocalDateTime startDateTime;
     private String instructorName;
+    /** Instructor's e-signature (base64) for this session. */
+    private String instructorSignatureData;
     private String sessionType;
     private String notes;
     private List<String> contentCoverage;      // Topic points / materials covered

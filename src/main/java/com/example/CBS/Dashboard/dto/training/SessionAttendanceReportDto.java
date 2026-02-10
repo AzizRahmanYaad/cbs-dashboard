@@ -20,6 +20,8 @@ public class SessionAttendanceReportDto {
     /** Signatures of attended students for report authentication. */
     private List<AttendeeSignatureDto> attendedStudentSignatures;
     private String instructorName;
+    /** Instructor's e-signature (base64) for this session. */
+    private String instructorSignatureData;
     private String sessionType;   // e.g. In-Person, Virtual, Hybrid
     private String notes;
 }

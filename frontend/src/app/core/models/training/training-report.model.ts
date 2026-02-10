@@ -21,6 +21,7 @@ export interface SingleSessionReport {
   sessionTopic: string;
   startDateTime: string;
   instructorName: string;
+  instructorSignatureData?: string;
   sessionType: string;
   notes?: string;
   contentCoverage: string[];
@@ -42,6 +43,7 @@ export interface SessionAttendanceReport {
   attendedStudentNames: string[];
   attendedStudentSignatures: AttendeeSignature[];
   instructorName: string;
+  instructorSignatureData?: string;
   sessionType: string;
   notes?: string;
 }

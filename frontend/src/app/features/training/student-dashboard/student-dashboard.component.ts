@@ -556,7 +556,22 @@ export class StudentDashboardComponent implements OnInit {
   }
 
   openMaterialLink(material: TrainingMaterial): void {
-    if (material.filePath) window.open(material.filePath, '_blank');
+    if (!material.filePath) {
+      this.toastr.warning('No link has been configured for this material.');
+      return;
+    }
+
+    // Automatically record completion/review when a student opens a material link.
+    if (material.id != null) {
+      this.trainingService.confirmMaterialReview(material.id).subscribe({
+        error: (err) => {
+          // Do not block the student from accessing learning content if tracking fails.
+          console.warn('Failed to record material review for student.', err);
+        }
+      });
+    }
+
+    window.open(material.filePath, '_blank');
   }
 
   downloadMaterial(material: TrainingMaterial): void {
