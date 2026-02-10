@@ -1,7 +1,7 @@
 <div class="teacher-dashboard-container">
   <div class="teacher-header">
     <h1 class="page-title">Teacher Dashboard</h1>
-    <p class="page-subtitle">Manage your programs, sessions, materials, topics, students, and attendance</p>
+    <p class="page-subtitle">Manage your programs, sessions, materials, students, and attendance</p>
   </div>
 
   <!-- Tabs -->
@@ -27,15 +27,15 @@
           <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 5.25h11.25L19.5 9v9.75H4.5z" />
           <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6M9 15h4" />
         </svg>
-        <svg *ngSwitchCase="'topics'" class="tab-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 6.75h15M4.5 12h15M4.5 17.25h8.25" />
-        </svg>
         <svg *ngSwitchCase="'students'" class="tab-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
           <path stroke-linecap="round" stroke-linejoin="round" d="M9.75 6.75a3 3 0 1 1-3 3 3 3 0 0 1 3-3zM16.5 8.25a2.25 2.25 0 1 1-2.25 2.25A2.25 2.25 0 0 1 16.5 8.25z" />
           <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 19.5a4.5 4.5 0 0 1 9 0M14.25 19.5a4.125 4.125 0 0 1 4.125-4.125" />
         </svg>
         <svg *ngSwitchCase="'attendance'" class="tab-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
           <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75 11.25 15 15 9.75M4.5 6.75h15M4.5 12h3m-3 5.25h3" />
+        </svg>
+        <svg *ngSwitchCase="'reports'" class="tab-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 4.5h16.5M6 4.5v15h12V9.75L14.25 4.5M9 12h6m-6 3h3" />
         </svg>
         <svg *ngSwitchDefault class="tab-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
           <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 6.75h15M4.5 12h9.75M4.5 17.25h6" />
@@ -286,27 +286,257 @@
       </div>
     </div>
 
-    <!-- Program Details -->
-    <div *ngIf="selectedProgram" class="card">
-      <h2 class="card-header-title">Program Details: {{ selectedProgram.title }}</h2>
-      <div class="grid grid-cols-2 gap-4">
-        <div>
-          <label class="form-label">Status</label>
-          <p>{{ selectedProgram.status }}</p>
+    <!-- Program Details - Modern Teacher Program View -->
+    <div *ngIf="selectedProgram" class="card program-details">
+      <header class="program-details__header">
+        <div class="program-details__header-main">
+          <h2 class="card-header-title">
+            {{ selectedProgram.trainingName || selectedProgram.trainingNameName || selectedProgram.title }}
+          </h2>
+          <p class="program-details__subtitle">
+            {{ selectedProgram.description || 'High-level view of sessions, materials, learners, and attendance for this program.' }}
+          </p>
+          <div class="program-details__chips">
+            <span *ngIf="selectedProgram.trainingTopicName" class="program-chip">
+              {{ selectedProgram.trainingTopicName }}
+            </span>
+            <span *ngIf="selectedProgram.trainingCategoryName" class="program-chip program-chip--muted">
+              {{ selectedProgram.trainingCategoryName }}
+            </span>
+            <span *ngIf="selectedProgram.departmentName" class="program-chip program-chip--muted">
+              {{ selectedProgram.departmentName }}
+            </span>
+          </div>
         </div>
-        <div>
-          <label class="form-label">Sessions</label>
-          <p>{{ selectedProgram.sessionsCount || 0 }}</p>
+        <div class="program-details__header-side">
+          <span
+            class="status-pill"
+            [ngClass]="selectedProgram.status === 'ONGOING'
+              ? 'status-pill--ongoing'
+              : (selectedProgram.status === 'COMPLETED'
+                  ? 'status-pill--completed'
+                  : 'status-pill--default')"
+          >
+            {{ selectedProgram.status || 'STATUS' }}
+          </span>
+          <div class="program-details__date" *ngIf="selectedProgram.trainingDate">
+            <span class="program-details__date-label">Start date</span>
+            <span class="program-details__date-value">
+              {{ selectedProgram.trainingDate | date:'mediumDate' }}
+            </span>
+          </div>
+          <div class="program-details__meta-line" *ngIf="selectedProgram.trainingType || selectedProgram.trainingLevel">
+            <span *ngIf="selectedProgram.trainingType">
+              {{ selectedProgram.trainingType }}
+            </span>
+            <span *ngIf="selectedProgram.trainingType && selectedProgram.trainingLevel">·</span>
+            <span *ngIf="selectedProgram.trainingLevel">
+              Level: {{ selectedProgram.trainingLevel }}
+            </span>
+          </div>
         </div>
-        <div>
-          <label class="form-label">Students</label>
-          <p>{{ selectedProgram.enrollmentsCount || 0 }}</p>
+      </header>
+
+      <!-- At-a-glance KPIs -->
+      <section class="program-details__kpis">
+        <div class="program-kpi">
+          <div class="program-kpi__label">Assigned Sessions</div>
+          <div class="program-kpi__value">{{ sessions.length || selectedProgram.sessionsCount || 0 }}</div>
+          <div class="program-kpi__hint">Across this specific program</div>
         </div>
-        <div>
-          <label class="form-label">Training Level</label>
-          <p>{{ selectedProgram.trainingLevel || 'N/A' }}</p>
+        <div class="program-kpi">
+          <div class="program-kpi__label">Enrolled Learners</div>
+          <div class="program-kpi__value">{{ selectedProgram.enrollmentsCount || programStudents.length || 0 }}</div>
+          <div class="program-kpi__hint">Students linked to this program</div>
         </div>
-      </div>
+        <div class="program-kpi">
+          <div class="program-kpi__label">Materials</div>
+          <div class="program-kpi__value">{{ materials.length }}</div>
+          <div class="program-kpi__hint">Training resources attached to sessions</div>
+        </div>
+      </section>
+
+      <!-- Sessions / Materials / Quick actions layout -->
+      <section class="program-details__layout">
+        <!-- Sessions summary -->
+        <div class="program-details__column">
+          <div class="program-details__section-header">
+            <h3 class="program-details__section-title">Sessions for this program</h3>
+            <span class="program-details__section-count">
+              {{ sessions.length || 0 }} total
+            </span>
+          </div>
+          <ng-container *ngIf="sessions.length > 0; else noProgramSessions">
+            <article
+              *ngFor="let session of sessions | slice:0:4"
+              class="program-session-pill"
+            >
+              <div class="program-session-pill__date">
+                <div class="program-session-pill__day">
+                  {{ session.startDateTime | date:'dd' }}
+                </div>
+                <div class="program-session-pill__date-meta">
+                  <span class="program-session-pill__month">
+                    {{ session.startDateTime | date:'MMM' }}
+                  </span>
+                  <span class="program-session-pill__time">
+                    {{ session.startDateTime | date:'shortTime' }}
+                  </span>
+                </div>
+              </div>
+              <div class="program-session-pill__content">
+                <div class="program-session-pill__title-row">
+                  <h4 class="program-session-pill__title">
+                    {{ session.topicName || 'Session ' + (session.sequenceOrder || '') }}
+                  </h4>
+                  <span
+                    class="status-pill program-session-pill__status"
+                    [ngClass]="session.status === 'COMPLETED'
+                      ? 'status-pill--completed'
+                      : (session.status === 'IN_PROGRESS'
+                          ? 'status-pill--pending'
+                          : 'status-pill--default')"
+                  >
+                    {{ session.status }}
+                  </span>
+                </div>
+                <p class="program-session-pill__meta">
+                  {{ session.sessionType || 'Session' }}
+                  ·
+                  {{ session.location || 'Location / link not set' }}
+                </p>
+                <p class="program-session-pill__meta">
+                  {{ session.enrollmentsCount || 0 }} learners
+                </p>
+              </div>
+              <div class="program-session-pill__actions">
+                <button
+                  type="button"
+                  class="btn-secondary btn-secondary--sm"
+                  (click)="openAttendanceModal(session)"
+                >
+                  Attendance
+                </button>
+              </div>
+            </article>
+            <button
+              *ngIf="sessions.length > 4"
+              type="button"
+              class="program-details__link-button"
+              (click)="goToSessionsForSelectedProgram()"
+            >
+              View all sessions
+            </button>
+          </ng-container>
+          <ng-template #noProgramSessions>
+            <p class="program-details__empty-text">
+              No sessions have been scheduled for this program yet.
+            </p>
+          </ng-template>
+        </div>
+
+        <!-- Materials summary -->
+        <div class="program-details__column">
+          <div class="program-details__section-header">
+            <h3 class="program-details__section-title">Training materials</h3>
+            <span class="program-details__section-count">
+              {{ materials.length }} attached
+            </span>
+          </div>
+          <ng-container *ngIf="materials.length > 0; else noProgramMaterials">
+            <article
+              *ngFor="let material of materials | slice:0:4"
+              class="program-material-pill"
+            >
+              <div class="program-material-pill__icon">
+                📄
+              </div>
+              <div class="program-material-pill__content">
+                <h4 class="program-material-pill__title">
+                  {{ material.title }}
+                </h4>
+                <p class="program-material-pill__meta">
+                  {{ material.materialType || 'Resource' }}
+                  <span class="program-material-pill__dot">·</span>
+                  <span>
+                    {{ material.isRequired ? 'Required' : 'Optional' }}
+                  </span>
+                </p>
+                <p class="program-material-pill__meta">
+                  Added
+                  {{ material.createdAt | date:'mediumDate' }}
+                </p>
+              </div>
+              <div class="program-material-pill__actions">
+                <button
+                  type="button"
+                  class="btn-secondary btn-secondary--sm"
+                  (click)="openMaterialLink(material)"
+                >
+                  Open
+                </button>
+              </div>
+            </article>
+            <button
+              *ngIf="materials.length > 4"
+              type="button"
+              class="program-details__link-button"
+              (click)="goToMaterialsForSelectedProgram()"
+            >
+              View all materials
+            </button>
+          </ng-container>
+          <ng-template #noProgramMaterials>
+            <p class="program-details__empty-text">
+              No materials have been added yet. Use the button below to attach PDFs, videos, links, or documents.
+            </p>
+          </ng-template>
+        </div>
+
+        <!-- Quick actions & attendance -->
+        <div class="program-details__column program-details__column--compact">
+          <div class="program-details__section-header">
+            <h3 class="program-details__section-title">Quick actions</h3>
+          </div>
+          <p class="program-details__helper-text">
+            Jump directly into managing sessions, materials, attendance, or generating formal reports for this program.
+          </p>
+          <div class="program-quick-actions">
+            <button
+              type="button"
+              class="btn-primary btn-primary--ghost"
+              (click)="goToSessionsForSelectedProgram()"
+            >
+              Manage sessions
+            </button>
+            <button
+              type="button"
+              class="btn-primary btn-primary--ghost"
+              (click)="goToMaterialsForSelectedProgram()"
+            >
+              Manage materials
+            </button>
+            <button
+              type="button"
+              class="btn-primary btn-primary--ghost"
+              (click)="goToAttendanceForSelectedProgram()"
+            >
+              View attendance table
+            </button>
+            <button
+              type="button"
+              class="btn-primary"
+              (click)="goToReportsForSelectedProgram()"
+            >
+              Download reports
+            </button>
+          </div>
+          <p class="program-details__footnote">
+            For complete, audit-ready attendance records and E-signatures, use the
+            <strong>Attendance</strong> and <strong>Reports</strong> tabs.
+          </p>
+        </div>
+      </section>
     </div>
   </div>
 
@@ -334,7 +564,7 @@
             <input
               type="text"
               class="form-input"
-              placeholder="Search by program, location, status, or type"
+                placeholder="Search by program, topic, location, status, or type"
               formControlName="search"
             >
           </div>
@@ -376,6 +606,10 @@
           <label class="form-label">To Date</label>
           <input type="date" class="form-input" formControlName="toDate">
         </div>
+        <div class="sessions-filters__field">
+          <label class="form-label">Sequence #</label>
+          <input type="number" class="form-input" formControlName="sequenceOrder" placeholder="e.g. 1">
+        </div>
       </div>
     </form>
 
@@ -383,6 +617,12 @@
       <div *ngIf="visibleSessions.length > 0" class="sessions-list">
         <article *ngFor="let session of visibleSessions" class="session-row">
           <div class="session-row__main">
+            <div
+              class="session-row__seq"
+              *ngIf="session.sequenceOrder !== undefined && session.sequenceOrder !== null"
+            >
+              #{{ session.sequenceOrder }}
+            </div>
             <div class="session-row__date">
               <div class="session-row__day">
                 {{ session.startDateTime | date:'dd' }}
@@ -402,10 +642,14 @@
                 <h3 class="session-row__title">
                   {{ session.programTitle || 'Untitled Program' }}
                 </h3>
-                <p class="session-row__subtitle">
-                  {{ session.sessionType || 'Session' }} ·
-                  {{ session.location || 'Location TBD' }}
-                </p>
+              <p class="session-row__topic" *ngIf="session.topicName">
+                <span class="session-row__topic-label">Topic</span>
+                <span class="session-row__topic-value">{{ session.topicName }}</span>
+              </p>
+              <p class="session-row__subtitle">
+                {{ session.sessionType || 'Session' }} ·
+                {{ session.location || 'Location TBD' }}
+              </p>
               </div>
 
               <div class="session-row__metrics">
@@ -435,6 +679,18 @@
           </div>
 
           <div class="session-row__actions">
+            <div class="session-row__actions-links">
+              <button
+                *ngIf="session.location && (session.location.startsWith('http://') || session.location.startsWith('https://'))"
+                type="button"
+                class="session-link-chip"
+                (click)="openSessionLink(session)"
+                title="Open session link"
+              >
+                <span class="session-link-chip__icon">🔗</span>
+                <span class="session-link-chip__label">Session link</span>
+              </button>
+            </div>
             <button (click)="openAttendanceModal(session)" class="btn-secondary" title="Mark attendance">
               Attendance
             </button>
@@ -631,6 +887,10 @@
             <label class="form-label">To Date</label>
             <input type="date" class="form-input" formControlName="toDate">
           </div>
+          <div class="sessions-filters__field">
+            <label class="form-label">Sequence #</label>
+            <input type="number" class="form-input" formControlName="displayOrder" placeholder="Display order">
+          </div>
         </div>
       </form>
 
@@ -639,6 +899,12 @@
         <div *ngIf="visibleMaterials.length > 0" class="materials-list">
           <article *ngFor="let material of visibleMaterials" class="material-row">
             <div class="material-row__main">
+              <div
+                class="material-row__seq"
+                *ngIf="material.displayOrder !== undefined && material.displayOrder !== null"
+              >
+                #{{ material.displayOrder }}
+              </div>
               <div class="material-row__icon">
                 📄
               </div>
@@ -676,11 +942,11 @@
             <div class="material-row__actions">
               <button
                 type="button"
-                class="btn-secondary"
+                class="btn-primary btn-primary--ghost"
                 (click)="openMaterialLink(material)"
                 title="Open material link"
               >
-                Open Link
+                <span>Open link</span>
               </button>
               <button (click)="editMaterial(material)" class="btn-icon" title="Edit material">
                 <svg class="icon-16" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.7" stroke="currentColor">
@@ -769,56 +1035,6 @@
             </div>
           </div>
         </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- Topics Tab -->
-  <div *ngIf="activeTab === 'topics' && !loading" class="tab-content space-y-4">
-    <div class="flex justify-between items-center mb-4">
-      <h2 class="card-header-title">Course Topics</h2>
-      <button
-        (click)="openTopicModal()"
-        class="btn-primary"
-      >
-        + Add Topic
-      </button>
-    </div>
-
-    <div class="table-shell">
-      <table class="table">
-        <thead>
-          <tr>
-            <th>Name</th>
-            <th>Description</th>
-            <th>Status</th>
-            <th>Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr *ngFor="let topic of topics">
-            <td>{{ topic.name }}</td>
-            <td>{{ topic.description || 'N/A' }}</td>
-            <td>
-              <span class="status-pill" [ngClass]="topic.isActive ? 'status-pill--ongoing' : 'status-pill--default'">
-                {{ topic.isActive ? 'Active' : 'Inactive' }}
-              </span>
-            </td>
-            <td>
-              <button (click)="openTopicModal(topic)" class="btn-icon" title="Edit topic">
-                ✏️
-              </button>
-              <button (click)="deleteTopic(topic)" class="btn-icon btn-icon--danger" title="Delete topic">
-                🗑
-              </button>
-            </td>
-          </tr>
-        </tbody>
-      </table>
-      <div *ngIf="topics.length === 0" class="empty-state">
-        <span class="empty-state-icon" aria-hidden="true">📚</span>
-        <p class="empty-state-title">No topics found</p>
-        <p class="empty-state-text">Add your first topic to define course content.</p>
       </div>
     </div>
   </div>
@@ -912,6 +1128,7 @@
         <thead>
           <tr>
             <th>Program</th>
+            <th>Topic</th>
             <th>Start Date</th>
             <th>Status</th>
             <th>Actions</th>
@@ -920,6 +1137,7 @@
         <tbody>
           <tr *ngFor="let session of sessions">
             <td>{{ session.programTitle }}</td>
+            <td>{{ session.topicName || '—' }}</td>
             <td>{{ session.startDateTime | date:'short' }}</td>
             <td>
               <span
@@ -950,6 +1168,321 @@
     </div>
   </div>
 
+  <!-- Reports Tab -->
+  <div *ngIf="activeTab === 'reports' && !loading" class="tab-content reports-tab-content">
+    <section class="reports-hero">
+      <h2 class="reports-hero__title">Advanced Training Reports</h2>
+      <p class="reports-hero__subtitle">
+        Generate formal, audit-ready reports for individual sessions or consolidated date ranges.
+      </p>
+    </section>
+
+    <!-- Mode selector -->
+    <div class="reports-mode-selector">
+      <button
+        type="button"
+        class="reports-mode-btn"
+        [class.reports-mode-btn--active]="reportsMode === 'session'"
+        (click)="setReportsMode('session')"
+      >
+        <span class="reports-mode-btn__icon">📄</span>
+        <span class="reports-mode-btn__label">Session-Based Report</span>
+        <span class="reports-mode-btn__desc">
+          Choose a specific training session to see full attendance, engagement, and signatures.
+        </span>
+      </button>
+      <button
+        type="button"
+        class="reports-mode-btn"
+        [class.reports-mode-btn--active]="reportsMode === 'dateRange'"
+        (click)="setReportsMode('dateRange')"
+      >
+        <span class="reports-mode-btn__icon">📆</span>
+        <span class="reports-mode-btn__label">Date-Range Report</span>
+        <span class="reports-mode-btn__desc">
+          View consolidated training activity over a selected period with audit-level details.
+        </span>
+      </button>
+    </div>
+
+    <!-- Session-Based Report -->
+    <ng-container *ngIf="reportsMode === 'session'">
+      <section class="reports-panel">
+        <h3 class="reports-panel__title">Session-Based Report</h3>
+        <p class="reports-panel__desc">
+          Select one of your training sessions to generate a detailed report including topic description,
+          training ID, attendance breakdown, and participant E-Signatures. The PDF layout is formatted
+          for official use and audit review.
+        </p>
+      </section>
+
+      <form [formGroup]="sessionReportForm" class="reports-filters">
+        <div class="reports-filters__row">
+          <div class="reports-filters__field reports-filters__field--wide">
+            <label>Session</label>
+            <select class="form-input" formControlName="sessionId">
+              <option [ngValue]="null">Select a session</option>
+              <option *ngFor="let s of sessions" [ngValue]="s.id">
+                {{ s.startDateTime | date:'dd-MMM-yyyy HH:mm' }} ·
+                {{ s.programTitle || 'Program' }} –
+                {{ s.topicName || 'No topic' }}
+              </option>
+            </select>
+          </div>
+          <div class="reports-filters__actions">
+            <button
+              type="button"
+              class="btn-secondary"
+              (click)="viewSingleSessionReport()"
+              [disabled]="reportsLoading"
+            >
+              {{ reportsLoading ? 'Loading…' : 'View Report' }}
+            </button>
+            <button
+              type="button"
+              class="btn-primary"
+              (click)="downloadSingleSessionReportPdf()"
+              [disabled]="!sessionReportForm.valid"
+            >
+              Download PDF
+            </button>
+          </div>
+        </div>
+      </form>
+
+      <ng-container *ngIf="singleSessionReport; else sessionReportEmpty">
+        <div class="report-summary-cards">
+          <div class="report-summary-card report-summary-card--total">
+            <span class="report-summary-card__value">{{ singleSessionReport.presentCount }}</span>
+            <span class="report-summary-card__label">Present</span>
+          </div>
+          <div class="report-summary-card">
+            <span class="report-summary-card__value">{{ singleSessionReport.absentCount }}</span>
+            <span class="report-summary-card__label">Absent</span>
+          </div>
+          <div class="report-summary-card">
+            <span class="report-summary-card__value">{{ singleSessionReport.lateCount }}</span>
+            <span class="report-summary-card__label">Late</span>
+          </div>
+          <div class="report-summary-card report-summary-card--highlight">
+            <span class="report-summary-card__value">{{ singleSessionReport.excusedCount }}</span>
+            <span class="report-summary-card__label">Excused</span>
+          </div>
+          <div class="report-summary-card">
+            <span class="report-summary-card__value">{{ singleSessionReport.totalEnrolled }}</span>
+            <span class="report-summary-card__label">Total Enrolled</span>
+          </div>
+        </div>
+
+        <h4 class="report-section-title">Session Details</h4>
+        <div class="attendance-report-session">
+          <div class="attendance-report-session__header">
+            <strong>{{ singleSessionReport.programTitle }}</strong> –
+            {{ singleSessionReport.sessionTopic }}
+          </div>
+          <div class="attendance-report-session__attendees">
+            Date &amp; Time:
+            {{ singleSessionReport.startDateTime | date:'dd-MMM-yyyy HH:mm' }} ·
+            Method: {{ singleSessionReport.sessionType || '—' }} ·
+            Instructor: {{ singleSessionReport.instructorName || '—' }}
+          </div>
+          <div *ngIf="singleSessionReport.contentCoverage?.length">
+            <div class="report-section-title">Training Description</div>
+            <ul class="list-disc pl-5 text-sm">
+              <li *ngFor="let item of singleSessionReport.contentCoverage">{{ item }}</li>
+            </ul>
+          </div>
+          <div *ngIf="singleSessionReport.notes" class="mt-2 text-sm text-gray-700">
+            <strong>Notes:</strong> {{ singleSessionReport.notes }}
+          </div>
+        </div>
+
+        <h4 class="report-section-title">Attendance &amp; Engagement</h4>
+        <div class="reports-table-wrapper" *ngIf="singleSessionReport.studentEngagement?.length">
+          <table class="reports-table">
+            <thead>
+              <tr>
+                <th>Student</th>
+                <th>Email</th>
+                <th>Status</th>
+                <th>Notes</th>
+                <th>Overall %</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let e of singleSessionReport.studentEngagement">
+                <td>{{ e.fullName }}</td>
+                <td>{{ e.email }}</td>
+                <td>{{ e.status }}</td>
+                <td>{{ e.notes || '—' }}</td>
+                <td>
+                  {{ e.attendancePercent !== undefined && e.attendancePercent !== null ? (e.attendancePercent + '%') : '—' }}
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="session-signatures">
+          <span class="session-signatures__label">
+            Present &amp; acknowledged participants (E-Signatures)
+          </span>
+          <div class="session-signatures__list" *ngIf="singleSessionReport.attendedStudentSignatures?.length; else noSignatures">
+            <div
+              class="session-signature-item"
+              *ngFor="let sig of singleSessionReport.attendedStudentSignatures"
+            >
+              <span class="session-signature-name">{{ sig.fullName }}</span>
+              <img
+                *ngIf="getSignatureImageSrc(sig.signatureData) as sigSrc"
+                class="report-signature-img report-signature-img--sm"
+                [src]="sigSrc"
+                alt="Signature"
+              />
+              <span *ngIf="!getSignatureImageSrc(sig.signatureData)" class="no-signature">
+                Signature on file
+              </span>
+            </div>
+          </div>
+          <ng-template #noSignatures>
+            <div class="no-signature">No signatures recorded for this session.</div>
+          </ng-template>
+        </div>
+      </ng-container>
+
+      <ng-template #sessionReportEmpty>
+        <div class="reports-empty-hint" *ngIf="!reportsLoading">
+          <span class="reports-empty-hint__icon">📄</span>
+          <p>Select a session and click <strong>View Report</strong> to see details here.</p>
+        </div>
+      </ng-template>
+    </ng-container>
+
+    <!-- Date-Range Report -->
+    <ng-container *ngIf="reportsMode === 'dateRange'">
+      <section class="reports-panel">
+        <h3 class="reports-panel__title">Date-Range Report</h3>
+        <p class="reports-panel__desc">
+          Choose a From–To date range to view consolidated session coverage and participation.
+          The downloadable PDF includes complete session records, attendance history, participant
+          E-Signatures, and a formal layout suitable for official and audit purposes.
+        </p>
+      </section>
+
+      <form [formGroup]="dateRangeReportForm" class="reports-filters">
+        <div class="reports-filters__row">
+          <div class="reports-filters__field">
+            <label>From date</label>
+            <input type="date" class="form-input" formControlName="from" />
+          </div>
+          <div class="reports-filters__field">
+            <label>To date</label>
+            <input type="date" class="form-input" formControlName="to" />
+          </div>
+          <div class="reports-filters__actions">
+            <button
+              type="button"
+              class="btn-secondary"
+              (click)="viewDateRangeReport()"
+              [disabled]="reportsLoading"
+            >
+              {{ reportsLoading ? 'Loading…' : 'View Report' }}
+            </button>
+            <button
+              type="button"
+              class="btn-primary"
+              (click)="downloadDateRangeReportPdf()"
+              [disabled]="!dateRangeReportForm.valid"
+            >
+              Download PDF
+            </button>
+          </div>
+        </div>
+      </form>
+
+      <ng-container *ngIf="groupedReport; else groupedEmpty">
+        <div class="report-summary-cards">
+          <div class="report-summary-card report-summary-card--total">
+            <span class="report-summary-card__value">{{ groupedReport.totalSessions }}</span>
+            <span class="report-summary-card__label">Sessions</span>
+          </div>
+          <div class="report-summary-card">
+            <span class="report-summary-card__value">{{ groupedReport.totalStudents }}</span>
+            <span class="report-summary-card__label">Students</span>
+          </div>
+          <div class="report-summary-card report-summary-card--highlight">
+            <span class="report-summary-card__value">
+              {{ groupedReport.overallParticipationRate | number:'1.0-1' }}%
+            </span>
+            <span class="report-summary-card__label">Overall Participation</span>
+          </div>
+        </div>
+
+        <h4 class="report-section-title">Session Coverage</h4>
+        <div class="attendance-report-preview" *ngIf="groupedReport.sessionsByDate?.length; else noSessionsRange">
+          <div
+            class="attendance-report-session"
+            *ngFor="let s of groupedReport.sessionsByDate"
+          >
+            <div class="attendance-report-session__header">
+              <strong>{{ s.programTitle }}</strong> –
+              {{ s.sessionTopic || '—' }}
+            </div>
+            <div class="attendance-report-session__attendees">
+              {{ s.startDateTime | date:'dd-MMM-yyyy HH:mm' }} ·
+              Method: {{ s.sessionType || '—' }} ·
+              Instructor: {{ s.instructorName || '—' }}
+              <span class="session-coverage-attendees">
+                Attendees:
+                {{
+                  s.attendedStudentNames && s.attendedStudentNames.length
+                    ? s.attendedStudentNames.join(', ')
+                    : '—'
+                }}
+              </span>
+            </div>
+          </div>
+        </div>
+        <ng-template #noSessionsRange>
+          <div class="no-signature">No sessions found for the selected date range.</div>
+        </ng-template>
+
+        <h4 class="report-section-title">Participation by Student</h4>
+        <div class="reports-table-wrapper" *ngIf="groupedReport.byStudent?.length">
+          <table class="reports-table">
+            <thead>
+              <tr>
+                <th>Student</th>
+                <th>Email</th>
+                <th>Sessions Attended</th>
+                <th>Total Sessions</th>
+                <th>Attendance %</th>
+                <th>Trend</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let s of groupedReport.byStudent">
+                <td>{{ s.fullName }}</td>
+                <td>{{ s.email }}</td>
+                <td>{{ s.sessionsAttended }}</td>
+                <td>{{ s.totalSessions }}</td>
+                <td>{{ s.attendancePercent | number:'1.0-1' }}</td>
+                <td>{{ s.participationTrend }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </ng-container>
+
+      <ng-template #groupedEmpty>
+        <div class="reports-empty-hint" *ngIf="!reportsLoading">
+          <span class="reports-empty-hint__icon">📊</span>
+          <p>Select a From–To range and click <strong>View Report</strong> to see consolidated details.</p>
+        </div>
+      </ng-template>
+    </ng-container>
+  </div>
+
   <!-- Session Modal -->
   <div *ngIf="showSessionModal" class="modal-overlay">
     <div class="modal-shell modal-shell--session">
@@ -963,6 +1496,16 @@
               <option *ngFor="let program of programs" [value]="program.id">{{ program.title }}</option>
             </select>
             <span class="form-hint">Only programs assigned to you are listed.</span>
+          </div>
+          <div>
+            <label class="form-label">Topic Name</label>
+            <input
+              type="text"
+              formControlName="topic"
+              class="form-input"
+              placeholder="Enter session topic (for example: Core Banking Overview)"
+            >
+            <span class="form-hint">This topic appears on reports and student dashboards.</span>
           </div>
           <div class="grid grid-cols-2 gap-4">
             <div>
@@ -1071,62 +1614,124 @@
     </div>
   </div>
 
-  <!-- Topic Modal -->
-  <div *ngIf="showTopicModal" class="modal-overlay">
-    <div class="modal-shell">
-      <h2 class="modal-title">{{ selectedTopic ? 'Edit' : 'Add' }} Topic</h2>
-      <form [formGroup]="topicForm" (ngSubmit)="saveTopic()">
-        <div class="space-y-4">
-          <div>
-            <label class="form-label">Name *</label>
-            <input type="text" formControlName="name" class="form-input">
-          </div>
-          <div>
-            <label class="form-label">Description</label>
-            <textarea formControlName="description" rows="3" class="form-input"></textarea>
-          </div>
-        </div>
-        <div class="flex justify-end space-x-2 mt-6">
-          <button type="button" (click)="closeTopicModal()" class="btn-secondary">Cancel</button>
-          <button type="submit" class="btn-primary">Save</button>
-        </div>
-      </form>
-    </div>
-  </div>
-
   <!-- Attendance Modal -->
   <div *ngIf="showAttendanceModal && selectedSessionForAttendance" class="modal-overlay">
-    <div class="modal-shell" style="max-width: 900px;">
+    <div class="modal-shell" style="max-width: 980px;">
       <h2 class="modal-title">Mark Attendance - {{ selectedSessionForAttendance.programTitle }}</h2>
-      <p class="text-sm text-gray-600 mb-1">{{ selectedSessionForAttendance.startDateTime | date:'short' }}</p>
-      <p class="text-xs text-amber-700 mb-4">When marking <strong>Present</strong>, the student’s saved e-signature is required and will be stored for audit. Students create it in <strong>Student Dashboard → My E-Signature</strong>.</p>
-      
+      <p class="text-sm text-gray-600 mb-1">
+        {{ selectedSessionForAttendance.startDateTime | date:'dd-MMM-yyyy HH:mm' }}
+        · {{ selectedSessionForAttendance.topicName || 'No topic specified' }}
+      </p>
+      <p class="text-xs text-amber-700 mb-4">
+        When marking <strong>Present</strong>, the student’s saved e-signature is required and will be stored for audit.
+        Students create it in <strong>Student Dashboard → My E-Signature</strong>.
+      </p>
+
       <form [formGroup]="attendanceForm" (ngSubmit)="saveAttendance()">
-        <div class="space-y-2 max-h-96 overflow-y-auto">
-          <div *ngFor="let enrollment of attendanceStudents" class="border rounded p-3">
-            <div class="flex items-center justify-between">
-              <div class="flex-1">
-                <p class="font-medium">{{ enrollment.participantFullName || enrollment.participantUsername }}</p>
-                <p class="text-sm text-gray-500">{{ enrollment.participantEmail }}</p>
-              </div>
-              <div class="flex items-center space-x-4">
-                <select [formControl]="getAttendanceControl(enrollment.participantId, 'status')" class="form-input">
-                  <option value="PRESENT">Present</option>
-                  <option value="ABSENT">Absent</option>
-                  <option value="LATE">Late</option>
-                  <option value="EXCUSED">Excused</option>
-                </select>
-                <input type="text" [formControl]="getAttendanceControl(enrollment.participantId, 'notes')" placeholder="Notes" class="form-input w-48">
-              </div>
-            </div>
+        <!-- Sheet-style attendance grid -->
+        <div class="table-shell mb-4" *ngIf="attendanceStudents.length > 0">
+          <div class="table-responsive">
+            <table class="table attendance-daily-table">
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th>Student</th>
+                  <th>Email</th>
+                  <th>Status</th>
+                  <th>Notes</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let enrollment of attendanceStudents; index as i">
+                  <td>{{ i + 1 }}</td>
+                  <td>
+                    {{ enrollment.participantFullName || enrollment.participantUsername }}
+                  </td>
+                  <td>
+                    {{ enrollment.participantEmail || '—' }}
+                  </td>
+                  <td>
+                    <select
+                      [formControl]="getAttendanceControl(enrollment.participantId, 'status')"
+                      class="form-input form-input--sm"
+                    >
+                      <option value="PRESENT">Present</option>
+                      <option value="ABSENT">Absent</option>
+                      <option value="LATE">Late</option>
+                      <option value="EXCUSED">Excused</option>
+                    </select>
+                  </td>
+                  <td>
+                    <input
+                      type="text"
+                      [formControl]="getAttendanceControl(enrollment.participantId, 'notes')"
+                      placeholder="Optional notes"
+                      class="form-input form-input--sm"
+                    >
+                  </td>
+                </tr>
+              </tbody>
+            </table>
           </div>
         </div>
+
         <div *ngIf="attendanceStudents.length === 0" class="text-center py-8 text-gray-500">
           No students enrolled for this session.
         </div>
-        <div class="flex justify-end space-x-2 mt-6">
-          <button type="button" (click)="closeAttendanceModal()" class="btn-secondary">Cancel</button>
-          <button type="submit" [disabled]="attendanceStudents.length === 0" class="btn-primary">Save Attendance</button>
+
+        <!-- Existing records for review / tracking -->
+        <div *ngIf="attendanceRecords.length > 0" class="mt-4">
+          <h3 class="text-sm font-semibold text-gray-700 mb-2">
+            Existing attendance records for this session
+          </h3>
+          <div class="table-shell">
+            <div class="table-responsive">
+              <table class="table">
+                <thead>
+                  <tr>
+                    <th>Student</th>
+                    <th>Email</th>
+                    <th>Status</th>
+                    <th>Notes</th>
+                    <th>Marked On</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr *ngFor="let record of attendanceRecords">
+                    <td>
+                      {{ record.participantFullName || record.participantUsername || getStudentName(record.participantId) }}
+                    </td>
+                    <td>{{ record.participantEmail || '—' }}</td>
+                    <td>{{ record.status }}</td>
+                    <td>{{ record.notes || '—' }}</td>
+                    <td>{{ (record.attendanceDate || record.createdAt) | date:'short' }}</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <div class="attendance-save-bar mt-6">
+          <button
+            type="button"
+            (click)="closeAttendanceModal()"
+            [disabled]="savingAttendance"
+            class="btn-secondary"
+          >
+            Cancel
+          </button>
+          <button
+            type="submit"
+            [disabled]="attendanceStudents.length === 0 || savingAttendance"
+            class="btn-primary btn-primary--lg ml-3"
+          >
+            <span *ngIf="!savingAttendance">Save Attendance</span>
+            <span *ngIf="savingAttendance" class="flex items-center gap-2">
+              <span class="animate-spin rounded-full h-4 w-4 border-b-2 border-white inline-block"></span>
+              Saving...
+            </span>
+          </button>
         </div>
       </form>
     </div>

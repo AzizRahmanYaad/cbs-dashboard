@@ -35,7 +35,8 @@ public class DataLoader implements CommandLineRunner {
                 "ROLE_TEACHER",
                 "ROLE_STUDENT",
                 "ROLE_DRILL_TESTING",
-                "ROLE_INDIVIDUAL_REPORT"
+                "ROLE_INDIVIDUAL_REPORT",
+                "ROLE_CFO" // CFO – Training Oversight & Financial Governance
         );
         defaultRoles.forEach(roleName -> roleRepository.findByName(roleName)
                 .orElseGet(() -> roleRepository.save(new Role(roleName))));

@@ -4,3 +4,4 @@ export * from './material.model';
 export * from './attendance.model';
 export * from './enrollment.model';
 export * from './training-report.model';
+export * from './cfo-training-dashboard.model';

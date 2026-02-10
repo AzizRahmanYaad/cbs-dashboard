@@ -21,7 +21,7 @@ public class TrainingSessionController {
     private final TrainingSessionService sessionService;
     
     @PostMapping
-    @PreAuthorize("hasAnyRole('ROLE_TEACHER', 'ROLE_TRAINING_ADMIN', 'ROLE_ADMIN')")
+    @PreAuthorize("hasAnyAuthority('ROLE_TEACHER', 'ROLE_TRAINING_ADMIN', 'ROLE_ADMIN')")
     public ResponseEntity<TrainingSessionDto> createSession(
             @Valid @RequestBody CreateTrainingSessionRequest request,
             Authentication authentication) {
@@ -34,25 +34,32 @@ public class TrainingSessionController {
     }
     
     @GetMapping
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<List<TrainingSessionDto>> getAllSessions(
-            @RequestParam(required = false) Long programId) {
-        List<TrainingSessionDto> sessions;
-        if (programId != null) {
-            sessions = sessionService.getSessionsByProgram(programId);
-        } else {
-            sessions = sessionService.getAllSessions();
+            @RequestParam(required = false) Long programId,
+            Authentication authentication) {
+        if (authentication == null || authentication.getName() == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
+        List<TrainingSessionDto> sessions =
+                sessionService.getSessionsForUser(authentication.getName(), programId);
         return ResponseEntity.ok(sessions);
     }
     
     @GetMapping("/{id}")
-    public ResponseEntity<TrainingSessionDto> getSessionById(@PathVariable Long id) {
-        TrainingSessionDto session = sessionService.getSessionById(id);
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<TrainingSessionDto> getSessionById(
+            @PathVariable Long id,
+            Authentication authentication) {
+        if (authentication == null || authentication.getName() == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+        TrainingSessionDto session = sessionService.getSessionById(id, authentication.getName());
         return ResponseEntity.ok(session);
     }
     
     @PutMapping("/{id}")
-    @PreAuthorize("hasAnyRole('ROLE_TEACHER', 'ROLE_TRAINING_ADMIN', 'ROLE_ADMIN')")
+    @PreAuthorize("hasAnyAuthority('ROLE_TEACHER', 'ROLE_TRAINING_ADMIN', 'ROLE_ADMIN')")
     public ResponseEntity<TrainingSessionDto> updateSession(
             @PathVariable Long id,
             @Valid @RequestBody CreateTrainingSessionRequest request) {
@@ -61,7 +68,7 @@ public class TrainingSessionController {
     }
     
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasAnyRole('ROLE_TEACHER', 'ROLE_TRAINING_ADMIN', 'ROLE_ADMIN')")
+    @PreAuthorize("hasAnyAuthority('ROLE_TEACHER', 'ROLE_TRAINING_ADMIN', 'ROLE_ADMIN')")
     public ResponseEntity<Void> deleteSession(@PathVariable Long id) {
         sessionService.deleteSession(id);
         return ResponseEntity.noContent().build();

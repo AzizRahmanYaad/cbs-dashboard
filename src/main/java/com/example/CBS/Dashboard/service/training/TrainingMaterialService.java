@@ -8,6 +8,7 @@ import com.example.CBS.Dashboard.entity.User;
 import com.example.CBS.Dashboard.repository.TrainingMaterialRepository;
 import com.example.CBS.Dashboard.repository.TrainingProgramRepository;
 import com.example.CBS.Dashboard.repository.UserRepository;
+import com.example.CBS.Dashboard.service.training.TrainingAccessService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
@@ -23,6 +24,7 @@ public class TrainingMaterialService {
     private final TrainingMaterialRepository materialRepository;
     private final TrainingProgramRepository programRepository;
     private final UserRepository userRepository;
+    private final TrainingAccessService trainingAccessService;
     
     @Transactional
     public TrainingMaterialDto createMaterial(CreateTrainingMaterialRequest request, String username) {
@@ -49,7 +51,8 @@ public class TrainingMaterialService {
     }
     
     @Transactional(readOnly = true)
-    public List<TrainingMaterialDto> getMaterialsByProgram(Long programId) {
+    public List<TrainingMaterialDto> getMaterialsByProgram(Long programId, String username) {
+        trainingAccessService.assertCanAccessProgramContent(username, programId);
         List<TrainingMaterialDto> materials = materialRepository.findByProgramId(programId).stream()
             .map(this::mapToDto)
             .collect(Collectors.toList());
@@ -66,9 +69,13 @@ public class TrainingMaterialService {
     }
     
     @Transactional(readOnly = true)
-    public TrainingMaterialDto getMaterialById(Long id) {
+    public TrainingMaterialDto getMaterialById(Long id, String username) {
         TrainingMaterial material = materialRepository.findById(id)
             .orElseThrow(() -> new RuntimeException("Training material not found"));
+        if (material.getProgram() == null || material.getProgram().getId() == null) {
+            throw new RuntimeException("Training material is not linked to a training program");
+        }
+        trainingAccessService.assertCanAccessProgramContent(username, material.getProgram().getId());
         return mapToDto(material);
     }
     

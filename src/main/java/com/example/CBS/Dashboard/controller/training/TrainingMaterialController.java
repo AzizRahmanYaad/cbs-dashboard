@@ -21,7 +21,7 @@ public class TrainingMaterialController {
     private final TrainingMaterialService materialService;
     
     @PostMapping
-    @PreAuthorize("hasAnyRole('ROLE_TEACHER', 'ROLE_TRAINING_ADMIN', 'ROLE_ADMIN')")
+    @PreAuthorize("hasAnyAuthority('ROLE_TEACHER', 'ROLE_TRAINING_ADMIN', 'ROLE_ADMIN')")
     public ResponseEntity<TrainingMaterialDto> createMaterial(
             @Valid @RequestBody CreateTrainingMaterialRequest request,
             Authentication authentication) {
@@ -34,11 +34,16 @@ public class TrainingMaterialController {
     }
     
     @GetMapping
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<List<TrainingMaterialDto>> getMaterials(
-            @RequestParam(required = false) Long programId) {
+            @RequestParam(required = false) Long programId,
+            Authentication authentication) {
+        if (authentication == null || authentication.getName() == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
         List<TrainingMaterialDto> materials;
         if (programId != null) {
-            materials = materialService.getMaterialsByProgram(programId);
+            materials = materialService.getMaterialsByProgram(programId, authentication.getName());
         } else {
             return ResponseEntity.badRequest().build();
         }
@@ -46,13 +51,19 @@ public class TrainingMaterialController {
     }
     
     @GetMapping("/{id}")
-    public ResponseEntity<TrainingMaterialDto> getMaterialById(@PathVariable Long id) {
-        TrainingMaterialDto material = materialService.getMaterialById(id);
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<TrainingMaterialDto> getMaterialById(
+            @PathVariable Long id,
+            Authentication authentication) {
+        if (authentication == null || authentication.getName() == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+        TrainingMaterialDto material = materialService.getMaterialById(id, authentication.getName());
         return ResponseEntity.ok(material);
     }
     
     @PutMapping("/{id}")
-    @PreAuthorize("hasAnyRole('ROLE_TEACHER', 'ROLE_TRAINING_ADMIN', 'ROLE_ADMIN')")
+    @PreAuthorize("hasAnyAuthority('ROLE_TEACHER', 'ROLE_TRAINING_ADMIN', 'ROLE_ADMIN')")
     public ResponseEntity<TrainingMaterialDto> updateMaterial(
             @PathVariable Long id,
             @Valid @RequestBody CreateTrainingMaterialRequest request) {
@@ -61,7 +72,7 @@ public class TrainingMaterialController {
     }
     
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasAnyRole('ROLE_TEACHER', 'ROLE_TRAINING_ADMIN', 'ROLE_ADMIN')")
+    @PreAuthorize("hasAnyAuthority('ROLE_TEACHER', 'ROLE_TRAINING_ADMIN', 'ROLE_ADMIN')")
     public ResponseEntity<Void> deleteMaterial(@PathVariable Long id) {
         materialService.deleteMaterial(id);
         return ResponseEntity.noContent().build();

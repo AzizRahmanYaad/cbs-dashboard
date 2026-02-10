@@ -13,7 +13,10 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @Service
@@ -23,6 +26,7 @@ public class TrainingSessionService {
     private final TrainingSessionRepository sessionRepository;
     private final TrainingProgramRepository programRepository;
     private final UserRepository userRepository;
+    private final TrainingAccessService trainingAccessService;
     
     @Transactional
     public TrainingSessionDto createSession(CreateTrainingSessionRequest request, String username) {
@@ -43,6 +47,7 @@ public class TrainingSessionService {
             TrainingSession.SessionStatus.SCHEDULED);
         session.setMaxCapacity(request.getMaxCapacity());
         session.setNotes(request.getNotes());
+        session.setTopic(request.getTopic());
         session.setCreatedBy(user);
         
         if (request.getInstructorId() != null) {
@@ -86,10 +91,80 @@ public class TrainingSessionService {
     }
     
     @Transactional(readOnly = true)
-    public TrainingSessionDto getSessionById(Long id) {
+    public TrainingSessionDto getSessionById(Long id, String username) {
+        User user = userRepository.findByUsername(username)
+            .orElseThrow(() -> new UsernameNotFoundException("User not found: " + username));
         TrainingSession session = sessionRepository.findById(id)
             .orElseThrow(() -> new RuntimeException("Training session not found"));
+        // Admins and training admins can see any session.
+        if (!hasAnyRole(user, "ROLE_ADMIN", "ROLE_TRAINING_ADMIN")) {
+            if (session.getProgram() == null || session.getProgram().getId() == null) {
+                throw new RuntimeException("Training session is not linked to a training program");
+            }
+            trainingAccessService.assertCanAccessProgramContent(username, session.getProgram().getId());
+        }
         return mapToDto(session);
+    }
+
+    /**
+     * Returns sessions visible to the given user.
+     *
+     * - Admin / training admin:
+     *     - with programId: all sessions for that program
+     *     - without programId: all sessions
+     * - Other users (teachers/students):
+     *     - with programId: only if they are instructor or enrolled in the program
+     *     - without programId: sessions for programs where they are instructor or enrolled
+     */
+    @Transactional(readOnly = true)
+    public List<TrainingSessionDto> getSessionsForUser(String username, Long programId) {
+        User user = userRepository.findByUsername(username)
+            .orElseThrow(() -> new UsernameNotFoundException("User not found: " + username));
+
+        boolean isAdminLike = hasAnyRole(user, "ROLE_ADMIN", "ROLE_TRAINING_ADMIN");
+
+        if (programId != null) {
+            if (!isAdminLike) {
+                trainingAccessService.assertCanAccessProgramContent(username, programId);
+            }
+            List<TrainingSessionDto> sessions = sessionRepository.findByProgramId(programId).stream()
+                .map(this::mapToDto)
+                .collect(Collectors.toList());
+            assignSequenceOrder(sessions);
+            return sessions;
+        }
+
+        // No program filter:
+        if (isAdminLike) {
+            // Admin-level users can see everything.
+            return getAllSessions();
+        }
+
+        // Teachers/students: only sessions for programs where they are instructor or enrolled.
+        Set<Long> accessibleProgramIds = new HashSet<>();
+
+        // As instructor
+        programRepository.findByInstructorId(user.getId())
+            .forEach(p -> accessibleProgramIds.add(p.getId()));
+
+        // As enrolled student (active enrollments only are already enforced in repository)
+        programRepository.findByStudentId(user.getId())
+            .forEach(p -> accessibleProgramIds.add(p.getId()));
+
+        if (accessibleProgramIds.isEmpty()) {
+            return new ArrayList<>();
+        }
+
+        List<TrainingSessionDto> result = new ArrayList<>();
+        for (Long pid : accessibleProgramIds) {
+            List<TrainingSessionDto> programSessions = sessionRepository.findByProgramId(pid).stream()
+                .map(this::mapToDto)
+                .collect(Collectors.toList());
+            result.addAll(programSessions);
+        }
+
+        assignSequenceOrder(result);
+        return result;
     }
     
     @Transactional
@@ -106,6 +181,7 @@ public class TrainingSessionService {
         }
         session.setMaxCapacity(request.getMaxCapacity());
         session.setNotes(request.getNotes());
+        session.setTopic(request.getTopic());
         
         if (request.getInstructorId() != null) {
             User instructor = userRepository.findById(request.getInstructorId())
@@ -115,6 +191,17 @@ public class TrainingSessionService {
         
         TrainingSession saved = sessionRepository.save(session);
         return mapToDto(saved);
+    }
+
+    private boolean hasAnyRole(User user, String... roleNames) {
+        if (user.getRoles() == null || user.getRoles().isEmpty()) {
+            return false;
+        }
+        return user.getRoles().stream()
+            .map(role -> role.getName() != null ? role.getName().trim() : "")
+            .anyMatch(userRole ->
+                java.util.Arrays.stream(roleNames)
+                    .anyMatch(required -> required.equalsIgnoreCase(userRole)));
     }
     
     @Transactional
@@ -129,6 +216,7 @@ public class TrainingSessionService {
         dto.setId(session.getId());
         dto.setProgramId(session.getProgram().getId());
         dto.setProgramTitle(session.getProgram().getTitle());
+        dto.setTopicName(session.getTopic());
         dto.setStartDateTime(session.getStartDateTime());
         dto.setEndDateTime(session.getEndDateTime());
         dto.setLocation(session.getLocation());

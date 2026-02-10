@@ -25,5 +25,10 @@ public class CreateTrainingSessionRequest {
     private String status;
     private Integer maxCapacity;
     private String notes;
+    /**
+     * Optional free-text topic/description for this specific session.
+     * This is shown on teacher/student dashboards and in reports.
+     */
+    private String topic;
     private Long instructorId;
 }

@@ -17,9 +17,11 @@ import {
   StudentAttendance,
   SessionStatus,
   AttendanceStatus,
-  MaterialType
+  MaterialType,
+  SingleSessionReport,
+  DateBasedGroupedReport
 } from '../../../core/models/training';
-import { TrainingTopic, StudentTeacher } from '../../../core/models/master';
+import { StudentTeacher } from '../../../core/models/master';
 import { User } from '../../../core/models';
 
 @Component({
@@ -37,9 +39,9 @@ export class TeacherDashboardComponent implements OnInit {
   private fb = inject(FormBuilder);
 
   currentUser: User | null = null;
-  activeTab: 'overview' | 'programs' | 'sessions' | 'materials' | 'topics' | 'students' | 'attendance' = 'overview';
-  tabs: ('overview' | 'programs' | 'sessions' | 'materials' | 'topics' | 'students' | 'attendance')[] = 
-    ['overview', 'programs', 'sessions', 'materials', 'topics', 'students', 'attendance'];
+  activeTab: 'overview' | 'programs' | 'sessions' | 'materials' | 'students' | 'attendance' | 'reports' = 'overview';
+  tabs: ('overview' | 'programs' | 'sessions' | 'materials' | 'students' | 'attendance' | 'reports')[] = 
+    ['overview', 'programs', 'sessions', 'materials', 'students', 'attendance', 'reports'];
   
   // Programs
   programs: TrainingProgram[] = [];
@@ -77,12 +79,6 @@ export class TeacherDashboardComponent implements OnInit {
   showDeleteMaterialModal = false;
   materialPendingDelete: TrainingMaterial | null = null;
   
-  // Topics
-  topics: TrainingTopic[] = [];
-  showTopicModal = false;
-  topicForm: FormGroup;
-  selectedTopic: TrainingTopic | null = null;
-  
   // Students
   students: StudentTeacher[] = [];
   programStudents: Enrollment[] = [];
@@ -95,6 +91,15 @@ export class TeacherDashboardComponent implements OnInit {
   showAttendanceModal = false;
   attendanceForm: FormGroup;
   attendanceStudents: Enrollment[] = [];
+  savingAttendance = false;
+  
+  // Reports
+  reportsMode: 'session' | 'dateRange' = 'session';
+  sessionReportForm: FormGroup;
+  dateRangeReportForm: FormGroup;
+  singleSessionReport: SingleSessionReport | null = null;
+  groupedReport: DateBasedGroupedReport | null = null;
+  reportsLoading = false;
   
   loading = false;
   
@@ -107,6 +112,7 @@ export class TeacherDashboardComponent implements OnInit {
     this.sessionForm = this.fb.group({
       programId: [null, Validators.required],
       startDateTime: ['', Validators.required],
+      topic: [''],
       location: [''],
       sessionType: [''],
       status: ['SCHEDULED'],
@@ -124,12 +130,16 @@ export class TeacherDashboardComponent implements OnInit {
       displayOrder: [null]
     });
     
-    this.topicForm = this.fb.group({
-      name: ['', Validators.required],
-      description: ['']
-    });
-    
     this.attendanceForm = this.fb.group({});
+
+    this.sessionReportForm = this.fb.group({
+      sessionId: [null, Validators.required]
+    });
+
+    this.dateRangeReportForm = this.fb.group({
+      from: ['', Validators.required],
+      to: ['', Validators.required]
+    });
 
     this.sessionFiltersForm = this.fb.group({
       programId: [null],
@@ -137,7 +147,8 @@ export class TeacherDashboardComponent implements OnInit {
       sessionType: [''],
       fromDate: [''],
       toDate: [''],
-      search: ['']
+      search: [''],
+      sequenceOrder: ['']
     });
 
     this.materialFiltersForm = this.fb.group({
@@ -145,7 +156,8 @@ export class TeacherDashboardComponent implements OnInit {
       status: [''],
       fromDate: [''],
       toDate: [''],
-      search: ['']
+      search: [''],
+      displayOrder: ['']
     });
 
     this.sessionFiltersForm.valueChanges.subscribe(() => {
@@ -164,7 +176,6 @@ export class TeacherDashboardComponent implements OnInit {
       this.currentUser = user;
       if (user?.id) {
         this.loadPrograms();
-        this.loadTopics();
         this.loadStudents();
         this.loadSessions();
       }
@@ -226,7 +237,7 @@ export class TeacherDashboardComponent implements OnInit {
       return;
     }
 
-    const { programId, status, sessionType, fromDate, toDate, search } = this.sessionFiltersForm.value;
+    const { programId, status, sessionType, fromDate, toDate, search, sequenceOrder } = this.sessionFiltersForm.value;
 
     let data = [...this.sessions];
 
@@ -259,11 +270,31 @@ export class TeacherDashboardComponent implements OnInit {
       const term = (search as string).toLowerCase();
       data = data.filter(s =>
         (s.programTitle || '').toLowerCase().includes(term) ||
+        (s.topicName || '').toLowerCase().includes(term) ||
         (s.location || '').toLowerCase().includes(term) ||
         (s.sessionType || '').toLowerCase().includes(term) ||
         (s.status || '').toLowerCase().includes(term)
       );
     }
+    
+    if (sequenceOrder !== null && sequenceOrder !== undefined && sequenceOrder !== '') {
+      const seq = Number(sequenceOrder);
+      if (!Number.isNaN(seq)) {
+        data = data.filter(s => (s.sequenceOrder ?? null) === seq);
+      }
+    }
+
+    // Sort by sequence order (desc), then by start date (desc)
+    data.sort((a, b) => {
+      const aSeq = a.sequenceOrder ?? 0;
+      const bSeq = b.sequenceOrder ?? 0;
+      if (aSeq !== bSeq) {
+        return bSeq - aSeq;
+      }
+      const aTime = a.startDateTime ? new Date(a.startDateTime).getTime() : 0;
+      const bTime = b.startDateTime ? new Date(b.startDateTime).getTime() : 0;
+      return bTime - aTime;
+    });
 
     this.filteredSessions = data;
     this.updateSessionPageData();
@@ -339,25 +370,17 @@ export class TeacherDashboardComponent implements OnInit {
       return;
     }
 
-    // Program duration alignment
+    // Program date alignment – session cannot start before program start date
     const program = this.programs.find(p => p.id === formValue.programId);
     if (program && program.trainingDate) {
       const programStart = new Date(program.trainingDate);
       // Normalize to start of day
       const programStartDay = new Date(programStart.getFullYear(), programStart.getMonth(), programStart.getDate(), 0, 0, 0, 0);
-
-      let programEndLimit: Date;
-      if (program.durationHours && program.durationHours > 0) {
-        programEndLimit = new Date(programStartDay.getTime() + program.durationHours * 60 * 60 * 1000);
-      } else {
-        // Default: same calendar day (24h window)
-        programEndLimit = new Date(programStartDay.getTime() + 24 * 60 * 60 * 1000);
-      }
-
-      if (start < programStartDay || start > programEndLimit) {
+      // Only enforce lower bound – allow sessions any time on/after program start
+      if (start < programStartDay) {
         const programDateStr = programStartDay.toLocaleDateString();
         this.toastr.error(
-          `Session start must be within the program timeline (starting ${programDateStr}${program.durationHours ? ' with duration ' + program.durationHours + ' hour(s)' : ''}).`
+          `Session start must be on or after the program start date (${programDateStr}).`
         );
         return;
       }
@@ -375,6 +398,7 @@ export class TeacherDashboardComponent implements OnInit {
       sessionType: formValue.sessionType,
       status: formValue.status,
       notes: formValue.notes,
+      topic: formValue.topic || undefined,
       instructorId: this.currentUser?.id
     };
 
@@ -411,6 +435,7 @@ export class TeacherDashboardComponent implements OnInit {
     this.sessionForm.patchValue({
       programId: session.programId,
       startDateTime: new Date(session.startDateTime).toISOString().slice(0, 16),
+      topic: session.topicName || '',
       location: locationValue,
       sessionType: session.sessionType,
       status: session.status,
@@ -548,7 +573,7 @@ export class TeacherDashboardComponent implements OnInit {
       return;
     }
 
-    const { materialType, status, fromDate, toDate, search } = this.materialFiltersForm.value;
+    const { materialType, status, fromDate, toDate, search, displayOrder } = this.materialFiltersForm.value;
     let data = [...this.materials];
 
     if (materialType) {
@@ -581,6 +606,25 @@ export class TeacherDashboardComponent implements OnInit {
         (m.filePath || '').toLowerCase().includes(term)
       );
     }
+    
+    if (displayOrder !== null && displayOrder !== undefined && displayOrder !== '') {
+      const order = Number(displayOrder);
+      if (!Number.isNaN(order)) {
+        data = data.filter(m => (m.displayOrder ?? null) === order);
+      }
+    }
+
+    // Sort by display order (desc), then created date (desc)
+    data.sort((a, b) => {
+      const aOrder = a.displayOrder ?? 0;
+      const bOrder = b.displayOrder ?? 0;
+      if (aOrder !== bOrder) {
+        return bOrder - aOrder;
+      }
+      const aTime = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+      const bTime = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+      return bTime - aTime;
+    });
 
     this.filteredMaterials = data;
     this.updateMaterialPageData();
@@ -665,77 +709,128 @@ export class TeacherDashboardComponent implements OnInit {
     window.open(material.filePath, '_blank');
   }
 
-  // Topics
-  loadTopics(): void {
-    this.loading = true;
-    this.masterSetupService.getAllTrainingTopics(true).subscribe({
-      next: (topics) => {
-        this.topics = topics;
-        this.loading = false;
+  openSessionLink(session: TrainingSession): void {
+    if (session.location && (session.location.startsWith('http://') || session.location.startsWith('https://'))) {
+      window.open(session.location, '_blank');
+    } else {
+      this.toastr.warning('No valid session link configured for this session.');
+    }
+  }
+
+  // Reports helpers
+
+  setReportsMode(mode: 'session' | 'dateRange'): void {
+    if (this.reportsMode === mode) return;
+    this.reportsMode = mode;
+    this.singleSessionReport = null;
+    this.groupedReport = null;
+  }
+
+  viewSingleSessionReport(): void {
+    if (!this.sessionReportForm.valid) {
+      this.toastr.error('Please select a session to view the report.');
+      return;
+    }
+    const sessionId = this.sessionReportForm.value.sessionId;
+    if (!sessionId) {
+      this.toastr.error('Please select a valid session.');
+      return;
+    }
+    this.reportsLoading = true;
+    this.trainingService.getSingleSessionReport(sessionId).subscribe({
+      next: (report) => {
+        this.singleSessionReport = report;
+        this.reportsLoading = false;
       },
-      error: () => {
-        this.toastr.error('Failed to load topics');
-        this.loading = false;
+      error: (err) => {
+        this.toastr.error(err?.error?.message || 'Failed to load session report');
+        this.reportsLoading = false;
       }
     });
   }
 
-  openTopicModal(topic?: TrainingTopic): void {
-    this.selectedTopic = topic || null;
-    if (topic) {
-      this.topicForm.patchValue({
-        name: topic.name,
-        description: topic.description
-      });
-    } else {
-      this.topicForm.reset();
+  downloadSingleSessionReportPdf(): void {
+    if (!this.sessionReportForm.valid) {
+      this.toastr.error('Please select a session before downloading the report.');
+      return;
     }
-    this.showTopicModal = true;
+    const sessionId = this.sessionReportForm.value.sessionId;
+    if (!sessionId) return;
+
+    this.trainingService.downloadSingleSessionReportPdf(sessionId).subscribe({
+      next: (blob) => {
+        this.saveBlob(blob, `session_report_${sessionId}.pdf`);
+      },
+      error: () => {
+        this.toastr.error('Failed to download session report PDF');
+      }
+    });
   }
 
-  closeTopicModal(): void {
-    this.showTopicModal = false;
-    this.topicForm.reset();
-    this.selectedTopic = null;
+  viewDateRangeReport(): void {
+    if (!this.dateRangeReportForm.valid) {
+      this.toastr.error('Please select both From and To dates.');
+      return;
+    }
+    const { from, to } = this.dateRangeReportForm.value;
+    if (!from || !to) {
+      this.toastr.error('Please select both From and To dates.');
+      return;
+    }
+    if (new Date(from) > new Date(to)) {
+      this.toastr.error('From date cannot be after To date.');
+      return;
+    }
+
+    this.reportsLoading = true;
+    this.trainingService.getDateBasedGroupedReport(from, to).subscribe({
+      next: (report) => {
+        this.groupedReport = report;
+        this.reportsLoading = false;
+      },
+      error: (err) => {
+        this.toastr.error(err?.error?.message || 'Failed to load date-range report');
+        this.reportsLoading = false;
+      }
+    });
   }
 
-  saveTopic(): void {
-    if (this.topicForm.valid) {
-      this.loading = true;
-      const request = this.topicForm.value;
-      
-      const save$ = this.selectedTopic
-        ? this.masterSetupService.updateTrainingTopic(this.selectedTopic.id, request)
-        : this.masterSetupService.createTrainingTopic(request);
-      
-      save$.subscribe({
-        next: () => {
-          this.toastr.success('Topic saved successfully');
-          this.closeTopicModal();
-          this.loadTopics();
-        },
-        error: () => {
-          this.toastr.error('Failed to save topic');
-          this.loading = false;
-        }
-      });
+  downloadDateRangeReportPdf(): void {
+    if (!this.dateRangeReportForm.valid) {
+      this.toastr.error('Please select both From and To dates.');
+      return;
     }
+    const { from, to } = this.dateRangeReportForm.value;
+    if (!from || !to) return;
+
+    this.trainingService.downloadDateBasedGroupedReportPdf(from, to).subscribe({
+      next: (blob) => {
+        this.saveBlob(blob, `training_grouped_report_${from}_to_${to}.pdf`);
+      },
+      error: () => {
+        this.toastr.error('Failed to download date-range report PDF');
+      }
+    });
   }
 
-  deleteTopic(topic: TrainingTopic): void {
-    if (confirm('Are you sure you want to delete this topic?')) {
-      this.loading = true;
-      this.masterSetupService.deleteTrainingTopic(topic.id).subscribe({
-        next: () => {
-          this.toastr.success('Topic deleted successfully');
-          this.loadTopics();
-        },
-        error: () => {
-          this.toastr.error('Failed to delete topic');
-          this.loading = false;
-        }
-      });
+  getSignatureImageSrc(data?: string | null): string | null {
+    if (!data || !data.trim()) {
+      return null;
     }
+    const trimmed = data.trim();
+    if (trimmed.startsWith('data:')) {
+      return trimmed;
+    }
+    return `data:image/png;base64,${trimmed}`;
+  }
+
+  private saveBlob(blob: Blob, filename: string): void {
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    a.click();
+    window.URL.revokeObjectURL(url);
   }
 
   // Students
@@ -813,51 +908,84 @@ export class TeacherDashboardComponent implements OnInit {
 
   // Attendance
   loadAttendance(sessionId: number): void {
-    this.loading = true;
+    // Kept for potential future use where only a refresh of records is needed.
+    // For building the attendance marking sheet (modal), see openAttendanceModal which
+    // coordinates loading both enrollments and existing records together.
     this.trainingService.getAttendanceBySession(sessionId).subscribe({
       next: (attendance) => {
-        this.attendanceRecords = attendance;
+        this.attendanceRecords = attendance || [];
         this.selectedSessionForAttendance = this.sessions.find(s => s.id === sessionId) || null;
-        this.loading = false;
       },
       error: () => {
         this.toastr.error('Failed to load attendance');
-        this.loading = false;
+        this.attendanceRecords = [];
       }
     });
   }
 
   openAttendanceModal(session: TrainingSession): void {
     this.selectedSessionForAttendance = session;
-    
-    // Load enrollments for this session's program
-    if (session.programId) {
-      this.trainingService.getProgramStudents(session.programId).subscribe({
-        next: (enrollments) => {
-          this.attendanceStudents = enrollments;
-          // Load existing attendance
-          this.loadAttendance(session.id);
-          
-          // Build attendance form with all enrolled students
-          const formControls: any = {};
-          enrollments.forEach(enrollment => {
-            const existingAttendance = this.attendanceRecords.find(
-              a => a.participantId === enrollment.participantId
-            );
-            formControls[`student_${enrollment.participantId}`] = this.fb.group({
-              participantId: [enrollment.participantId],
-              status: [existingAttendance?.status || 'PRESENT'],
-              notes: [existingAttendance?.notes || '']
-            });
-          });
-          this.attendanceForm = this.fb.group(formControls);
-          this.showAttendanceModal = true;
-        },
-        error: () => {
-          this.toastr.error('Failed to load students for attendance');
-        }
-      });
+
+    if (!session.programId) {
+      this.toastr.error('Program information is missing for this session.');
+      return;
     }
+
+    this.loading = true;
+
+    // Step 1: load enrolled students for the session's program
+    this.trainingService.getProgramStudents(session.programId).subscribe({
+      next: (enrollments) => {
+        this.attendanceStudents = enrollments || [];
+
+        // Step 2: load any existing attendance records for this session
+        this.trainingService.getAttendanceBySession(session.id).subscribe({
+          next: (attendance) => {
+            this.attendanceRecords = attendance || [];
+
+            // Build attendance form with all enrolled students, seeding from existing records
+            const formControls: any = {};
+            this.attendanceStudents.forEach(enrollment => {
+              const existingAttendance = this.attendanceRecords.find(
+                a => a.participantId === enrollment.participantId
+              );
+              formControls[`student_${enrollment.participantId}`] = this.fb.group({
+                participantId: [enrollment.participantId],
+                status: [existingAttendance?.status || 'PRESENT'],
+                notes: [existingAttendance?.notes || '']
+              });
+            });
+
+            this.attendanceForm = this.fb.group(formControls);
+            this.showAttendanceModal = true;
+            this.loading = false;
+          },
+          error: () => {
+            // If attendance records cannot be loaded, allow marking fresh attendance.
+            this.toastr.error('Failed to load existing attendance records. You can still mark new attendance.');
+            this.attendanceRecords = [];
+
+            const formControls: any = {};
+            this.attendanceStudents.forEach(enrollment => {
+              formControls[`student_${enrollment.participantId}`] = this.fb.group({
+                participantId: [enrollment.participantId],
+                status: ['PRESENT'],
+                notes: ['']
+              });
+            });
+
+            this.attendanceForm = this.fb.group(formControls);
+            this.showAttendanceModal = true;
+            this.loading = false;
+          }
+        });
+      },
+      error: () => {
+        this.toastr.error('Failed to load students for attendance');
+        this.attendanceStudents = [];
+        this.loading = false;
+      }
+    });
   }
 
   closeAttendanceModal(): void {
@@ -888,17 +1016,18 @@ export class TeacherDashboardComponent implements OnInit {
       attendances
     };
 
-    this.loading = true;
+    this.savingAttendance = true;
     this.trainingService.markAttendance(request).subscribe({
       next: () => {
         this.toastr.success('Attendance marked successfully');
         this.closeAttendanceModal();
-        this.loadAttendance(this.selectedSessionForAttendance!.id);
+        this.activeTab = 'attendance';
+        this.savingAttendance = false;
       },
       error: (err) => {
         const msg = err?.error?.message || err?.error?.error || err?.message || 'Failed to mark attendance';
         this.toastr.error(msg);
-        this.loading = false;
+        this.savingAttendance = false;
       }
     });
   }
@@ -963,6 +1092,50 @@ export class TeacherDashboardComponent implements OnInit {
     return this.mostActivePrograms.reduce((max, p) => Math.max(max, p.sessions), 0) || 1;
   }
 
+  // ---------- Programs tab navigation helpers ----------
+
+  goToSessionsForSelectedProgram(): void {
+    if (!this.selectedProgram) {
+      return;
+    }
+    const programId = this.selectedProgram.id;
+    this.activeTab = 'sessions';
+    this.loadSessions(programId);
+    // Pre-filter by this program in the sessions list
+    if (this.sessionFiltersForm) {
+      this.sessionFiltersForm.patchValue({ programId }, { emitEvent: true });
+    }
+  }
+
+  goToMaterialsForSelectedProgram(): void {
+    if (!this.selectedProgram) {
+      return;
+    }
+    const programId = this.selectedProgram.id;
+    this.activeTab = 'materials';
+    this.loadMaterials(programId);
+  }
+
+  goToAttendanceForSelectedProgram(): void {
+    if (!this.selectedProgram) {
+      return;
+    }
+    const programId = this.selectedProgram.id;
+    this.activeTab = 'attendance';
+    this.loadSessions(programId);
+  }
+
+  goToReportsForSelectedProgram(): void {
+    if (!this.selectedProgram) {
+      return;
+    }
+    const programId = this.selectedProgram.id;
+    this.activeTab = 'reports';
+    this.reportsMode = 'session';
+    // Restrict initial report dropdown to sessions from this program
+    this.loadSessions(programId);
+  }
+
   switchTab(tab: typeof this.activeTab): void {
     this.activeTab = tab;
     if (tab === 'overview') {
@@ -978,11 +1151,12 @@ export class TeacherDashboardComponent implements OnInit {
         this.selectedProgram = this.programs[0];
         this.loadMaterials(this.selectedProgram.id);
       }
-    } else if (tab === 'topics') {
-      this.loadTopics();
     } else if (tab === 'students') {
       this.loadStudents();
     } else if (tab === 'attendance') {
+      this.loadSessions();
+    } else if (tab === 'reports') {
+      // Ensure latest sessions are available for reports
       this.loadSessions();
     }
   }

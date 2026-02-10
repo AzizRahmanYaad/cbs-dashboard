@@ -2,8 +2,8 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
-import { 
-  TrainingProgram, 
+import {
+  TrainingProgram,
   CreateTrainingProgramRequest,
   TrainingSession,
   CreateTrainingSessionRequest,
@@ -14,7 +14,8 @@ import {
   MarkAttendanceRequest,
   SessionAttendanceReport,
   SingleSessionReport,
-  DateBasedGroupedReport
+  DateBasedGroupedReport,
+  CfoTrainingDashboard
 } from '../models/training';
 
 @Injectable({
@@ -198,5 +199,22 @@ export class TrainingService {
       responseType: 'blob',
       headers: { 'Accept': 'application/pdf' }
     });
+  }
+
+  // -------- CFO Executive Dashboard --------
+
+  /**
+   * CFO-only executive training dashboard.
+   * When from/to are omitted, the backend defaults to the last 90 days.
+   */
+  getCfoDashboard(from?: string, to?: string): Observable<CfoTrainingDashboard> {
+    let params = new HttpParams();
+    if (from) {
+      params = params.set('from', from);
+    }
+    if (to) {
+      params = params.set('to', to);
+    }
+    return this.http.get<CfoTrainingDashboard>(`${this.baseUrl}/cfo/dashboard`, { params });
   }
 }

@@ -13,6 +13,10 @@ public class TrainingSessionDto {
     private Long id;
     private Long programId;
     private String programTitle;
+    /**
+     * Session topic/description text to display in dashboards.
+     */
+    private String topicName;
     private LocalDateTime startDateTime;
     private LocalDateTime endDateTime;
     private String location;

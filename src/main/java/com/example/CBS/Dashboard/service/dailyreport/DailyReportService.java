@@ -107,7 +107,7 @@ public class DailyReportService {
     }
     
     @Transactional
-    @PreAuthorize("hasAnyRole('ROLE_ADMIN', 'ROLE_QUALITY_CONTROL')")
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_QUALITY_CONTROL')")
     public DailyReportDto reviewReport(Long reportId, Long reviewerId, ReviewReportRequest request) {
         DailyReport report = dailyReportRepository.findById(reportId)
             .orElseThrow(() -> new EntityNotFoundException("Report not found"));
@@ -200,7 +200,7 @@ public class DailyReportService {
     }
     
     @Transactional(readOnly = true)
-    @PreAuthorize("hasAnyRole('ROLE_ADMIN', 'ROLE_QUALITY_CONTROL')")
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_QUALITY_CONTROL')")
     public Page<DailyReportDto> getAllReports(Pageable pageable, LocalDate startDate, LocalDate endDate, 
                                                Long employeeId, DailyReport.ReportStatus status) {
         Specification<DailyReport> spec = null;
@@ -233,7 +233,7 @@ public class DailyReportService {
     }
     
     @Transactional(readOnly = true)
-    @PreAuthorize("hasAnyRole('ROLE_ADMIN', 'ROLE_QUALITY_CONTROL')")
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_QUALITY_CONTROL')")
     public DailyReportDashboardDto getDashboard() {
         DailyReportDashboardDto dashboard = new DailyReportDashboardDto();
         

@@ -110,6 +110,9 @@
               </div>
               <div class="overview-session-row__content">
                 <div class="title">{{ session.programTitle || 'Session' }}</div>
+                <div class="subtitle" *ngIf="session.topicName">
+                  Topic: {{ session.topicName }}
+                </div>
                 <div class="subtitle">
                   {{ session.location || 'Location TBD' }} ·
                   {{ session.startDateTime | date:'shortTime' }}
@@ -233,38 +236,196 @@
 
   <!-- Sessions Tab -->
   <div *ngIf="activeTab === 'sessions' && !loading" class="tab-content space-y-4">
-    <div class="card">
-      <h2 class="card-header-title">Training Sessions</h2>
-      <div *ngIf="sessions.length === 0" class="empty-state">
+    <div class="card sessions-card">
+      <div class="sessions-header">
+        <h2 class="card-header-title">Training Sessions</h2>
+        <p class="sessions-header__subtitle">View and join your scheduled training sessions</p>
+      </div>
+      
+      <!-- Session Filters -->
+      <div class="filter-bar" *ngIf="sessions.length > 0 || programs.length > 0">
+        <div class="filter-group filter-group--wide">
+          <label class="filter-label">Search</label>
+          <input
+            type="text"
+            class="filter-input"
+            placeholder="Search by program, topic, or location"
+            [(ngModel)]="sessionFilter.search"
+            (ngModelChange)="onSessionFilterChange()"
+          />
+        </div>
+        <div class="filter-group">
+          <label class="filter-label">Program</label>
+          <select
+            class="filter-select"
+            [(ngModel)]="sessionFilter.programId"
+            (ngModelChange)="onSessionFilterChange()"
+          >
+            <option [ngValue]="null">All programs</option>
+            <option *ngFor="let p of programs" [ngValue]="p.id">
+              {{ p.trainingName || p.trainingNameName || p.title }}
+            </option>
+          </select>
+        </div>
+        <div class="filter-group">
+          <label class="filter-label">Status</label>
+          <select
+            class="filter-select"
+            [(ngModel)]="sessionFilter.status"
+            (ngModelChange)="onSessionFilterChange()"
+          >
+            <option value="ALL">All statuses</option>
+            <option *ngFor="let s of sessionStatusOptions" [value]="s">
+              {{ s }}
+            </option>
+          </select>
+        </div>
+        <div class="filter-group">
+          <label class="filter-label">Session / Sequence #</label>
+          <input
+            type="number"
+            class="filter-input"
+            placeholder="e.g. 1"
+            [(ngModel)]="sessionFilter.sequenceOrder"
+            (ngModelChange)="onSessionFilterChange()"
+          />
+        </div>
+      </div>
+
+      <div *ngIf="filteredSessions.length === 0" class="empty-state">
         <span class="empty-state-icon" aria-hidden="true">📅</span>
         <p class="empty-state-title">No sessions found</p>
         <p class="empty-state-text">Sessions for your enrolled programs will appear here.</p>
       </div>
-      <div *ngIf="sessions.length > 0" class="table-shell">
-        <table class="table">
-          <thead>
-            <tr>
-              <th>Program</th>
-              <th>Start Date</th>
-              <th>End Date</th>
-              <th>Location</th>
-              <th>Status</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr *ngFor="let session of sessions">
-              <td>{{ session.programTitle }}</td>
-              <td>{{ session.startDateTime | date:'short' }}</td>
-              <td>{{ session.endDateTime | date:'short' }}</td>
-              <td>{{ session.location || 'N/A' }}</td>
-              <td>
-                <span class="status-pill" [ngClass]="getStatusClass(session.status)">
-                  {{ session.status }}
-                </span>
-              </td>
-            </tr>
-          </tbody>
-        </table>
+
+      <!-- Session Cards Grid -->
+      <div *ngIf="filteredSessions.length > 0" class="session-cards-grid">
+        <article
+          *ngFor="let session of pagedSessions"
+          class="session-card"
+          [class.session-card--has-link]="hasSessionLink(session)"
+          (click)="onSessionClicked(session)"
+        >
+          <div class="session-card__header">
+            <div class="session-card__icon" [class.session-card__icon--link]="hasSessionLink(session)">
+              <ng-container *ngIf="hasSessionLink(session)">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 10.5V6a3.75 3.75 0 1 0-7.5 0v4.5m11.356-1.993 1.263 12c.07.665-.45 1.243-1.119 1.243H4.25a1.125 1.125 0 0 1-1.12-1.243l1.264-12A1.125 1.125 0 0 1 5.513 7.5h12.974c.576 0 1.059.435 1.119 1.007ZM8.625 10.5a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm7.5 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Z" />
+                </svg>
+              </ng-container>
+              <ng-container *ngIf="!hasSessionLink(session)">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 0 1 2.25-2.25h13.5A2.25 2.25 0 0 1 21 7.5v11.25m-18 0A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75m-18 0v-7.5A2.25 2.25 0 0 1 5.25 9h13.5A2.25 2.25 0 0 1 21 11.25v7.5" />
+                </svg>
+              </ng-container>
+            </div>
+            <div class="session-card__titles">
+              <h3 class="session-card__title">{{ session.programTitle || 'Session' }}</h3>
+              <p class="session-card__meta" *ngIf="session.topicName">
+                {{ session.topicName }}
+              </p>
+              <span
+                class="sequence-pill session-card__seq"
+                *ngIf="session.sequenceOrder !== undefined && session.sequenceOrder !== null"
+              >
+                Session #{{ session.sequenceOrder }}
+              </span>
+            </div>
+            <span class="status-pill session-card__status" [ngClass]="getStatusClass(session.status)">
+              {{ session.status }}
+            </span>
+          </div>
+
+          <div class="session-card__body">
+            <div class="session-card__detail">
+              <span class="session-card__detail-label">Start</span>
+              <span class="session-card__detail-value">{{ session.startDateTime | date:'medium' }}</span>
+            </div>
+            <div class="session-card__detail">
+              <span class="session-card__detail-label">End</span>
+              <span class="session-card__detail-value">{{ session.endDateTime | date:'medium' }}</span>
+            </div>
+            <div class="session-card__detail" *ngIf="session.location && !hasSessionLink(session)">
+              <span class="session-card__detail-label">Location</span>
+              <span class="session-card__detail-value">{{ session.location }}</span>
+            </div>
+          </div>
+
+          <!-- Session link - prominent and clear -->
+          <div class="session-card__footer">
+            <ng-container *ngIf="hasSessionLink(session); else noSessionLink">
+              <button
+                type="button"
+                class="session-card__join-btn"
+                (click)="openSessionLink(session); $event.stopPropagation()"
+              >
+                <svg class="session-card__join-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 6H5.25A2.25 2.25 0 0 0 3 8.25v10.5A2.25 2.25 0 0 0 5.25 21h10.5A2.25 2.25 0 0 0 18 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25" />
+                </svg>
+                <span>Join session</span>
+              </button>
+              <p class="session-card__link-url" [title]="session.location">{{ session.location }}</p>
+            </ng-container>
+            <ng-template #noSessionLink>
+              <button
+                type="button"
+                class="session-card__view-materials-btn"
+                (click)="onSessionClicked(session); $event.stopPropagation()"
+              >
+                View materials
+              </button>
+            </ng-template>
+          </div>
+        </article>
+      </div>
+
+      <!-- Session Pagination -->
+      <div *ngIf="filteredSessions.length > sessionPageSize" class="pagination-bar">
+        <div class="pagination-info">
+          Showing
+          <strong>{{ sessionPageIndex * sessionPageSize + 1 }}</strong>
+          –
+          <strong>{{ Math.min((sessionPageIndex + 1) * sessionPageSize, filteredSessions.length) }}</strong>
+          of
+          <strong>{{ filteredSessions.length }}</strong>
+          sessions
+        </div>
+        <div class="pagination-controls">
+          <button
+            type="button"
+            class="pagination-button"
+            [disabled]="sessionPageIndex === 0"
+            (click)="changeSessionPage(-1)"
+          >
+            ‹ Prev
+          </button>
+          <button
+            type="button"
+            class="pagination-button"
+            *ngFor="let _ of [].constructor(totalSessionPages); let i = index"
+            [class.pagination-button--active]="i === sessionPageIndex"
+            (click)="goToSessionPage(i)"
+          >
+            {{ i + 1 }}
+          </button>
+          <button
+            type="button"
+            class="pagination-button"
+            [disabled]="sessionPageIndex >= totalSessionPages - 1"
+            (click)="changeSessionPage(1)"
+          >
+            Next ›
+          </button>
+          <select
+            class="pagination-select"
+            [(ngModel)]="sessionPageSize"
+            (ngModelChange)="onSessionPageSizeChange()"
+          >
+            <option *ngFor="let size of sessionPageSizeOptions" [ngValue]="size">
+              {{ size }} / page
+            </option>
+          </select>
+        </div>
       </div>
     </div>
   </div>
@@ -283,25 +444,155 @@
         <p class="empty-state-title">No materials available</p>
         <p class="empty-state-text">This program has no materials yet.</p>
       </div>
-      <div *ngIf="selectedProgram && materials.length > 0" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        <div *ngFor="let material of materials" class="card">
-          <h3 class="font-semibold text-lg mb-2">{{ material.title }}</h3>
-          <p class="text-sm text-gray-600 mb-2" *ngIf="material.description">{{ material.description }}</p>
-          <div class="flex items-center justify-between mt-4">
-            <span class="status-pill" [ngClass]="material.isRequired ? 'status-pill--ongoing' : 'status-pill--default'">
-              {{ material.isRequired ? 'Required' : 'Optional' }}
-            </span>
-            <span class="text-xs text-gray-500">{{ material.materialType || 'N/A' }}</span>
+      <ng-container *ngIf="selectedProgram && materials.length > 0">
+        <!-- Material Filters -->
+        <div class="filter-bar">
+          <div class="filter-group filter-group--wide">
+            <label class="filter-label">Search</label>
+            <input
+              type="text"
+              class="filter-input"
+              placeholder="Search by title, description, or type"
+              [(ngModel)]="materialFilter.search"
+              (ngModelChange)="onMaterialFilterChange()"
+            />
           </div>
-          <button 
-            *ngIf="material.filePath"
-            (click)="downloadMaterial(material)"
-            class="btn-primary mt-3 w-full"
-          >
-            Download
-          </button>
+          <div class="filter-group">
+            <label class="filter-label">Type</label>
+            <select
+              class="filter-select"
+              [(ngModel)]="materialFilter.materialType"
+              (ngModelChange)="onMaterialFilterChange()"
+            >
+              <option value="ALL">All types</option>
+              <option *ngFor="let t of materialTypeOptions" [value]="t">
+                {{ t }}
+              </option>
+            </select>
+          </div>
+          <div class="filter-group">
+            <label class="filter-label">Required</label>
+            <select
+              class="filter-select"
+              [(ngModel)]="materialFilter.isRequired"
+              (ngModelChange)="onMaterialFilterChange()"
+            >
+              <option value="ALL">All</option>
+              <option value="REQUIRED">Required only</option>
+              <option value="OPTIONAL">Optional only</option>
+            </select>
+          </div>
+          <div class="filter-group">
+            <label class="filter-label">Sequence #</label>
+            <input
+              type="number"
+              class="filter-input"
+              placeholder="Display order"
+              [(ngModel)]="materialFilter.displayOrder"
+              (ngModelChange)="onMaterialFilterChange()"
+            />
+          </div>
         </div>
-      </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <article
+            *ngFor="let material of pagedMaterials"
+            class="card material-card"
+            (click)="openMaterialLink(material)"
+          >
+            <header class="material-card__header">
+              <div class="material-card__icon">
+                <span *ngIf="material.materialType === 'PDF'">📄</span>
+                <span *ngIf="material.materialType === 'Video'">🎬</span>
+                <span *ngIf="material.materialType === 'Presentation'">📊</span>
+                <span *ngIf="material.materialType === 'Document'">📘</span>
+                <span *ngIf="material.materialType === 'Link'">🔗</span>
+                <span *ngIf="!material.materialType">📁</span>
+              </div>
+              <div class="material-card__titles">
+                <h3 class="material-card__title">{{ material.title }}</h3>
+                <p class="material-card__meta">
+                  {{ material.materialType || 'Material' }}
+                  <span *ngIf="material.displayOrder !== undefined && material.displayOrder !== null">
+                    · Seq #{{ material.displayOrder }}
+                  </span>
+                </p>
+              </div>
+              <span
+                class="status-pill material-pill"
+                [ngClass]="material.isRequired ? 'status-pill--ongoing' : 'status-pill--default'"
+              >
+                {{ material.isRequired ? 'Required' : 'Optional' }}
+              </span>
+            </header>
+            <p class="material-card__description" *ngIf="material.description">
+              {{ material.description }}
+            </p>
+            <footer class="material-card__footer">
+              <button
+                type="button"
+                class="btn-primary btn-primary--ghost"
+                *ngIf="material.filePath"
+                (click)="downloadMaterial(material); $event.stopPropagation()"
+              >
+                Open material
+              </button>
+              <span *ngIf="!material.filePath" class="text-xs text-gray-400">
+                No file attached
+              </span>
+            </footer>
+          </article>
+        </div>
+
+        <!-- Material Pagination -->
+        <div *ngIf="filteredMaterials.length > materialPageSize" class="pagination-bar">
+          <div class="pagination-info">
+            Showing
+            <strong>{{ materialPageIndex * materialPageSize + 1 }}</strong>
+            –
+            <strong>{{ Math.min((materialPageIndex + 1) * materialPageSize, filteredMaterials.length) }}</strong>
+            of
+            <strong>{{ filteredMaterials.length }}</strong>
+            materials
+          </div>
+          <div class="pagination-controls">
+            <button
+              type="button"
+              class="pagination-button"
+              [disabled]="materialPageIndex === 0"
+              (click)="changeMaterialPage(-1)"
+            >
+              ‹ Prev
+            </button>
+            <button
+              type="button"
+              class="pagination-button"
+              *ngFor="let _ of [].constructor(totalMaterialPages); let i = index"
+              [class.pagination-button--active]="i === materialPageIndex"
+              (click)="goToMaterialPage(i)"
+            >
+              {{ i + 1 }}
+            </button>
+            <button
+              type="button"
+              class="pagination-button"
+              [disabled]="materialPageIndex >= totalMaterialPages - 1"
+              (click)="changeMaterialPage(1)"
+            >
+              Next ›
+            </button>
+            <select
+              class="pagination-select"
+              [(ngModel)]="materialPageSize"
+              (ngModelChange)="onMaterialPageSizeChange()"
+            >
+              <option *ngFor="let size of materialPageSizeOptions" [ngValue]="size">
+                {{ size }} / page
+              </option>
+            </select>
+          </div>
+        </div>
+      </ng-container>
     </div>
   </div>
 

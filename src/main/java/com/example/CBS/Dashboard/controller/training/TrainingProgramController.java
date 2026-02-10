@@ -21,7 +21,7 @@ public class TrainingProgramController {
     private final TrainingProgramService trainingProgramService;
     
     @PostMapping
-    @PreAuthorize("hasAnyRole('ROLE_TRAINING_ADMIN', 'ROLE_ADMIN')")
+    @PreAuthorize("hasAnyAuthority('ROLE_TRAINING_ADMIN', 'ROLE_ADMIN')")
     public ResponseEntity<TrainingProgramDto> createProgram(
             @Valid @RequestBody CreateTrainingProgramRequest request,
             Authentication authentication) {
@@ -83,7 +83,7 @@ public class TrainingProgramController {
     }
     
     @PutMapping("/{id}")
-    @PreAuthorize("hasAnyRole('ROLE_TRAINING_ADMIN', 'ROLE_ADMIN')")
+    @PreAuthorize("hasAnyAuthority('ROLE_TRAINING_ADMIN', 'ROLE_ADMIN')")
     public ResponseEntity<TrainingProgramDto> updateProgram(
             @PathVariable Long id,
             @Valid @RequestBody CreateTrainingProgramRequest request) {
@@ -92,7 +92,7 @@ public class TrainingProgramController {
     }
     
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasAnyRole('ROLE_TRAINING_ADMIN', 'ROLE_ADMIN')")
+    @PreAuthorize("hasAnyAuthority('ROLE_TRAINING_ADMIN', 'ROLE_ADMIN')")
     public ResponseEntity<Void> deleteProgram(@PathVariable Long id) {
         try {
             System.out.println("DELETE /api/training/programs/" + id + " called");
@@ -107,7 +107,7 @@ public class TrainingProgramController {
     }
     
     @DeleteMapping("/{programId}/students/{studentId}")
-    @PreAuthorize("hasAnyRole('ROLE_TEACHER', 'ROLE_TRAINING_ADMIN', 'ROLE_ADMIN')")
+    @PreAuthorize("hasAnyAuthority('ROLE_TEACHER', 'ROLE_TRAINING_ADMIN', 'ROLE_ADMIN')")
     public ResponseEntity<Void> removeStudentFromProgram(
             @PathVariable Long programId,
             @PathVariable Long studentId) {

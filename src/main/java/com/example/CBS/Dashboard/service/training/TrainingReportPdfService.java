@@ -124,11 +124,18 @@ public class TrainingReportPdfService {
         Table headerTable = new Table(UnitValue.createPercentArray(new float[]{1, 2, 1})).useAllAvailableWidth();
         headerTable.setMarginBottom(15);
 
-        // Left cell: DAB Logo
+        // Left cell: DAB Logo (same logo as login/header: assets/DAB.png)
         Cell logoCell = new Cell().setBorder(Border.NO_BORDER);
         try {
             Resource logoResource = null;
-            String[] logoPaths = {"static/DAB.png", "DAB.png", "classpath:static/DAB.png", "classpath:DAB.png"};
+            String[] logoPaths = {
+                    "static/assets/DAB.png",
+                    "classpath:static/assets/DAB.png",
+                    "static/DAB.png",
+                    "classpath:static/DAB.png",
+                    "DAB.png",
+                    "classpath:DAB.png"
+            };
             for (String path : logoPaths) {
                 try {
                     logoResource = new ClassPathResource(path);
@@ -172,6 +179,15 @@ public class TrainingReportPdfService {
                                            List<AttendeeSignatureDto> signatures) {
         document.add(new Paragraph("_____________________________________________________")
                 .setMarginTop(15).setMarginBottom(15));
+
+        // CFO signature block (uses a shared CFO signature image when available)
+        document.add(new Paragraph("CFO's Signature:").setBold().setFontSize(11).setMarginBottom(4));
+        if (!addCfoSignatureImage(document)) {
+            // Fallback line if CFO signature image is not configured
+            document.add(new Paragraph("_________________________").setFontSize(10).setMarginBottom(8));
+        } else {
+            document.add(new Paragraph("").setMarginBottom(8));
+        }
 
         document.add(new Paragraph("Guideline").setBold().setFontSize(12).setMarginBottom(8));
         String[] guidelines = {
@@ -221,6 +237,46 @@ public class TrainingReportPdfService {
 
         document.add(new Paragraph("Admin is Responsible to send a copy of this form to HR Training Center")
                 .setFontSize(8).setFontColor(new DeviceRgb(100, 100, 100)).setTextAlignment(TextAlignment.RIGHT));
+    }
+
+    /**
+     * Adds the CFO signature image to the document if a configured image is available on the classpath.
+     * Returns true when an image was added, false when not found.
+     */
+    private boolean addCfoSignatureImage(Document document) {
+        try {
+            Resource sigResource = null;
+            String[] sigPaths = {
+                    "static/CFO_SIGNATURE.png",
+                    "classpath:static/CFO_SIGNATURE.png",
+                    "static/assets/CFO_SIGNATURE.png",
+                    "classpath:static/assets/CFO_SIGNATURE.png",
+                    "CFO_SIGNATURE.png",
+                    "classpath:CFO_SIGNATURE.png"
+            };
+
+            for (String path : sigPaths) {
+                try {
+                    sigResource = new ClassPathResource(path);
+                    if (sigResource.exists() && sigResource.isReadable()) {
+                        break;
+                    }
+                } catch (Exception ignored) { }
+            }
+
+            if (sigResource != null && sigResource.exists()) {
+                byte[] sigBytes = sigResource.getInputStream().readAllBytes();
+                Image sigImg = new Image(ImageDataFactory.create(sigBytes));
+                sigImg.setWidth(100);
+                sigImg.setHeight(40);
+                sigImg.setHorizontalAlignment(HorizontalAlignment.LEFT);
+                document.add(sigImg);
+                return true;
+            }
+        } catch (Exception ignored) {
+            // If anything fails we simply fall back to the placeholder line
+        }
+        return false;
     }
 
     /** Comprehensive Single Session Report - student engagement, attendance, content coverage. */

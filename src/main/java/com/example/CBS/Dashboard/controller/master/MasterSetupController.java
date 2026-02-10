@@ -176,7 +176,7 @@ public class MasterSetupController {
     
     // Coordinator endpoints
     @PostMapping("/coordinators")
-    @PreAuthorize("hasAnyRole('ROLE_TRAINING_ADMIN', 'ROLE_ADMIN')")
+    @PreAuthorize("hasAnyAuthority('ROLE_TRAINING_ADMIN', 'ROLE_ADMIN')")
     public ResponseEntity<CoordinatorDto> createCoordinator(
             @Valid @RequestBody CreateCoordinatorRequest request,
             Authentication authentication) {
@@ -186,7 +186,7 @@ public class MasterSetupController {
     }
     
     @GetMapping("/coordinators")
-    @PreAuthorize("hasAnyRole('ROLE_TRAINING_ADMIN', 'ROLE_ADMIN', 'ROLE_TRAINING')")
+    @PreAuthorize("hasAnyAuthority('ROLE_TRAINING_ADMIN', 'ROLE_ADMIN', 'ROLE_TRAINING')")
     public ResponseEntity<List<CoordinatorDto>> getAllCoordinators(
             @RequestParam(defaultValue = "true") boolean activeOnly) {
         List<CoordinatorDto> coordinators = masterSetupService.getAllCoordinators(activeOnly);
@@ -194,7 +194,7 @@ public class MasterSetupController {
     }
     
     @PutMapping("/coordinators/{id}")
-    @PreAuthorize("hasAnyRole('ROLE_TRAINING_ADMIN', 'ROLE_ADMIN')")
+    @PreAuthorize("hasAnyAuthority('ROLE_TRAINING_ADMIN', 'ROLE_ADMIN')")
     public ResponseEntity<CoordinatorDto> updateCoordinator(
             @PathVariable Long id,
             @Valid @RequestBody CreateCoordinatorRequest request) {
@@ -203,7 +203,7 @@ public class MasterSetupController {
     }
     
     @DeleteMapping("/coordinators/{id}")
-    @PreAuthorize("hasAnyRole('ROLE_TRAINING_ADMIN', 'ROLE_ADMIN')")
+    @PreAuthorize("hasAnyAuthority('ROLE_TRAINING_ADMIN', 'ROLE_ADMIN')")
     public ResponseEntity<Void> deleteCoordinator(@PathVariable Long id) {
         masterSetupService.deleteCoordinator(id);
         return ResponseEntity.noContent().build();
@@ -211,7 +211,7 @@ public class MasterSetupController {
     
     // Student/Teacher endpoints
     @PostMapping("/student-teachers")
-    @PreAuthorize("hasAnyRole('ROLE_TRAINING_ADMIN', 'ROLE_ADMIN')")
+    @PreAuthorize("hasAnyAuthority('ROLE_TRAINING_ADMIN', 'ROLE_ADMIN')")
     public ResponseEntity<StudentTeacherDto> createStudentTeacher(
             @Valid @RequestBody CreateStudentTeacherRequest request,
             Authentication authentication) {
@@ -221,7 +221,7 @@ public class MasterSetupController {
     }
     
     @GetMapping("/student-teachers")
-    @PreAuthorize("hasAnyRole('ROLE_TRAINING_ADMIN', 'ROLE_ADMIN', 'ROLE_TRAINING')")
+    @PreAuthorize("hasAnyAuthority('ROLE_TRAINING_ADMIN', 'ROLE_ADMIN', 'ROLE_TRAINING')")
     public ResponseEntity<List<StudentTeacherDto>> getAllStudentTeachers(
             @RequestParam(defaultValue = "true") boolean activeOnly,
             @RequestParam(required = false) String type) {
@@ -230,7 +230,7 @@ public class MasterSetupController {
     }
     
     @PutMapping("/student-teachers/{id}")
-    @PreAuthorize("hasAnyRole('ROLE_TRAINING_ADMIN', 'ROLE_ADMIN')")
+    @PreAuthorize("hasAnyAuthority('ROLE_TRAINING_ADMIN', 'ROLE_ADMIN')")
     public ResponseEntity<StudentTeacherDto> updateStudentTeacher(
             @PathVariable Long id,
             @Valid @RequestBody CreateStudentTeacherRequest request) {
@@ -239,7 +239,7 @@ public class MasterSetupController {
     }
     
     @DeleteMapping("/student-teachers/{id}")
-    @PreAuthorize("hasAnyRole('ROLE_TRAINING_ADMIN', 'ROLE_ADMIN')")
+    @PreAuthorize("hasAnyAuthority('ROLE_TRAINING_ADMIN', 'ROLE_ADMIN')")
     public ResponseEntity<Void> deleteStudentTeacher(@PathVariable Long id) {
         masterSetupService.deleteStudentTeacher(id);
         return ResponseEntity.noContent().build();

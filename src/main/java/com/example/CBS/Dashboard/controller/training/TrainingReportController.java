@@ -30,7 +30,7 @@ public class TrainingReportController {
     private final TrainingReportPdfService trainingReportPdfService;
 
     @GetMapping("/teacher")
-    @PreAuthorize("hasAnyRole('ROLE_TEACHER', 'ROLE_TRAINING_ADMIN', 'ROLE_ADMIN')")
+    @PreAuthorize("hasAnyAuthority('ROLE_TEACHER', 'ROLE_TRAINING_ADMIN', 'ROLE_ADMIN')")
     public ResponseEntity<List<SessionAttendanceReportDto>> getTeacherReport(
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to,
@@ -44,7 +44,7 @@ public class TrainingReportController {
     }
 
     @GetMapping("/teacher/pdf")
-    @PreAuthorize("hasAnyRole('ROLE_TEACHER', 'ROLE_TRAINING_ADMIN', 'ROLE_ADMIN')")
+    @PreAuthorize("hasAnyAuthority('ROLE_TEACHER', 'ROLE_TRAINING_ADMIN', 'ROLE_ADMIN')")
     public ResponseEntity<Resource> downloadTeacherReportPdf(
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to,
@@ -69,7 +69,7 @@ public class TrainingReportController {
     }
 
     @GetMapping("/session/{sessionId}")
-    @PreAuthorize("hasAnyRole('ROLE_TEACHER', 'ROLE_TRAINING_ADMIN', 'ROLE_ADMIN')")
+    @PreAuthorize("hasAnyAuthority('ROLE_TEACHER', 'ROLE_TRAINING_ADMIN', 'ROLE_ADMIN')")
     public ResponseEntity<SingleSessionReportDto> getSingleSessionReport(
             @PathVariable Long sessionId,
             Authentication authentication) {
@@ -81,7 +81,7 @@ public class TrainingReportController {
     }
 
     @GetMapping("/session/{sessionId}/pdf")
-    @PreAuthorize("hasAnyRole('ROLE_TEACHER', 'ROLE_TRAINING_ADMIN', 'ROLE_ADMIN')")
+    @PreAuthorize("hasAnyAuthority('ROLE_TEACHER', 'ROLE_TRAINING_ADMIN', 'ROLE_ADMIN')")
     public ResponseEntity<Resource> downloadSingleSessionReportPdf(
             @PathVariable Long sessionId,
             Authentication authentication) throws IOException {
@@ -99,7 +99,7 @@ public class TrainingReportController {
     }
 
     @GetMapping("/teacher/grouped")
-    @PreAuthorize("hasAnyRole('ROLE_TEACHER', 'ROLE_TRAINING_ADMIN', 'ROLE_ADMIN')")
+    @PreAuthorize("hasAnyAuthority('ROLE_TEACHER', 'ROLE_TRAINING_ADMIN', 'ROLE_ADMIN')")
     public ResponseEntity<DateBasedGroupedReportDto> getDateBasedGroupedReport(
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to,
@@ -112,7 +112,7 @@ public class TrainingReportController {
     }
 
     @GetMapping("/teacher/grouped/pdf")
-    @PreAuthorize("hasAnyRole('ROLE_TEACHER', 'ROLE_TRAINING_ADMIN', 'ROLE_ADMIN')")
+    @PreAuthorize("hasAnyAuthority('ROLE_TEACHER', 'ROLE_TRAINING_ADMIN', 'ROLE_ADMIN')")
     public ResponseEntity<Resource> downloadDateBasedGroupedReportPdf(
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to,

@@ -10,7 +10,8 @@ import {
   TrainingSession, 
   TrainingMaterial,
   Enrollment,
-  Attendance
+  Attendance,
+  MaterialType
 } from '../../../core/models/training';
 import { User } from '../../../core/models';
 import { SignaturePadComponent } from '../shared/signature-pad/signature-pad.component';
@@ -30,6 +31,9 @@ export class StudentDashboardComponent implements OnInit {
   private authService = inject(AuthService);
   private userProfileService = inject(UserProfileService);
   private toastr = inject(ToastrService);
+
+  // Expose Math for template expressions (e.g., pagination ranges)
+  Math = Math;
 
   currentUser: User | null = null;
   activeTab: 'overview' | 'programs' | 'sessions' | 'materials' | 'attendance' | 'signature' | 'progress' = 'overview';
@@ -62,7 +66,43 @@ export class StudentDashboardComponent implements OnInit {
   selectedAttendanceForAck: Attendance | null = null;
   acknowledgeMaterials: TrainingMaterial[] = [];
   acknowledgeLoading = false;
-  
+
+  // Sessions: filters & pagination
+  sessionFilter = {
+    search: '',
+    status: 'ALL' as 'ALL' | 'SCHEDULED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED' | 'POSTPONED',
+    programId: null as number | null,
+    sequenceOrder: null as number | null
+  };
+  sessionStatusOptions: Array<'SCHEDULED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED' | 'POSTPONED'> = [
+    'SCHEDULED',
+    'IN_PROGRESS',
+    'COMPLETED',
+    'CANCELLED',
+    'POSTPONED'
+  ];
+  sessionPageIndex = 0;
+  sessionPageSize = 6;
+  sessionPageSizeOptions = [6, 12, 24];
+
+  // Materials: filters & pagination
+  materialFilter = {
+    search: '',
+    materialType: 'ALL' as 'ALL' | MaterialType | string,
+    isRequired: 'ALL' as 'ALL' | 'REQUIRED' | 'OPTIONAL',
+    displayOrder: null as number | null
+  };
+  materialTypeOptions: string[] = [
+    MaterialType.PDF,
+    MaterialType.VIDEO,
+    MaterialType.DOCUMENT,
+    MaterialType.LINK,
+    MaterialType.PRESENTATION
+  ];
+  materialPageIndex = 0;
+  materialPageSize = 6;
+  materialPageSizeOptions = [6, 12, 24];
+
   loading = false;
 
   ngOnInit(): void {
@@ -189,6 +229,171 @@ export class StudentDashboardComponent implements OnInit {
     return attendance?.status || 'NOT_MARKED';
   }
 
+  // ---------- Sessions: filtering & pagination ----------
+
+  get filteredSessions(): TrainingSession[] {
+    let data = [...(this.sessions || [])];
+    const { search, status, programId, sequenceOrder } = this.sessionFilter;
+
+    if (programId) {
+      data = data.filter(s => s.programId === programId);
+    }
+    if (status && status !== 'ALL') {
+      data = data.filter(s => s.status === status);
+    }
+    if (sequenceOrder !== null && sequenceOrder !== undefined && sequenceOrder !== ('' as any)) {
+      const seq = Number(sequenceOrder);
+      if (!Number.isNaN(seq)) {
+        data = data.filter(s => (s.sequenceOrder ?? null) === seq);
+      }
+    }
+    if (search && search.trim()) {
+      const term = search.toLowerCase();
+      data = data.filter(s =>
+        (s.programTitle || '').toLowerCase().includes(term) ||
+        (s.topicName || '').toLowerCase().includes(term) ||
+        (s.location || '').toLowerCase().includes(term)
+      );
+    }
+
+    // Sort by sequence order (desc), then by start date (desc)
+    return data.sort((a, b) => {
+      const aSeq = a.sequenceOrder ?? 0;
+      const bSeq = b.sequenceOrder ?? 0;
+      if (aSeq !== bSeq) {
+        return bSeq - aSeq;
+      }
+      const aTime = a.startDateTime ? new Date(a.startDateTime).getTime() : 0;
+      const bTime = b.startDateTime ? new Date(b.startDateTime).getTime() : 0;
+      return bTime - aTime;
+    });
+  }
+
+  get pagedSessions(): TrainingSession[] {
+    const start = this.sessionPageIndex * this.sessionPageSize;
+    return this.filteredSessions.slice(start, start + this.sessionPageSize);
+  }
+
+  get totalSessionPages(): number {
+    const total = this.filteredSessions.length;
+    return total === 0 ? 1 : Math.ceil(total / this.sessionPageSize);
+  }
+
+  onSessionFilterChange(): void {
+    this.sessionPageIndex = 0;
+  }
+
+  onSessionPageSizeChange(): void {
+    this.sessionPageIndex = 0;
+  }
+
+  goToSessionPage(index: number): void {
+    if (index < 0 || index >= this.totalSessionPages) return;
+    this.sessionPageIndex = index;
+  }
+
+  changeSessionPage(delta: number): void {
+    this.goToSessionPage(this.sessionPageIndex + delta);
+  }
+
+  onSessionClicked(session: TrainingSession): void {
+    // Treat clicking a session as navigating to its learning content:
+    // focus the related program and open its materials.
+    const program = this.programs.find(p => p.id === session.programId) || null;
+    if (program) {
+      this.selectedProgram = program;
+      this.activeTab = 'materials';
+      this.loadMaterials(program.id);
+    }
+  }
+
+  hasSessionLink(session: TrainingSession): boolean {
+    return !!(session.location && (session.location.startsWith('http://') || session.location.startsWith('https://')));
+  }
+
+  openSessionLink(session: TrainingSession): void {
+    if (this.hasSessionLink(session)) {
+      window.open(session.location!, '_blank');
+    }
+  }
+
+  // ---------- Materials: filtering & pagination ----------
+
+  get filteredMaterials(): TrainingMaterial[] {
+    let data = [...(this.materials || [])];
+
+    if (this.selectedProgram) {
+      data = data.filter(m => m.programId === this.selectedProgram!.id);
+    }
+
+    const { search, materialType, isRequired, displayOrder } = this.materialFilter;
+
+    if (materialType && materialType !== 'ALL') {
+      data = data.filter(m => (m.materialType || '') === materialType);
+    }
+
+    if (isRequired === 'REQUIRED') {
+      data = data.filter(m => !!m.isRequired);
+    } else if (isRequired === 'OPTIONAL') {
+      data = data.filter(m => !m.isRequired);
+    }
+
+    if (displayOrder !== null && displayOrder !== undefined && displayOrder !== ('' as any)) {
+      const order = Number(displayOrder);
+      if (!Number.isNaN(order)) {
+        data = data.filter(m => (m.displayOrder ?? null) === order);
+      }
+    }
+
+    if (search && search.trim()) {
+      const term = search.toLowerCase();
+      data = data.filter(m =>
+        m.title.toLowerCase().includes(term) ||
+        (m.description || '').toLowerCase().includes(term) ||
+        (m.materialType || '').toLowerCase().includes(term)
+      );
+    }
+
+    // Sort by display order (desc) then created date (desc)
+    return data.sort((a, b) => {
+      const aOrder = a.displayOrder ?? 0;
+      const bOrder = b.displayOrder ?? 0;
+      if (aOrder !== bOrder) {
+        return bOrder - aOrder;
+      }
+      const aTime = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+      const bTime = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+      return bTime - aTime;
+    });
+  }
+
+  get pagedMaterials(): TrainingMaterial[] {
+    const start = this.materialPageIndex * this.materialPageSize;
+    return this.filteredMaterials.slice(start, start + this.materialPageSize);
+  }
+
+  get totalMaterialPages(): number {
+    const total = this.filteredMaterials.length;
+    return total === 0 ? 1 : Math.ceil(total / this.materialPageSize);
+  }
+
+  onMaterialFilterChange(): void {
+    this.materialPageIndex = 0;
+  }
+
+  onMaterialPageSizeChange(): void {
+    this.materialPageIndex = 0;
+  }
+
+  goToMaterialPage(index: number): void {
+    if (index < 0 || index >= this.totalMaterialPages) return;
+    this.materialPageIndex = index;
+  }
+
+  changeMaterialPage(delta: number): void {
+    this.goToMaterialPage(this.materialPageIndex + delta);
+  }
+
   // ---------- Overview helpers ----------
 
   get totalPrograms(): number {
@@ -216,6 +421,8 @@ export class StudentDashboardComponent implements OnInit {
       'DRAFT': 'bg-gray-100 text-gray-800',
       'PUBLISHED': 'bg-purple-100 text-purple-800',
       'CANCELLED': 'bg-red-100 text-red-800',
+      'SCHEDULED': 'bg-blue-100 text-blue-800',
+      'POSTPONED': 'bg-yellow-100 text-yellow-800',
       'CONFIRMED': 'bg-green-100 text-green-800',
       'PENDING': 'bg-yellow-100 text-yellow-800',
       'IN_PROGRESS': 'bg-blue-100 text-blue-800',
@@ -233,6 +440,14 @@ export class StudentDashboardComponent implements OnInit {
     if (tab === 'overview') {
       this.loadPrograms();
       this.loadAttendance();
+    } else if (tab === 'materials') {
+      // When student opens Materials, automatically select a program and load its materials
+      if (this.selectedProgram?.id) {
+        this.loadMaterials(this.selectedProgram.id);
+      } else if (this.programs.length > 0) {
+        this.selectedProgram = this.programs[0];
+        this.loadMaterials(this.selectedProgram.id);
+      }
     } else if (tab === 'sessions') {
       this.loadSessions();
     } else if (tab === 'attendance') {

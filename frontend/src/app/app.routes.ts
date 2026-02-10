@@ -9,6 +9,7 @@ import { TrainingAdminSettingsComponent } from './features/training/training-adm
 import { TrainingMasterSettingsComponent } from './features/training/training-master-settings/training-master-settings.component';
 import { TeacherDashboardComponent } from './features/training/teacher-dashboard/teacher-dashboard.component';
 import { StudentDashboardComponent } from './features/training/student-dashboard/student-dashboard.component';
+import { CfoTrainingDashboardComponent } from './features/training/cfo-dashboard/cfo-dashboard.component';
 import { DrillTestingComponent } from './features/drill-testing/drill-testing.component';
 import { DailyReportComponent } from './features/daily-report/daily-report.component';
 import { UnauthorizedComponent } from './features/auth/unauthorized/unauthorized.component';
@@ -67,6 +68,11 @@ export const routes: Routes = [
         path: 'training/student-dashboard',
         component: StudentDashboardComponent,
         data: { roles: ['ROLE_STUDENT', 'ROLE_TRAINING_ADMIN', 'ROLE_ADMIN'] }
+      },
+      {
+        path: 'training/cfo-dashboard',
+        component: CfoTrainingDashboardComponent,
+        data: { roles: ['ROLE_CFO'] }
       },
       {
         path: 'drill-testing',

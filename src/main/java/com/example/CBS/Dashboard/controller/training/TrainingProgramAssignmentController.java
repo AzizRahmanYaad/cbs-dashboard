@@ -13,14 +13,13 @@ import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/training/programs/assignments")
-@CrossOrigin(origins = "*")
 @RequiredArgsConstructor
 public class TrainingProgramAssignmentController {
     
     private final TrainingProgramService trainingProgramService;
     
     @PostMapping("/teacher")
-    @PreAuthorize("hasAnyRole('ROLE_TEACHER', 'ROLE_TRAINING_ADMIN', 'ROLE_ADMIN')")
+    @PreAuthorize("hasAnyAuthority('ROLE_TEACHER', 'ROLE_TRAINING_ADMIN', 'ROLE_ADMIN')")
     public ResponseEntity<TrainingProgramDto> assignTeacher(
             @Valid @RequestBody AssignTeacherRequest request,
             Authentication authentication) {
@@ -33,7 +32,7 @@ public class TrainingProgramAssignmentController {
     }
     
     @PostMapping("/students")
-    @PreAuthorize("hasAnyRole('ROLE_TEACHER', 'ROLE_TRAINING_ADMIN', 'ROLE_ADMIN')")
+    @PreAuthorize("hasAnyAuthority('ROLE_TEACHER', 'ROLE_TRAINING_ADMIN', 'ROLE_ADMIN')")
     public ResponseEntity<Void> assignStudents(
             @Valid @RequestBody AssignStudentRequest request,
             Authentication authentication) {

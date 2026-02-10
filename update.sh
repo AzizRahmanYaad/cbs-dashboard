@@ -65,7 +65,8 @@ stop_all_processes() {
     # Stop backend processes (Gradle/Spring Boot)
     print_info "Stopping backend processes..."
     pkill -f "gradlew.*bootRun" 2>/dev/null || true
-    pkill -f "java.*cbs-dashboard" 2>/dev/null || true
+    # Kill any Java process running the CBS Dashboard jar (case-insensitive)
+    pkill -fi "cbs-dashboard" 2>/dev/null || true
     # Also ensure nothing is left listening on backend port 8090
     if command -v lsof &> /dev/null; then
         if lsof -ti:8090 &> /dev/null; then
@@ -366,6 +367,14 @@ start_backend() {
     print_header "Starting Backend"
     
     # Prefer Maven-based startup if present, fall back to Gradle jar if present
+    # If something is already listening on 8090, assume backend is already running and don't treat as a hard error.
+    if command -v ss &> /dev/null || command -v netstat &> /dev/null; then
+        if ss -ltnp 2>/dev/null | grep -q ":8090" || netstat -tuln 2>/dev/null | grep -q ":8090 "; then
+            print_warning "Port 8090 is already in use. Assuming CBS backend is already running and skipping new start."
+            return 0
+        fi
+    fi
+
     if [ -f "pom.xml" ] && [ -x "./mvnw" ]; then
         print_info "Starting Spring Boot backend with Maven on port 8090 (accessible on all interfaces)..."
         SPRING_PROFILES_ACTIVE=dev ./mvnw spring-boot:run > /tmp/backend.log 2>&1 &

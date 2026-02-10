@@ -4,8 +4,10 @@
       <div class="logo-container">
         <img [src]="logoPath" alt="Da Afghanistan Bank logo" class="bank-logo" />
       </div>
-      <h1 class="app-title">CFO Administrative Suite</h1>
-      <p class="app-subtitle">Secure access</p>
+      <div class="logo-text">
+        <h1 class="app-title">CFO Administrative Suite</h1>
+        <p class="app-subtitle">Secure access</p>
+      </div>
     </div>
 
     <form [formGroup]="loginForm" (ngSubmit)="onSubmit()" class="login-form">
@@ -84,6 +86,5 @@
         </span>
       </button>
     </form>
-
   </div>
 </div>

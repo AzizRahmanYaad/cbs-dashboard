@@ -22,7 +22,7 @@ public class AttendanceController {
     private final AttendanceService attendanceService;
 
     @PostMapping("/mark")
-    @PreAuthorize("hasAnyRole('ROLE_TEACHER', 'ROLE_TRAINING_ADMIN', 'ROLE_ADMIN')")
+    @PreAuthorize("hasAnyAuthority('ROLE_TEACHER', 'ROLE_TRAINING_ADMIN', 'ROLE_ADMIN')")
     public ResponseEntity<Void> markAttendance(
             @Valid @RequestBody MarkAttendanceRequest request,
             Authentication authentication) {

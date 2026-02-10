@@ -1,0 +1,272 @@
+<div class="cfo-dashboard-container">
+  <header class="cfo-header">
+    <div>
+      <h1 class="page-title">CFO Training Analytics</h1>
+      <p class="page-subtitle">
+        Executive view of training performance, attendance, and process efficiency across the organization.
+      </p>
+    </div>
+    <form [formGroup]="filterForm" class="filters-shell" (ngSubmit)="refresh()">
+      <div class="filters-fields">
+        <div class="filter-field">
+          <label class="filter-label">From</label>
+          <input type="date" class="filter-input" formControlName="from" />
+        </div>
+        <div class="filter-field">
+          <label class="filter-label">To</label>
+          <input type="date" class="filter-input" formControlName="to" />
+        </div>
+      </div>
+      <button class="btn-refresh" type="submit" [disabled]="loading">
+        <span *ngIf="!loading">Refresh</span>
+        <span *ngIf="loading" class="btn-refresh__spinner"></span>
+      </button>
+    </form>
+  </header>
+
+  <section *ngIf="summary as s" class="kpi-grid">
+    <article class="kpi-card kpi-card--primary">
+      <div class="kpi-card__label">Total Programs</div>
+      <div class="kpi-card__value">{{ s.totalPrograms }}</div>
+      <div class="kpi-card__meta">
+        <span>{{ s.activePrograms }} active</span>
+        <span>·</span>
+        <span>{{ s.completedPrograms }} completed</span>
+      </div>
+    </article>
+
+    <article class="kpi-card">
+      <div class="kpi-card__label">Sessions Completion</div>
+      <div class="kpi-card__value">{{ s.sessionCompletionRate | number:'1.0-1' }}%</div>
+      <div class="kpi-card__trend" [ngClass]="'trend--' + getTrendDirection('completion')">
+        <span class="trend-icon"></span>
+        <span>Completion trend</span>
+      </div>
+    </article>
+
+    <article class="kpi-card">
+      <div class="kpi-card__label">Student Attendance Rate</div>
+      <div class="kpi-card__value">{{ s.studentAttendanceRate | number:'1.0-1' }}%</div>
+      <div class="kpi-card__trend" [ngClass]="'trend--' + getTrendDirection('attendance')">
+        <span class="trend-icon"></span>
+        <span>Attendance trend</span>
+      </div>
+    </article>
+
+    <article class="kpi-card">
+      <div class="kpi-card__label">Training Utilization</div>
+      <div class="kpi-card__value">{{ s.trainingUtilizationRate | number:'1.0-1' }}%</div>
+      <div class="kpi-card__meta">
+        <span>Operational efficiency score:</span>
+        <span class="badge-pill">{{ s.operationalEfficiencyScore | number:'1.0-1' }}%</span>
+      </div>
+    </article>
+
+    <article class="kpi-card">
+      <div class="kpi-card__label">Underperforming Programs</div>
+      <div class="kpi-card__value">{{ s.underperformingPrograms || 0 }}</div>
+      <div class="kpi-card__meta">
+        <span>Delayed / cancelled sessions:</span>
+        <span class="badge-pill badge-pill--warning">{{ s.delayedOrCancelledSessions || 0 }}</span>
+      </div>
+    </article>
+
+    <article class="kpi-card">
+      <div class="kpi-card__label">Material Engagement Index</div>
+      <div class="kpi-card__value">{{ s.materialEngagementScore | number:'1.0-1' }}%</div>
+      <div class="kpi-card__meta">
+        <span *ngIf="s.averageCompletionTimeDays != null">
+          Avg completion time: {{ s.averageCompletionTimeDays }} days
+        </span>
+        <span *ngIf="s.averageCompletionTimeDays == null">
+          Completion timeline: not yet established
+        </span>
+      </div>
+    </article>
+  </section>
+
+  <section class="main-grid" *ngIf="dashboard">
+    <!-- Program / Session performance -->
+    <article class="panel">
+      <header class="panel__header">
+        <h2 class="panel__title">Program &amp; Session Performance</h2>
+        <p class="panel__subtitle">
+          Completion and attendance effectiveness by training program.
+        </p>
+      </header>
+      <div class="panel__body">
+        <div *ngIf="topPrograms.length === 0" class="panel-empty">
+          <p>No programs found in the selected period.</p>
+        </div>
+        <div *ngIf="topPrograms.length > 0" class="program-bars">
+          <div *ngFor="let p of topPrograms" class="program-row">
+            <div class="program-row__meta">
+              <div class="program-row__title">
+                {{ p.programTitle }}
+              </div>
+              <div class="program-row__badge" *ngIf="p.departmentName">
+                {{ p.departmentName }}
+              </div>
+            </div>
+            <div class="program-row__metrics">
+              <div class="program-row__metric">
+                <span class="metric-label">Completion</span>
+                <div class="metric-bar">
+                  <div class="metric-bar__fill metric-bar__fill--completion" [style.width.%]="p.completionRate"></div>
+                </div>
+                <span class="metric-value">{{ p.completionRate | number:'1.0-1' }}%</span>
+              </div>
+              <div class="program-row__metric">
+                <span class="metric-label">Attendance</span>
+                <div class="metric-bar">
+                  <div class="metric-bar__fill metric-bar__fill--attendance" [style.width.%]="p.attendanceRate"></div>
+                </div>
+                <span class="metric-value">{{ p.attendanceRate | number:'1.0-1' }}%</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </article>
+
+    <!-- Attendance & Trend analytics -->
+    <article class="panel">
+      <header class="panel__header">
+        <h2 class="panel__title">Attendance &amp; Completion Trends</h2>
+        <p class="panel__subtitle">
+          Month-over-month view of attendance, completion and engagement.
+        </p>
+      </header>
+      <div class="panel__body">
+        <div *ngIf="performanceTrend.length === 0" class="panel-empty">
+          <p>Trend data will appear here once sessions are recorded in the selected period.</p>
+        </div>
+        <div *ngIf="performanceTrend.length > 0" class="trend-grid">
+          <div *ngFor="let point of performanceTrend" class="trend-row">
+            <div class="trend-row__period">{{ point.period }}</div>
+            <div class="trend-row__bars">
+              <div class="trend-bar">
+                <span class="trend-bar__label">Attendance</span>
+                <div class="trend-bar__track">
+                  <div class="trend-bar__fill trend-bar__fill--attendance" [style.width.%]="point.attendanceRate"></div>
+                </div>
+                <span class="trend-bar__value">{{ point.attendanceRate | number:'1.0-1' }}%</span>
+              </div>
+              <div class="trend-bar">
+                <span class="trend-bar__label">Completion</span>
+                <div class="trend-bar__track">
+                  <div class="trend-bar__fill trend-bar__fill--completion" [style.width.%]="point.completionRate"></div>
+                </div>
+                <span class="trend-bar__value">{{ point.completionRate | number:'1.0-1' }}%</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </article>
+
+    <!-- Instructor productivity -->
+    <article class="panel">
+      <header class="panel__header">
+        <h2 class="panel__title">Instructor &amp; Coordinator Productivity</h2>
+        <p class="panel__subtitle">
+          Sessions delivered, reliability and engagement by instructor.
+        </p>
+      </header>
+      <div class="panel__body">
+        <div *ngIf="instructorLeaderboard.length === 0" class="panel-empty">
+          <p>No instructor activity found in the selected period.</p>
+        </div>
+        <div *ngIf="instructorLeaderboard.length > 0" class="leaderboard">
+          <div *ngFor="let i of instructorLeaderboard" class="leaderboard-row">
+            <div class="leaderboard-row__name">
+              <span class="leaderboard-row__avatar">
+                {{ i.instructorName | slice:0:2 | uppercase }}
+              </span>
+              <div>
+                <div class="leaderboard-row__title">{{ i.instructorName }}</div>
+                <div class="leaderboard-row__subtitle">
+                  {{ i.sessionsConducted }} sessions
+                </div>
+              </div>
+            </div>
+            <div class="leaderboard-row__metric">
+              <span class="metric-label">Reliability</span>
+              <span class="metric-pill">
+                {{ i.reliabilityRate | number:'1.0-1' }}%
+              </span>
+            </div>
+            <div class="leaderboard-row__metric">
+              <span class="metric-label">Engagement</span>
+              <span class="metric-pill metric-pill--accent">
+                {{ i.engagementScore | number:'1.0-1' }}%
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </article>
+
+    <!-- Department-level attendance -->
+    <article class="panel">
+      <header class="panel__header">
+        <h2 class="panel__title">Department Training Participation</h2>
+        <p class="panel__subtitle">
+          Attendance reliability by department for CFO oversight.
+        </p>
+      </header>
+      <div class="panel__body">
+        <div *ngIf="departmentAttendance.length === 0" class="panel-empty">
+          <p>No department attendance records found in the selected period.</p>
+        </div>
+        <div *ngIf="departmentAttendance.length > 0" class="department-list">
+          <div *ngFor="let d of departmentAttendance" class="department-row">
+            <div class="department-row__name">{{ d.category }}</div>
+            <div class="department-row__bar">
+              <div class="department-bar__track">
+                <div class="department-bar__fill" [style.width.%]="d.value"></div>
+              </div>
+            </div>
+            <div class="department-row__value">
+              {{ d.value | number:'1.0-1' }}%
+            </div>
+          </div>
+        </div>
+      </div>
+    </article>
+
+    <!-- Risk & alert panel -->
+    <article class="panel panel--risks">
+      <header class="panel__header">
+        <h2 class="panel__title">Risk, Alert &amp; Performance Monitoring</h2>
+        <p class="panel__subtitle">
+          Underperforming programs, low attendance and departmental risk indicators.
+        </p>
+      </header>
+      <div class="panel__body risk-grid" *ngIf="risks.length > 0; else noRisks">
+        <div *ngFor="let r of risks" class="risk-card" [ngClass]="getRiskSeverityClass(r.severity)">
+          <div class="risk-card__badge">
+            <span *ngIf="r.severity === 'RED'">✖</span>
+            <span *ngIf="r.severity === 'YELLOW'">⚠</span>
+            <span *ngIf="!r.severity || r.severity === 'GREEN'">✔</span>
+            <span class="risk-card__type">{{ r.type }}</span>
+          </div>
+          <div class="risk-card__label">{{ r.label }}</div>
+          <div class="risk-card__summary">
+            {{ r.summary }}
+          </div>
+        </div>
+      </div>
+      <ng-template #noRisks>
+        <div class="panel-empty">
+          <p>No risk indicators detected for the selected period.</p>
+        </div>
+      </ng-template>
+    </article>
+  </section>
+
+  <div *ngIf="loading" class="loading-overlay">
+    <div class="spinner"></div>
+  </div>
+</div>
+

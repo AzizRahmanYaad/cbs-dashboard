@@ -65,6 +65,12 @@ export class SidebarComponent {
       requiredRoles: ['ROLE_STUDENT', 'ROLE_TRAINING_ADMIN', 'ROLE_ADMIN']
     },
     {
+      label: 'CFO Training Analytics',
+      icon: 'chart-bar',
+      route: '/dashboard/training/cfo-dashboard',
+      requiredRoles: ['ROLE_CFO']
+    },
+    {
       label: 'Drill Test',
       icon: 'clipboard-document-check',
       route: '/dashboard/drill-testing',
