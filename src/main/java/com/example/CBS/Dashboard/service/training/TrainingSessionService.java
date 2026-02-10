@@ -216,7 +216,28 @@ public class TrainingSessionService {
         dto.setId(session.getId());
         dto.setProgramId(session.getProgram().getId());
         dto.setProgramTitle(session.getProgram().getTitle());
-        dto.setTopicName(session.getTopic());
+
+        // Prefer explicit per-session topic; fall back to program-level topic/name/title
+        String topic = session.getTopic();
+        if (topic == null || topic.isBlank()) {
+            if (session.getProgram() != null) {
+                if (session.getProgram().getTrainingTopic() != null
+                        && session.getProgram().getTrainingTopic().getName() != null
+                        && !session.getProgram().getTrainingTopic().getName().isBlank()) {
+                    topic = session.getProgram().getTrainingTopic().getName().trim();
+                } else if (session.getProgram().getTrainingNameString() != null
+                        && !session.getProgram().getTrainingNameString().isBlank()) {
+                    topic = session.getProgram().getTrainingNameString().trim();
+                } else if (session.getProgram().getTitle() != null
+                        && !session.getProgram().getTitle().isBlank()) {
+                    topic = session.getProgram().getTitle().trim();
+                }
+            }
+        } else {
+            topic = topic.trim();
+        }
+        dto.setTopicName(topic);
+
         dto.setStartDateTime(session.getStartDateTime());
         dto.setEndDateTime(session.getEndDateTime());
         dto.setLocation(session.getLocation());

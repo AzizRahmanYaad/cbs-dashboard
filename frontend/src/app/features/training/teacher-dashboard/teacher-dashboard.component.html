@@ -1,7 +1,7 @@
 <div class="teacher-dashboard-container">
   <div class="teacher-header">
     <h1 class="page-title">Teacher Dashboard</h1>
-    <p class="page-subtitle">Manage your programs, sessions, materials, students, and attendance</p>
+    <p class="page-subtitle">Manage your programs, sessions, materials, and attendance</p>
   </div>
 
   <!-- Tabs -->
@@ -1684,7 +1684,12 @@
           <h3 class="text-sm font-semibold text-gray-700 mb-2">
             Existing attendance records for this session
           </h3>
-          <div class="table-shell">
+          <!-- 
+            NOTE:
+            Wrapped in a scrollable shell so long history of existing
+            records does not push the modal beyond the viewport height.
+          -->
+          <div class="table-shell attendance-existing-shell">
             <div class="table-responsive">
               <table class="table">
                 <thead>

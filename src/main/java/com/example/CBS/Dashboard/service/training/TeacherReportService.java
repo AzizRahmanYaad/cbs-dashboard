@@ -29,6 +29,40 @@ public class TeacherReportService {
     private final UserRepository userRepository;
     private final EnrollmentRepository enrollmentRepository;
 
+    /**
+     * Derives a human-readable topic/description for a session.
+     * Priority:
+     *  1) Explicit per-session topic
+     *  2) Program training topic name
+     *  3) Program training name string
+     *  4) Program title
+     *  5) "—" placeholder
+     */
+    private String resolveSessionTopic(TrainingSession session) {
+        if (session == null) {
+            return "—";
+        }
+        if (session.getTopic() != null && !session.getTopic().isBlank()) {
+            return session.getTopic().trim();
+        }
+        if (session.getProgram() != null) {
+            if (session.getProgram().getTrainingTopic() != null
+                    && session.getProgram().getTrainingTopic().getName() != null
+                    && !session.getProgram().getTrainingTopic().getName().isBlank()) {
+                return session.getProgram().getTrainingTopic().getName().trim();
+            }
+            if (session.getProgram().getTrainingNameString() != null
+                    && !session.getProgram().getTrainingNameString().isBlank()) {
+                return session.getProgram().getTrainingNameString().trim();
+            }
+            if (session.getProgram().getTitle() != null
+                    && !session.getProgram().getTitle().isBlank()) {
+                return session.getProgram().getTitle().trim();
+            }
+        }
+        return "—";
+    }
+
     @Transactional(readOnly = true)
     public List<SessionAttendanceReportDto> getTeacherAttendanceReport(String username, LocalDate from, LocalDate to) {
         Long instructorId = userRepository.findByUsername(username)
@@ -94,7 +128,7 @@ public class TeacherReportService {
             }
 
             String programTitle = session.getProgram() != null ? session.getProgram().getTitle() : "—";
-            String topic = (session.getTopic() != null && !session.getTopic().isBlank()) ? session.getTopic() : "—";
+            String topic = resolveSessionTopic(session);
             String instructorName = session.getInstructor() != null ? session.getInstructor().getFullName() : null;
             if (instructorName == null && session.getProgram() != null && session.getProgram().getInstructor() != null) {
                 instructorName = session.getProgram().getInstructor().getFullName();
@@ -211,10 +245,18 @@ public class TeacherReportService {
                     sigType));
         }
 
+        // Build content coverage bullets from resolved topic, splitting on commas/newlines
         List<String> contentCoverage = new ArrayList<>();
-        String topic = (session.getTopic() != null && !session.getTopic().isBlank()) ? session.getTopic() : "—";
-        contentCoverage.addAll(Arrays.stream(topic.split("[,\n]")).map(String::trim).filter(s -> !s.isEmpty()).collect(Collectors.toList()));
-        if (contentCoverage.isEmpty()) contentCoverage.add(topic);
+        String topic = resolveSessionTopic(session);
+        contentCoverage.addAll(
+                Arrays.stream(topic.split("[,\n]"))
+                        .map(String::trim)
+                        .filter(s -> !s.isEmpty())
+                        .collect(Collectors.toList())
+        );
+        if (contentCoverage.isEmpty()) {
+            contentCoverage.add(topic);
+        }
 
         String instructorName = session.getInstructor() != null ? session.getInstructor().getFullName() : null;
         if (instructorName == null && session.getProgram() != null && session.getProgram().getInstructor() != null) {

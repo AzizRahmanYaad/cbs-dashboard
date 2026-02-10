@@ -524,9 +524,40 @@ public class TrainingProgramService {
     public List<TrainingProgramDto> getProgramsByInstructor(Long instructorId) {
         List<TrainingProgram> programs = trainingProgramRepository.findByInstructorId(instructorId);
         programs.forEach(this::initializeRelationships);
-        return programs.stream()
+
+        // Map to DTOs first using the standard mapper
+        List<TrainingProgramDto> dtos = programs.stream()
             .map(mapper::toDto)
             .collect(Collectors.toList());
+
+        // Ensure accurate counts for teacher dashboards:
+        // - Sessions: count all sessions linked to this program
+        // - Students: count active enrollments only (exclude CANCELLED / WITHDRAWN)
+        for (TrainingProgramDto dto : dtos) {
+            if (dto == null || dto.getId() == null) {
+                continue;
+            }
+            Long programId = dto.getId();
+            try {
+                // Sessions count (safe even if there are none)
+                long sessionsCount = trainingSessionRepository.findByProgramId(programId).size();
+                dto.setSessionsCount(sessionsCount);
+            } catch (Exception e) {
+                // If anything goes wrong, keep the mapper-derived value
+            }
+
+            try {
+                long activeEnrollments = enrollmentRepository.findByProgramId(programId).stream()
+                    .filter(e -> e.getStatus() != Enrollment.EnrollmentStatus.CANCELLED
+                            && e.getStatus() != Enrollment.EnrollmentStatus.WITHDRAWN)
+                    .count();
+                dto.setEnrollmentsCount(activeEnrollments);
+            } catch (Exception e) {
+                // If anything goes wrong, keep the mapper-derived value
+            }
+        }
+
+        return dtos;
     }
     
     @Transactional(readOnly = true)
@@ -552,9 +583,36 @@ public class TrainingProgramService {
     public List<TrainingProgramDto> getProgramsByStudent(Long studentId) {
         List<TrainingProgram> programs = trainingProgramRepository.findByStudentId(studentId);
         programs.forEach(this::initializeRelationships);
-        return programs.stream()
+
+        List<TrainingProgramDto> dtos = programs.stream()
             .map(mapper::toDto)
             .collect(Collectors.toList());
+
+        // For student-facing dashboards, also make sure counts reflect active enrollments
+        for (TrainingProgramDto dto : dtos) {
+            if (dto == null || dto.getId() == null) {
+                continue;
+            }
+            Long programId = dto.getId();
+            try {
+                long sessionsCount = trainingSessionRepository.findByProgramId(programId).size();
+                dto.setSessionsCount(sessionsCount);
+            } catch (Exception e) {
+                // Ignore and keep existing value
+            }
+
+            try {
+                long activeEnrollments = enrollmentRepository.findByProgramId(programId).stream()
+                    .filter(e -> e.getStatus() != Enrollment.EnrollmentStatus.CANCELLED
+                            && e.getStatus() != Enrollment.EnrollmentStatus.WITHDRAWN)
+                    .count();
+                dto.setEnrollmentsCount(activeEnrollments);
+            } catch (Exception e) {
+                // Ignore and keep existing value
+            }
+        }
+
+        return dtos;
     }
     
     private com.example.CBS.Dashboard.dto.training.EnrollmentDto mapEnrollmentToDto(Enrollment enrollment) {

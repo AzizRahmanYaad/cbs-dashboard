@@ -39,9 +39,9 @@ export class TeacherDashboardComponent implements OnInit {
   private fb = inject(FormBuilder);
 
   currentUser: User | null = null;
-  activeTab: 'overview' | 'programs' | 'sessions' | 'materials' | 'students' | 'attendance' | 'reports' = 'overview';
-  tabs: ('overview' | 'programs' | 'sessions' | 'materials' | 'students' | 'attendance' | 'reports')[] = 
-    ['overview', 'programs', 'sessions', 'materials', 'students', 'attendance', 'reports'];
+  activeTab: 'overview' | 'programs' | 'sessions' | 'materials' | 'attendance' | 'reports' = 'overview';
+  tabs: ('overview' | 'programs' | 'sessions' | 'materials' | 'attendance' | 'reports')[] = 
+    ['overview', 'programs', 'sessions', 'materials', 'attendance', 'reports'];
   
   // Programs
   programs: TrainingProgram[] = [];
@@ -387,14 +387,27 @@ export class TeacherDashboardComponent implements OnInit {
     }
 
     // Map form values to request, handling session link vs location
+    // For Virtual/Hybrid, we treat "sessionLink" as the primary source and normalize it to a full URL.
+    let normalizedLocation = formValue.location || '';
+    if (formValue.sessionType === 'Virtual' || formValue.sessionType === 'Hybrid') {
+      let link = (formValue.sessionLink || formValue.location || '').trim();
+      if (link) {
+        // Auto-prefix protocol if the user omitted it so links remain clickable for students/teachers.
+        if (!link.toLowerCase().startsWith('http://') && !link.toLowerCase().startsWith('https://')) {
+          link = `https://${link}`;
+        }
+        normalizedLocation = link;
+      } else {
+        normalizedLocation = '';
+      }
+    }
+
     const request: CreateTrainingSessionRequest = {
       programId: formValue.programId,
       startDateTime: formValue.startDateTime,
       // Backend requires endDateTime – use same as start when only a single point is provided
       endDateTime: formValue.startDateTime,
-      location: (formValue.sessionType === 'Virtual' || formValue.sessionType === 'Hybrid')
-        ? (formValue.sessionLink || formValue.location || '')
-        : (formValue.location || ''),
+      location: normalizedLocation,
       sessionType: formValue.sessionType,
       status: formValue.status,
       notes: formValue.notes,
@@ -709,9 +722,22 @@ export class TeacherDashboardComponent implements OnInit {
     window.open(material.filePath, '_blank');
   }
 
+  private getSessionUrl(session: TrainingSession): string | null {
+    const raw = (session.location || '').trim();
+    if (!raw) {
+      return null;
+    }
+    if (raw.toLowerCase().startsWith('http://') || raw.toLowerCase().startsWith('https://')) {
+      return raw;
+    }
+    // Allow stored values without protocol to still be opened as HTTPS links.
+    return `https://${raw}`;
+  }
+
   openSessionLink(session: TrainingSession): void {
-    if (session.location && (session.location.startsWith('http://') || session.location.startsWith('https://'))) {
-      window.open(session.location, '_blank');
+    const url = this.getSessionUrl(session);
+    if (url) {
+      window.open(url, '_blank');
     } else {
       this.toastr.warning('No valid session link configured for this session.');
     }

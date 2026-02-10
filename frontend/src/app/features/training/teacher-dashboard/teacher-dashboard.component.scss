@@ -1642,6 +1642,15 @@
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.04);
 }
 
+// Scrollable container specifically for the
+// "Existing attendance records for this session" table
+// inside the attendance modal. This keeps the modal height
+// constrained while allowing the history to scroll.
+.attendance-existing-shell {
+  max-height: 260px;
+  overflow-y: auto;
+}
+
 .table {
   width: 100%;
   border-collapse: collapse;

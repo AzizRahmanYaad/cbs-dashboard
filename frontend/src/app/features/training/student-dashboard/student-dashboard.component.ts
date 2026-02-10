@@ -307,13 +307,26 @@ export class StudentDashboardComponent implements OnInit {
     }
   }
 
+  private getSessionUrl(session: TrainingSession): string | null {
+    const raw = (session.location || '').trim();
+    if (!raw) {
+      return null;
+    }
+    if (raw.toLowerCase().startsWith('http://') || raw.toLowerCase().startsWith('https://')) {
+      return raw;
+    }
+    // Allow links saved without protocol to still be opened correctly.
+    return `https://${raw}`;
+  }
+
   hasSessionLink(session: TrainingSession): boolean {
-    return !!(session.location && (session.location.startsWith('http://') || session.location.startsWith('https://')));
+    return !!this.getSessionUrl(session);
   }
 
   openSessionLink(session: TrainingSession): void {
-    if (this.hasSessionLink(session)) {
-      window.open(session.location!, '_blank');
+    const url = this.getSessionUrl(session);
+    if (url) {
+      window.open(url, '_blank');
     }
   }
 
