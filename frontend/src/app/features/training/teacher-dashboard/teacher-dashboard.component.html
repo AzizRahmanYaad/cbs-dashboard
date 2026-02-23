@@ -1,7 +1,7 @@
 <div class="teacher-dashboard-container">
   <div class="teacher-header">
-    <h1 class="page-title">Teacher Dashboard</h1>
-    <p class="page-subtitle">Manage your programs, sessions, materials, and attendance</p>
+    <h1 class="page-title">{{ isCfoViewOnly ? 'Training Reports' : 'Teacher Dashboard' }}</h1>
+    <p class="page-subtitle">{{ isCfoViewOnly ? 'View and export session and date-range reports (view-only)' : 'Manage your programs, sessions, materials, and attendance' }}</p>
   </div>
 
   <!-- Tabs -->
@@ -26,10 +26,6 @@
         <svg *ngSwitchCase="'materials'" class="tab-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
           <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 5.25h11.25L19.5 9v9.75H4.5z" />
           <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6M9 15h4" />
-        </svg>
-        <svg *ngSwitchCase="'students'" class="tab-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M9.75 6.75a3 3 0 1 1-3 3 3 3 0 0 1 3-3zM16.5 8.25a2.25 2.25 0 1 1-2.25 2.25A2.25 2.25 0 0 1 16.5 8.25z" />
-          <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 19.5a4.5 4.5 0 0 1 9 0M14.25 19.5a4.125 4.125 0 0 1 4.125-4.125" />
         </svg>
         <svg *ngSwitchCase="'attendance'" class="tab-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
           <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75 11.25 15 15 9.75M4.5 6.75h15M4.5 12h3m-3 5.25h3" />
@@ -287,30 +283,38 @@
     </div>
 
     <!-- Program Details - Modern Teacher Program View -->
-    <div *ngIf="selectedProgram" class="card program-details">
-      <header class="program-details__header">
+    <div *ngIf="selectedProgram" class="card program-details program-details--modern">
+      <header class="program-details__hero">
+        <div class="program-details__hero-badge">
+          <svg class="program-details__hero-badge-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M4.26 10.147a60.438 60.438 0 0 0-.491 6.347A48.62 48.62 0 0 1 12 20.904a48.62 48.62 0 0 1 8.232-4.41 60.46 60.46 0 0 0-.491-6.347m-15.482 0a50.636 50.636 0 0 0-2.658-.813A59.906 59.906 0 0 1 12 3.493a59.903 59.903 0 0 1 10.399 5.84c-.896.248-1.783.52-2.658.814m-15.482 0A50.717 50.717 0 0 1 12 13.489a50.702 50.702 0 0 1 7.74-3.342M6.75 15a.75.75 0 1 0 0-1.5.75.75 0 0 0 0 1.5Zm0 0v-3.675A55.378 55.378 0 0 1 12 8.443m-7.007 11.55A5.981 5.981 0 0 0 6.75 15.75v-1.5" />
+          </svg>
+          <span>Program</span>
+        </div>
         <div class="program-details__header-main">
-          <h2 class="card-header-title">
+          <h2 class="program-details__title">
             {{ selectedProgram.trainingName || selectedProgram.trainingNameName || selectedProgram.title }}
           </h2>
           <p class="program-details__subtitle">
             {{ selectedProgram.description || 'High-level view of sessions, materials, learners, and attendance for this program.' }}
           </p>
           <div class="program-details__chips">
-            <span *ngIf="selectedProgram.trainingTopicName" class="program-chip">
+            <span *ngIf="selectedProgram.trainingTopicName" class="program-chip program-chip--topic">
+              <svg class="program-chip__icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M9.568 3H5.25A2.25 2.25 0 0 0 3 5.25v4.318c0 .597.237 1.17.659 1.591l9.581 9.581c.699.699 1.78.872 2.607.33a18.095 18.095 0 0 0 5.223-5.223c.542-.827.369-1.908-.33-2.607L11.16 3.66A2.25 2.25 0 0 0 9.568 3Z" /></svg>
               {{ selectedProgram.trainingTopicName }}
             </span>
             <span *ngIf="selectedProgram.trainingCategoryName" class="program-chip program-chip--muted">
               {{ selectedProgram.trainingCategoryName }}
             </span>
             <span *ngIf="selectedProgram.departmentName" class="program-chip program-chip--muted">
+              <svg class="program-chip__icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 21h16.5M4.5 3h15M5.25 3v18m13.5-18v18M9 6.75h1.5m-1.5 3h1.5m-1.5 3h1.5m3-6H15m-1.5 3H15m-1.5 3H15M9 21v-3.375c0-.621.504-1.125 1.125-1.125h3.75c.621 0 1.125.504 1.125 1.125V21" /></svg>
               {{ selectedProgram.departmentName }}
             </span>
           </div>
         </div>
-        <div class="program-details__header-side">
+        <div class="program-details__header-meta">
           <span
-            class="status-pill"
+            class="program-details__status status-pill"
             [ngClass]="selectedProgram.status === 'ONGOING'
               ? 'status-pill--ongoing'
               : (selectedProgram.status === 'COMPLETED'
@@ -319,221 +323,209 @@
           >
             {{ selectedProgram.status || 'STATUS' }}
           </span>
-          <div class="program-details__date" *ngIf="selectedProgram.trainingDate">
-            <span class="program-details__date-label">Start date</span>
-            <span class="program-details__date-value">
-              {{ selectedProgram.trainingDate | date:'mediumDate' }}
-            </span>
-          </div>
-          <div class="program-details__meta-line" *ngIf="selectedProgram.trainingType || selectedProgram.trainingLevel">
-            <span *ngIf="selectedProgram.trainingType">
-              {{ selectedProgram.trainingType }}
-            </span>
-            <span *ngIf="selectedProgram.trainingType && selectedProgram.trainingLevel">·</span>
-            <span *ngIf="selectedProgram.trainingLevel">
-              Level: {{ selectedProgram.trainingLevel }}
-            </span>
+          <div class="program-details__meta-cards" *ngIf="selectedProgram.trainingDate || selectedProgram.trainingType || selectedProgram.trainingLevel">
+            <div class="program-details__meta-card" *ngIf="selectedProgram.trainingDate">
+              <svg class="program-details__meta-card-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 0 1 2.25-2.25h13.5A2.25 2.25 0 0 1 21 7.5v11.25m-18 0A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75m-18 0v-7.5A2.25 2.25 0 0 1 5.25 9h13.5A2.25 2.25 0 0 1 21 11.25v7.5" />
+              </svg>
+              <div>
+                <span class="program-details__meta-card-label">Start date</span>
+                <span class="program-details__meta-card-value">{{ selectedProgram.trainingDate | date:'mediumDate' }}</span>
+              </div>
+            </div>
+            <div class="program-details__meta-card" *ngIf="selectedProgram.trainingType || selectedProgram.trainingLevel">
+              <svg class="program-details__meta-card-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6A2.25 2.25 0 0 1 6 3.75h2.25A2.25 2.25 0 0 1 10.5 6v2.25a2.25 2.25 0 0 1-2.25 2.25H6a2.25 2.25 0 0 1-2.25-2.25V6ZM3.75 15.75A2.25 2.25 0 0 1 6 13.5h2.25a2.25 2.25 0 0 1 2.25 2.25V18a2.25 2.25 0 0 1-2.25 2.25H6A2.25 2.25 0 0 1 3.75 18v-2.25ZM13.5 6a2.25 2.25 0 0 1 2.25-2.25H18A2.25 2.25 0 0 1 20.25 6v2.25A2.25 2.25 0 0 1 18 10.5h-2.25a2.25 2.25 0 0 1-2.25-2.25V6ZM13.5 15.75a2.25 2.25 0 0 1 2.25-2.25H18a2.25 2.25 0 0 1 2.25 2.25V18A2.25 2.25 0 0 1 18 20.25h-2.25A2.25 2.25 0 0 1 13.5 18v-2.25Z" />
+              </svg>
+              <div>
+                <span class="program-details__meta-card-label">Modality · Level</span>
+                <span class="program-details__meta-card-value">{{ selectedProgram.trainingType || '—' }} · {{ selectedProgram.trainingLevel || 'N/A' }}</span>
+              </div>
+            </div>
           </div>
         </div>
       </header>
 
-      <!-- At-a-glance KPIs -->
-      <section class="program-details__kpis">
-        <div class="program-kpi">
-          <div class="program-kpi__label">Assigned Sessions</div>
-          <div class="program-kpi__value">{{ sessions.length || selectedProgram.sessionsCount || 0 }}</div>
-          <div class="program-kpi__hint">Across this specific program</div>
-        </div>
-        <div class="program-kpi">
-          <div class="program-kpi__label">Enrolled Learners</div>
-          <div class="program-kpi__value">{{ selectedProgram.enrollmentsCount || programStudents.length || 0 }}</div>
-          <div class="program-kpi__hint">Students linked to this program</div>
-        </div>
-        <div class="program-kpi">
-          <div class="program-kpi__label">Materials</div>
-          <div class="program-kpi__value">{{ materials.length }}</div>
-          <div class="program-kpi__hint">Training resources attached to sessions</div>
-        </div>
+      <!-- At-a-glance KPIs with icons -->
+      <section class="program-details__kpis program-details__kpis--modern">
+        <article class="program-kpi program-kpi--sessions">
+          <div class="program-kpi__icon-wrap">
+            <svg class="program-kpi__icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 0 1 2.25-2.25h13.5A2.25 2.25 0 0 1 21 7.5v11.25m-18 0A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75m-18 0v-7.5A2.25 2.25 0 0 1 5.25 9h13.5A2.25 2.25 0 0 1 21 11.25v7.5" />
+            </svg>
+          </div>
+          <div class="program-kpi__body">
+            <span class="program-kpi__label">Assigned Sessions</span>
+            <span class="program-kpi__value">{{ sessions.length || selectedProgram.sessionsCount || 0 }}</span>
+            <span class="program-kpi__hint">Across this specific program</span>
+          </div>
+        </article>
+        <article class="program-kpi program-kpi--learners">
+          <div class="program-kpi__icon-wrap">
+            <svg class="program-kpi__icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M15 19.128a9.38 9.38 0 0 0 2.625.372 9.337 9.337 0 0 0 4.121-.952 4.125 4.125 0 0 0-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 0 1 8.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0 1 11.964-3.07M12 6.375a3.375 3.375 0 1 1-6.75 0 3.375 3.375 0 0 1 6.75 0Zm8.25 2.25a2.625 2.625 0 1 1-5.25 0 2.625 2.625 0 0 1 5.25 0Z" />
+            </svg>
+          </div>
+          <div class="program-kpi__body">
+            <span class="program-kpi__label">Enrolled Learners</span>
+            <span class="program-kpi__value">{{ selectedProgram.enrollmentsCount || programStudents.length || 0 }}</span>
+            <span class="program-kpi__hint">Students linked to this program</span>
+          </div>
+        </article>
+        <article class="program-kpi program-kpi--materials">
+          <div class="program-kpi__icon-wrap">
+            <svg class="program-kpi__icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z" />
+            </svg>
+          </div>
+          <div class="program-kpi__body">
+            <span class="program-kpi__label">Materials</span>
+            <span class="program-kpi__value">{{ materials.length }}</span>
+            <span class="program-kpi__hint">Training resources attached to sessions</span>
+          </div>
+        </article>
       </section>
 
       <!-- Sessions / Materials / Quick actions layout -->
       <section class="program-details__layout">
-        <!-- Sessions summary -->
         <div class="program-details__column">
           <div class="program-details__section-header">
-            <h3 class="program-details__section-title">Sessions for this program</h3>
-            <span class="program-details__section-count">
-              {{ sessions.length || 0 }} total
-            </span>
+            <div class="program-details__section-title-wrap">
+              <svg class="program-details__section-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 5.25h16.5M8.25 9.75h7.5m-10.5 4.5h6m-6 4.5h10.5" />
+              </svg>
+              <h3 class="program-details__section-title">Sessions for this program</h3>
+            </div>
+            <span class="program-details__section-count">{{ sessions.length || 0 }} total</span>
           </div>
           <ng-container *ngIf="sessions.length > 0; else noProgramSessions">
             <article
               *ngFor="let session of sessions | slice:0:4"
-              class="program-session-pill"
+              class="program-session-pill program-session-pill--modern"
             >
               <div class="program-session-pill__date">
-                <div class="program-session-pill__day">
-                  {{ session.startDateTime | date:'dd' }}
-                </div>
-                <div class="program-session-pill__date-meta">
-                  <span class="program-session-pill__month">
-                    {{ session.startDateTime | date:'MMM' }}
-                  </span>
-                  <span class="program-session-pill__time">
-                    {{ session.startDateTime | date:'shortTime' }}
-                  </span>
+                <svg class="program-session-pill__date-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 0 1 2.25-2.25h13.5A2.25 2.25 0 0 1 21 7.5v11.25m-18 0A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75m-18 0v-7.5A2.25 2.25 0 0 1 5.25 9h13.5A2.25 2.25 0 0 1 21 11.25v7.5" />
+                </svg>
+                <div class="program-session-pill__date-inner">
+                  <span class="program-session-pill__day">{{ session.startDateTime | date:'dd' }}</span>
+                  <span class="program-session-pill__month">{{ session.startDateTime | date:'MMM' }}</span>
+                  <span class="program-session-pill__time">{{ session.startDateTime | date:'shortTime' }}</span>
                 </div>
               </div>
               <div class="program-session-pill__content">
                 <div class="program-session-pill__title-row">
-                  <h4 class="program-session-pill__title">
-                    {{ session.topicName || 'Session ' + (session.sequenceOrder || '') }}
-                  </h4>
+                  <h4 class="program-session-pill__title">{{ session.topicName || 'Session ' + (session.sequenceOrder || '') }}</h4>
                   <span
                     class="status-pill program-session-pill__status"
-                    [ngClass]="session.status === 'COMPLETED'
-                      ? 'status-pill--completed'
-                      : (session.status === 'IN_PROGRESS'
-                          ? 'status-pill--pending'
-                          : 'status-pill--default')"
-                  >
-                    {{ session.status }}
-                  </span>
+                    [ngClass]="session.status === 'COMPLETED' ? 'status-pill--completed' : (session.status === 'IN_PROGRESS' ? 'status-pill--pending' : 'status-pill--default')"
+                  >{{ session.status }}</span>
                 </div>
                 <p class="program-session-pill__meta">
-                  {{ session.sessionType || 'Session' }}
-                  ·
-                  {{ session.location || 'Location / link not set' }}
+                  <svg class="program-session-pill__meta-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="m2.25 12 8.954-8.955c.44-.439 1.152-.439 1.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H19.5M4.5 9.75V9.75" /></svg>
+                  {{ session.sessionType || 'Session' }} · {{ session.location || 'Location / link not set' }}
                 </p>
                 <p class="program-session-pill__meta">
+                  <svg class="program-session-pill__meta-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19.128a9.38 9.38 0 0 0 2.625.372 9.337 9.337 0 0 0 4.121-.952 4.125 4.125 0 0 0-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 0 1 8.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0 1 11.964-3.07M12 6.375a3.375 3.375 0 1 1-6.75 0 3.375 3.375 0 0 1 6.75 0Z" /></svg>
                   {{ session.enrollmentsCount || 0 }} learners
                 </p>
               </div>
               <div class="program-session-pill__actions">
-                <button
-                  type="button"
-                  class="btn-secondary btn-secondary--sm"
-                  (click)="openAttendanceModal(session)"
-                >
+                <button type="button" class="btn-secondary btn-secondary--sm program-session-pill__btn" (click)="openAttendanceModal(session)">
+                  <svg class="program-session-pill__btn-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75 11.25 15 15 9.75M4.5 6.75h15M4.5 12h3m-3 5.25h3" /></svg>
                   Attendance
                 </button>
               </div>
             </article>
-            <button
-              *ngIf="sessions.length > 4"
-              type="button"
-              class="program-details__link-button"
-              (click)="goToSessionsForSelectedProgram()"
-            >
-              View all sessions
+            <button *ngIf="sessions.length > 4" type="button" class="program-details__link-button" (click)="goToSessionsForSelectedProgram()">
+              View all sessions →
             </button>
           </ng-container>
           <ng-template #noProgramSessions>
-            <p class="program-details__empty-text">
-              No sessions have been scheduled for this program yet.
-            </p>
+            <div class="program-details__empty">
+              <svg class="program-details__empty-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 0 1 2.25-2.25h13.5A2.25 2.25 0 0 1 21 7.5v11.25m-18 0A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75m-18 0v-7.5A2.25 2.25 0 0 1 5.25 9h13.5A2.25 2.25 0 0 1 21 11.25v7.5" /></svg>
+              <p class="program-details__empty-text">No sessions have been scheduled for this program yet.</p>
+            </div>
           </ng-template>
         </div>
 
-        <!-- Materials summary -->
         <div class="program-details__column">
           <div class="program-details__section-header">
-            <h3 class="program-details__section-title">Training materials</h3>
-            <span class="program-details__section-count">
-              {{ materials.length }} attached
-            </span>
+            <div class="program-details__section-title-wrap">
+              <svg class="program-details__section-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z" />
+              </svg>
+              <h3 class="program-details__section-title">Training materials</h3>
+            </div>
+            <span class="program-details__section-count">{{ materials.length }} attached</span>
           </div>
           <ng-container *ngIf="materials.length > 0; else noProgramMaterials">
-            <article
-              *ngFor="let material of materials | slice:0:4"
-              class="program-material-pill"
-            >
+            <article *ngFor="let material of materials | slice:0:4" class="program-material-pill program-material-pill--modern">
               <div class="program-material-pill__icon">
-                📄
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z" />
+                </svg>
               </div>
               <div class="program-material-pill__content">
-                <h4 class="program-material-pill__title">
-                  {{ material.title }}
-                </h4>
+                <h4 class="program-material-pill__title">{{ material.title }}</h4>
                 <p class="program-material-pill__meta">
-                  {{ material.materialType || 'Resource' }}
-                  <span class="program-material-pill__dot">·</span>
-                  <span>
-                    {{ material.isRequired ? 'Required' : 'Optional' }}
-                  </span>
+                  <svg class="program-material-pill__meta-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M13.19 8.688a4.5 4.5 0 0 1 1.242 7.244l-4.5 4.5a4.5 4.5 0 0 1-6.364-6.364l1.757-1.757m13.35-.622 1.757-1.757a4.5 4.5 0 0 0-6.364-6.364l-4.5 4.5a4.5 4.5 0 0 0 1.242 7.244" /></svg>
+                  {{ material.materialType || 'Resource' }} · {{ material.isRequired ? 'Required' : 'Optional' }}
                 </p>
                 <p class="program-material-pill__meta">
-                  Added
-                  {{ material.createdAt | date:'mediumDate' }}
+                  <svg class="program-material-pill__meta-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 0 1 2.25-2.25h13.5A2.25 2.25 0 0 1 21 7.5v11.25m-18 0A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75m-18 0v-7.5A2.25 2.25 0 0 1 5.25 9h13.5A2.25 2.25 0 0 1 21 11.25v7.5" /></svg>
+                  Added {{ material.createdAt | date:'mediumDate' }}
                 </p>
               </div>
               <div class="program-material-pill__actions">
-                <button
-                  type="button"
-                  class="btn-secondary btn-secondary--sm"
-                  (click)="openMaterialLink(material)"
-                >
+                <button type="button" class="btn-secondary btn-secondary--sm program-material-pill__btn" (click)="openMaterialLink(material)">
+                  <svg class="program-material-pill__btn-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M13.5 6H5.25A2.25 2.25 0 0 0 3 8.25v10.5A2.25 2.25 0 0 0 5.25 21h10.5A2.25 2.25 0 0 0 18 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25" /></svg>
                   Open
                 </button>
               </div>
             </article>
-            <button
-              *ngIf="materials.length > 4"
-              type="button"
-              class="program-details__link-button"
-              (click)="goToMaterialsForSelectedProgram()"
-            >
-              View all materials
+            <button *ngIf="materials.length > 4" type="button" class="program-details__link-button" (click)="goToMaterialsForSelectedProgram()">
+              View all materials →
             </button>
           </ng-container>
           <ng-template #noProgramMaterials>
-            <p class="program-details__empty-text">
-              No materials have been added yet. Use the button below to attach PDFs, videos, links, or documents.
-            </p>
+            <div class="program-details__empty">
+              <svg class="program-details__empty-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z" /></svg>
+              <p class="program-details__empty-text">No materials have been added yet. Use the button below to attach PDFs, videos, links, or documents.</p>
+            </div>
           </ng-template>
         </div>
 
-        <!-- Quick actions & attendance -->
-        <div class="program-details__column program-details__column--compact">
+        <div class="program-details__column program-details__column--actions">
           <div class="program-details__section-header">
-            <h3 class="program-details__section-title">Quick actions</h3>
+            <div class="program-details__section-title-wrap">
+              <svg class="program-details__section-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25H12" />
+              </svg>
+              <h3 class="program-details__section-title">Quick actions</h3>
+            </div>
           </div>
-          <p class="program-details__helper-text">
-            Jump directly into managing sessions, materials, attendance, or generating formal reports for this program.
-          </p>
-          <div class="program-quick-actions">
-            <button
-              type="button"
-              class="btn-primary btn-primary--ghost"
-              (click)="goToSessionsForSelectedProgram()"
-            >
-              Manage sessions
+          <p class="program-details__helper-text">Jump directly into managing sessions, materials, attendance, or generating formal reports for this program.</p>
+          <div class="program-quick-actions program-quick-actions--modern">
+            <button type="button" class="program-quick-action program-quick-action--secondary" (click)="goToSessionsForSelectedProgram()">
+              <svg class="program-quick-action__icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 5.25h16.5M8.25 9.75h7.5m-10.5 4.5h6m-6 4.5h10.5" /></svg>
+              <span>Manage sessions</span>
             </button>
-            <button
-              type="button"
-              class="btn-primary btn-primary--ghost"
-              (click)="goToMaterialsForSelectedProgram()"
-            >
-              Manage materials
+            <button type="button" class="program-quick-action program-quick-action--secondary" (click)="goToMaterialsForSelectedProgram()">
+              <svg class="program-quick-action__icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z" /></svg>
+              <span>Manage materials</span>
             </button>
-            <button
-              type="button"
-              class="btn-primary btn-primary--ghost"
-              (click)="goToAttendanceForSelectedProgram()"
-            >
-              View attendance table
+            <button type="button" class="program-quick-action program-quick-action--secondary" (click)="goToAttendanceForSelectedProgram()">
+              <svg class="program-quick-action__icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75 11.25 15 15 9.75M4.5 6.75h15M4.5 12h3m-3 5.25h3" /></svg>
+              <span>View attendance table</span>
             </button>
-            <button
-              type="button"
-              class="btn-primary"
-              (click)="goToReportsForSelectedProgram()"
-            >
-              Download reports
+            <button type="button" class="program-quick-action program-quick-action--primary" (click)="goToReportsForSelectedProgram()">
+              <svg class="program-quick-action__icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M16.5 12 12 16.5m0 0L7.5 12m4.5 4.5V3" /></svg>
+              <span>Download reports</span>
             </button>
           </div>
           <p class="program-details__footnote">
-            For complete, audit-ready attendance records and E-signatures, use the
-            <strong>Attendance</strong> and <strong>Reports</strong> tabs.
+            For complete, audit-ready attendance records and E-signatures, use the <strong>Attendance</strong> and <strong>Reports</strong> tabs.
           </p>
         </div>
       </section>
@@ -678,18 +670,19 @@
             </div>
           </div>
 
-          <div class="session-row__actions">
+            <div class="session-row__actions">
             <div class="session-row__actions-links">
-              <button
-                *ngIf="session.location && (session.location.startsWith('http://') || session.location.startsWith('https://'))"
-                type="button"
-                class="session-link-chip"
-                (click)="openSessionLink(session)"
-                title="Open session link"
-              >
-                <span class="session-link-chip__icon">🔗</span>
-                <span class="session-link-chip__label">Session link</span>
-              </button>
+              <ng-container *ngIf="getSessionUrl(session) as sessionUrl">
+                <button
+                  type="button"
+                  class="session-link-chip"
+                  (click)="openSessionLink(session)"
+                  title="Open session link"
+                >
+                  <span class="session-link-chip__icon">🔗</span>
+                  <span class="session-link-chip__label">Session link</span>
+                </button>
+              </ng-container>
             </div>
             <button (click)="openAttendanceModal(session)" class="btn-secondary" title="Mark attendance">
               Attendance
@@ -1039,131 +1032,257 @@
     </div>
   </div>
 
-  <!-- Students Tab -->
-  <div *ngIf="activeTab === 'students' && !loading" class="tab-content space-y-4">
-    <div class="card mb-2">
-      <h2 class="card-header-title">Student Management</h2>
-      <div *ngIf="!selectedProgramForStudents">
-        <p class="text-sm text-gray-700">
-          Please select a program from the Programs tab to manage students.
-        </p>
+  <!-- Attendance Tab - Session-based -->
+  <div *ngIf="activeTab === 'attendance' && !loading" class="tab-content attendance-tab-content attendance-tab-content--modern">
+    <section class="attendance-hero">
+      <div class="attendance-hero__icon-wrap">
+        <svg class="attendance-hero__icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75 11.25 15 15 9.75M4.5 6.75h15M4.5 12h3m-3 5.25h3" />
+        </svg>
       </div>
-    </div>
+      <div class="attendance-hero__content">
+        <h2 class="attendance-hero__title">Attendance Management</h2>
+        <p class="attendance-hero__subtitle">Select a session, view all enrolled students, and mark attendance directly. Records are saved for audit and reporting.</p>
+      </div>
+    </section>
 
-    <div *ngIf="selectedProgramForStudents" class="card">
-      <h3 class="card-header-title">{{ selectedProgramForStudents.title }} - Students</h3>
-      
-      <div class="mb-4">
-        <h4 class="font-medium mb-2">Assign Students</h4>
-        <div class="student-list grid grid-cols-1 md:grid-cols-3 gap-2 max-h-60 overflow-y-auto border rounded p-2">
-          <label *ngFor="let student of students" class="flex items-center space-x-2">
-            <input
-              type="checkbox"
-              [checked]="selectedStudentIds.has(student.userId)"
-              (change)="toggleStudentAssignment(student.userId, $event)"
-            />
-            <span class="text-sm">{{ student.fullName || student.username }}</span>
-          </label>
+    <!-- Session filters -->
+    <form [formGroup]="attendanceFiltersForm" class="attendance-filters attendance-filters--modern">
+      <div class="attendance-filters__row">
+        <div class="attendance-filters__search">
+          <label class="form-label">Search Sessions</label>
+          <div class="attendance-filters__search-input">
+            <svg class="attendance-filters__search-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z" />
+            </svg>
+            <input type="text" class="form-input" placeholder="Program, topic, or location..." formControlName="search">
+          </div>
         </div>
-        <button
-          (click)="saveStudentAssignments()"
-          class="btn-primary mt-3"
-        >
-          Save Assignments
-        </button>
+        <div class="attendance-filters__field">
+          <label class="form-label">Program</label>
+          <select class="form-input" formControlName="programId">
+            <option [ngValue]="null">All programs</option>
+            <option *ngFor="let p of programs" [ngValue]="p.id">{{ p.trainingName || p.trainingNameName || p.title }}</option>
+          </select>
+        </div>
+        <div class="attendance-filters__field">
+          <label class="form-label">Status</label>
+          <select class="form-input" formControlName="status">
+            <option value="">All statuses</option>
+            <option *ngFor="let s of (SessionStatus | keyvalue)" [value]="s.value">{{ s.value }}</option>
+          </select>
+        </div>
+        <div class="attendance-filters__field">
+          <label class="form-label">From</label>
+          <input type="date" class="form-input" formControlName="fromDate">
+        </div>
+        <div class="attendance-filters__field">
+          <label class="form-label">To</label>
+          <input type="date" class="form-input" formControlName="toDate">
+        </div>
       </div>
+    </form>
 
-      <div class="mt-6">
-        <h4 class="font-medium mb-2">Enrolled Students</h4>
-        <div class="table-shell">
-          <table class="table">
-            <thead>
-              <tr>
-                <th>Name</th>
-                <th>Email</th>
-                <th>Status</th>
-                <th>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr *ngFor="let enrollment of programStudents">
-                <td>{{ enrollment.participantFullName || enrollment.participantUsername }}</td>
-                <td>{{ enrollment.participantEmail }}</td>
-                <td>
-                  <span class="status-pill" [ngClass]="enrollment.status === 'CONFIRMED' ? 'status-pill--ongoing' : 'status-pill--pending'">
-                    {{ enrollment.status }}
-                  </span>
-                </td>
-                <td>
-                  <button
-                    (click)="removeStudent(selectedProgramForStudents!.id, enrollment.participantId)"
-                    class="btn-icon btn-icon--danger"
-                    title="Remove student"
-                  >
-                    🗑
-                  </button>
-                </td>
-              </tr>
-            </tbody>
-          </table>
-          <div *ngIf="programStudents.length === 0" class="empty-state">
-            <span class="empty-state-icon" aria-hidden="true">👥</span>
-            <p class="empty-state-title">No students enrolled yet</p>
-            <p class="empty-state-text">Assign students above to enroll them in this program.</p>
+    <div class="attendance-layout">
+      <!-- Session selector / list -->
+      <div class="attendance-sessions-panel">
+        <div class="attendance-sessions-panel__header">
+          <h3 class="attendance-sessions-panel__title">
+            <svg class="attendance-sessions-panel__title-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 0 1 2.25-2.25h13.5A2.25 2.25 0 0 1 21 7.5v11.25m-18 0A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75m-18 0v-7.5A2.25 2.25 0 0 1 5.25 9h13.5A2.25 2.25 0 0 1 21 11.25v7.5" />
+            </svg>
+            Select Session
+          </h3>
+          <span class="attendance-sessions-panel__count">{{ attendanceSessionsFiltered.length }} sessions</span>
+        </div>
+
+        <div class="attendance-sessions-list" *ngIf="attendanceSessionsVisible.length > 0">
+          <article
+            *ngFor="let session of attendanceSessionsVisible"
+            (click)="selectAttendanceSession(session)"
+            class="attendance-session-card"
+            [class.attendance-session-card--selected]="selectedAttendanceSession?.id === session.id"
+          >
+            <div class="attendance-session-card__date">
+              <span class="attendance-session-card__day">{{ session.startDateTime | date:'dd' }}</span>
+              <span class="attendance-session-card__month">{{ session.startDateTime | date:'MMM' }}</span>
+              <span class="attendance-session-card__time">{{ session.startDateTime | date:'shortTime' }}</span>
+            </div>
+            <div class="attendance-session-card__body">
+              <h4 class="attendance-session-card__title">{{ session.programTitle || 'Program' }}</h4>
+              <p class="attendance-session-card__topic">{{ session.topicName || 'No topic' }}</p>
+              <div class="attendance-session-card__meta">
+                <span class="status-pill" [ngClass]="session.status === 'COMPLETED' ? 'status-pill--completed' : session.status === 'IN_PROGRESS' ? 'status-pill--pending' : 'status-pill--default'">{{ session.status }}</span>
+                <span class="attendance-session-card__learners">{{ session.enrollmentsCount || 0 }} learners</span>
+              </div>
+            </div>
+          </article>
+        </div>
+
+        <div *ngIf="sessions.length === 0" class="attendance-empty">
+          <svg class="attendance-empty__icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 0 1 2.25-2.25h13.5A2.25 2.25 0 0 1 21 7.5v11.25m-18 0A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75m-18 0v-7.5A2.25 2.25 0 0 1 5.25 9h13.5A2.25 2.25 0 0 1 21 11.25v7.5" />
+          </svg>
+          <p class="attendance-empty__title">No sessions available</p>
+          <p class="attendance-empty__text">Create sessions in the Sessions tab first.</p>
+        </div>
+        <div *ngIf="sessions.length > 0 && attendanceSessionsVisible.length === 0" class="attendance-empty">
+          <svg class="attendance-empty__icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z" />
+          </svg>
+          <p class="attendance-empty__title">No sessions match filters</p>
+          <p class="attendance-empty__text">Adjust the filters above.</p>
+        </div>
+
+        <!-- Session pagination -->
+        <div *ngIf="attendanceSessionsFiltered.length > 0" class="attendance-pagination">
+          <span class="attendance-pagination__info">
+            {{ (attendanceSessionPage - 1) * attendanceSessionPageSize + 1 }}–{{ Math.min(attendanceSessionPage * attendanceSessionPageSize, attendanceSessionsFiltered.length) }} of {{ attendanceSessionsFiltered.length }}
+          </span>
+          <div class="attendance-pagination__controls">
+            <select class="form-input attendance-pagination__select" [ngModel]="attendanceSessionPageSize" (ngModelChange)="onAttendanceSessionPageSizeChange($event)">
+              <option *ngFor="let s of attendanceSessionPageSizeOptions" [ngValue]="s">{{ s }}</option>
+            </select>
+            <button type="button" class="page-button" [disabled]="attendanceSessionPage === 1" (click)="prevAttendanceSessionPage()">‹</button>
+            <button type="button" class="page-button" *ngFor="let p of attendanceSessionPageNumbers" [class.page-button--active]="p === attendanceSessionPage" (click)="goToAttendanceSessionPage(p)">{{ p }}</button>
+            <button type="button" class="page-button" [disabled]="attendanceSessionPage === attendanceSessionTotalPages" (click)="nextAttendanceSessionPage()">›</button>
           </div>
         </div>
       </div>
-    </div>
-  </div>
 
-  <!-- Attendance Tab -->
-  <div *ngIf="activeTab === 'attendance' && !loading" class="tab-content space-y-4">
-    <div class="mb-4">
-      <h2 class="card-header-title">Attendance Management</h2>
-      <p class="text-sm text-gray-600">Select a session to mark attendance</p>
-    </div>
+      <!-- Attendance list for selected session -->
+      <div class="attendance-students-panel" *ngIf="selectedAttendanceSession">
+        <div class="attendance-students-panel__header">
+          <div class="attendance-students-panel__header-main">
+            <button type="button" class="attendance-students-panel__back" (click)="clearAttendanceSession()" title="Back to sessions">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M10.5 19.5 3 12m0 0 7.5-7.5M3 12h18" /></svg>
+            </button>
+            <div>
+              <h3 class="attendance-students-panel__title">{{ selectedAttendanceSession.programTitle }}</h3>
+              <p class="attendance-students-panel__subtitle">
+                {{ selectedAttendanceSession.startDateTime | date:'dd MMM yyyy · HH:mm' }}
+                · {{ selectedAttendanceSession.topicName || 'No topic' }}
+              </p>
+            </div>
+          </div>
+        </div>
 
-    <div class="table-shell">
-      <table class="table">
-        <thead>
-          <tr>
-            <th>Program</th>
-            <th>Topic</th>
-            <th>Start Date</th>
-            <th>Status</th>
-            <th>Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr *ngFor="let session of sessions">
-            <td>{{ session.programTitle }}</td>
-            <td>{{ session.topicName || '—' }}</td>
-            <td>{{ session.startDateTime | date:'short' }}</td>
-            <td>
-              <span
-                class="status-pill"
-                [ngClass]="session.status === 'COMPLETED' ? 'status-pill--completed' :
-                           session.status === 'IN_PROGRESS' ? 'status-pill--pending' :
-                           'status-pill--default'"
-              >
-                {{ session.status }}
+        <div *ngIf="attendanceTabLoading" class="attendance-loading">
+          <div class="animate-spin rounded-full h-10 w-10 border-b-2 border-D34E4E mx-auto"></div>
+          <p>Loading students...</p>
+        </div>
+
+        <ng-container *ngIf="!attendanceTabLoading && attendanceStudents.length > 0">
+          <!-- Student filters -->
+          <form [formGroup]="attendanceStudentFiltersForm" class="attendance-student-filters">
+            <div class="attendance-student-filters__search">
+              <svg class="attendance-student-filters__icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z" />
+              </svg>
+              <input type="text" class="form-input" placeholder="Search by name or email..." formControlName="search">
+            </div>
+          </form>
+
+          <div class="attendance-students-scroll">
+            <table class="attendance-table">
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th>Student</th>
+                  <th>Email</th>
+                  <th>Current Status</th>
+                  <th>Status</th>
+                  <th>Notes</th>
+                  <th class="text-right">Quick</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let enrollment of attendanceStudentsVisible; index as i">
+                  <td>{{ (attendanceStudentPage - 1) * attendanceStudentPageSize + i + 1 }}</td>
+                  <td>
+                    <div class="attendance-table__student">
+                      <span class="attendance-table__avatar">{{ (enrollment.participantFullName || enrollment.participantUsername || '?')[0] | uppercase }}</span>
+                      {{ enrollment.participantFullName || enrollment.participantUsername }}
+                    </div>
+                  </td>
+                  <td>{{ enrollment.participantEmail || '—' }}</td>
+                  <td>
+                    <span *ngIf="getExistingAttendanceForStudent(enrollment.participantId) as existing" class="attendance-status-badge" [ngClass]="'attendance-status-badge--' + (existing.status | lowercase)">
+                      {{ existing.status }}
+                    </span>
+                    <span *ngIf="!getExistingAttendanceForStudent(enrollment.participantId)" class="attendance-status-badge attendance-status-badge--none">—</span>
+                  </td>
+                  <td>
+                    <select [formControl]="getAttendanceControl(enrollment.participantId, 'status')" class="form-input form-input--sm attendance-table__select">
+                      <option value="PRESENT">Present</option>
+                      <option value="ABSENT">Absent</option>
+                      <option value="LATE">Late</option>
+                      <option value="EXCUSED">Excused</option>
+                    </select>
+                  </td>
+                  <td>
+                    <input type="text" [formControl]="getAttendanceControl(enrollment.participantId, 'notes')" placeholder="Notes" class="form-input form-input--sm attendance-table__notes">
+                  </td>
+                  <td class="text-right">
+                    <button type="button" *ngIf="getAttendanceControl(enrollment.participantId, 'status')?.value === 'ABSENT'" class="btn-secondary btn-secondary--xs" (click)="approveAbsenceForParticipant(enrollment.participantId)">
+                      Excuse
+                    </button>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Student pagination -->
+          <div *ngIf="attendanceStudentsFiltered.length > 0" class="attendance-pagination attendance-pagination--bottom">
+            <span class="attendance-pagination__info">
+              {{ (attendanceStudentPage - 1) * attendanceStudentPageSize + 1 }}–{{ Math.min(attendanceStudentPage * attendanceStudentPageSize, attendanceStudentsFiltered.length) }} of {{ attendanceStudentsFiltered.length }} students
+            </span>
+            <div class="attendance-pagination__controls">
+              <select class="form-input attendance-pagination__select" [ngModel]="attendanceStudentPageSize" (ngModelChange)="onAttendanceStudentPageSizeChange($event)">
+                <option *ngFor="let s of attendanceStudentPageSizeOptions" [ngValue]="s">{{ s }}</option>
+              </select>
+              <button type="button" class="page-button" [disabled]="attendanceStudentPage === 1" (click)="prevAttendanceStudentPage()">‹</button>
+              <button type="button" class="page-button" *ngFor="let p of attendanceStudentPageNumbers" [class.page-button--active]="p === attendanceStudentPage" (click)="goToAttendanceStudentPage(p)">{{ p }}</button>
+              <button type="button" class="page-button" [disabled]="attendanceStudentPage === attendanceStudentTotalPages" (click)="nextAttendanceStudentPage()">›</button>
+            </div>
+          </div>
+
+          <div class="attendance-save-bar">
+            <button type="button" (click)="clearAttendanceSession()" class="btn-secondary">Cancel</button>
+            <button type="button" (click)="saveAttendanceInline()" [disabled]="savingAttendance" class="btn-primary btn-primary--lg">
+              <span *ngIf="!savingAttendance">
+                <svg class="attendance-save-bar__icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
+                </svg>
+                Save Attendance
               </span>
-            </td>
-            <td>
-              <button
-                (click)="openAttendanceModal(session)"
-                class="btn-primary"
-              >
-                Mark Attendance
-              </button>
-            </td>
-          </tr>
-        </tbody>
-      </table>
-      <div *ngIf="sessions.length === 0" class="empty-state">
-        <span class="empty-state-icon" aria-hidden="true">📝</span>
-        <p class="empty-state-title">No sessions available</p>
-        <p class="empty-state-text">Create sessions first before marking attendance.</p>
+              <span *ngIf="savingAttendance" class="flex items-center gap-2">
+                <span class="animate-spin rounded-full h-4 w-4 border-b-2 border-white inline-block"></span>
+                Saving...
+              </span>
+            </button>
+          </div>
+        </ng-container>
+
+        <div *ngIf="!attendanceTabLoading && selectedAttendanceSession && attendanceStudents.length === 0" class="attendance-empty">
+          <svg class="attendance-empty__icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M15 19.128a9.38 9.38 0 0 0 2.625.372 9.337 9.337 0 0 0 4.121-.952 4.125 4.125 0 0 0-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 0 1 8.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0 1 11.964-3.07M12 6.375a3.375 3.375 0 1 1-6.75 0 3.375 3.375 0 0 1 6.75 0Z" />
+          </svg>
+          <p class="attendance-empty__title">No students enrolled</p>
+          <p class="attendance-empty__text">Assign students to this program in the Programs tab.</p>
+        </div>
+      </div>
+
+      <!-- Placeholder when no session selected -->
+      <div *ngIf="!selectedAttendanceSession" class="attendance-placeholder">
+        <div class="attendance-placeholder__content">
+          <svg class="attendance-placeholder__icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75 11.25 15 15 9.75M4.5 6.75h15M4.5 12h3m-3 5.25h3" />
+          </svg>
+          <h3 class="attendance-placeholder__title">Select a session</h3>
+          <p class="attendance-placeholder__text">Choose a session from the list on the left to view and mark attendance for all enrolled students.</p>
+        </div>
       </div>
     </div>
   </div>
@@ -1222,11 +1341,20 @@
             <label>Session</label>
             <select class="form-input" formControlName="sessionId">
               <option [ngValue]="null">Select a session</option>
-              <option *ngFor="let s of sessions" [ngValue]="s.id">
-                {{ s.startDateTime | date:'dd-MMM-yyyy HH:mm' }} ·
-                {{ s.programTitle || 'Program' }} –
-                {{ s.topicName || 'No topic' }}
-              </option>
+              <ng-container *ngIf="isCfoViewOnly">
+                <option *ngFor="let s of cfoReportSessions" [ngValue]="s.sessionId">
+                  {{ s.startDateTime | date:'dd-MMM-yyyy HH:mm' }} ·
+                  {{ s.programTitle || 'Program' }} –
+                  {{ s.sessionTopic || 'No topic' }}
+                </option>
+              </ng-container>
+              <ng-container *ngIf="!isCfoViewOnly">
+                <option *ngFor="let s of sessions" [ngValue]="s.id">
+                  {{ s.startDateTime | date:'dd-MMM-yyyy HH:mm' }} ·
+                  {{ s.programTitle || 'Program' }} –
+                  {{ s.topicName || 'No topic' }}
+                </option>
+              </ng-container>
             </select>
           </div>
           <div class="reports-filters__actions">
@@ -1299,14 +1427,12 @@
 
         <!-- Instructor E-Signature for this session -->
         <div
-          class="session-signatures session-signatures--instructor"
+          class="report-signatures-block report-signatures-block--instructor"
           *ngIf="instructorReportSignature && getSignatureImageSrc(instructorReportSignature) as instructorSigSrc"
         >
-          <span class="session-signatures__label">
-            Instructor E-Signature
-          </span>
+          <h4 class="report-signatures-block__title">Instructor E-Signature</h4>
           <img
-            class="report-signature-img"
+            class="report-signature-card__img report-signature-card__img--instructor"
             [src]="instructorSigSrc"
             alt="Instructor e-signature"
           />
@@ -1338,29 +1464,26 @@
           </table>
         </div>
 
-        <div class="session-signatures">
-          <span class="session-signatures__label">
-            Present &amp; acknowledged participants (E-Signatures)
-          </span>
-          <div class="session-signatures__list" *ngIf="singleSessionReport.attendedStudentSignatures?.length; else noSignatures">
+        <!-- Participant E-Signatures (students who provided) -->
+        <div class="report-signatures-block">
+          <h4 class="report-signatures-block__title">Participant E-Signatures</h4>
+          <p class="report-signatures-block__subtitle">Signed attendance for this session. Only participants who have provided an e-signature are listed.</p>
+          <div class="report-signatures-grid" *ngIf="getSignaturesWithImage(singleSessionReport.attendedStudentSignatures)?.length; else noSignatures">
             <div
-              class="session-signature-item"
-              *ngFor="let sig of singleSessionReport.attendedStudentSignatures"
+              class="report-signature-card"
+              *ngFor="let sig of getSignaturesWithImage(singleSessionReport.attendedStudentSignatures)"
             >
-              <span class="session-signature-name">{{ sig.fullName }}</span>
+              <span class="report-signature-card__name">{{ sig.fullName }}</span>
               <img
                 *ngIf="getSignatureImageSrc(sig.signatureData) as sigSrc"
-                class="report-signature-img report-signature-img--sm"
+                class="report-signature-card__img"
                 [src]="sigSrc"
-                alt="Signature"
+                [alt]="'E-signature of ' + sig.fullName"
               />
-              <span *ngIf="!getSignatureImageSrc(sig.signatureData)" class="no-signature">
-                Signature on file
-              </span>
             </div>
           </div>
           <ng-template #noSignatures>
-            <div class="no-signature">No signatures recorded for this session.</div>
+            <div class="report-signatures-empty">No participant e-signatures recorded for this session.</div>
           </ng-template>
         </div>
       </ng-container>
@@ -1456,6 +1579,24 @@
                 }}
               </span>
             </div>
+            <!-- Participant E-Signatures for this session (students who provided) -->
+            <div class="report-signatures-block report-signatures-block--inline" *ngIf="getSignaturesWithImage(s.attendedStudentSignatures)?.length">
+              <h5 class="report-signatures-block__title report-signatures-block__title--sm">Participant E-Signatures</h5>
+              <div class="report-signatures-grid">
+                <div
+                  class="report-signature-card"
+                  *ngFor="let sig of getSignaturesWithImage(s.attendedStudentSignatures)"
+                >
+                  <span class="report-signature-card__name">{{ sig.fullName }}</span>
+                  <img
+                    *ngIf="getSignatureImageSrc(sig.signatureData) as sigSrc"
+                    class="report-signature-card__img"
+                    [src]="sigSrc"
+                    [alt]="'E-signature of ' + sig.fullName"
+                  />
+                </div>
+              </div>
+            </div>
           </div>
         </div>
         <ng-template #noSessionsRange>
@@ -1490,14 +1631,12 @@
 
         <!-- Instructor E-Signature for this reporting window (if available) -->
         <div
-          class="session-signatures session-signatures--instructor mt-4"
+          class="report-signatures-block report-signatures-block--instructor mt-4"
           *ngIf="instructorReportSignature && getSignatureImageSrc(instructorReportSignature) as instructorSigSrc"
         >
-          <span class="session-signatures__label">
-            Instructor E-Signature (for sessions in this period)
-          </span>
+          <h4 class="report-signatures-block__title">Instructor E-Signature (sessions in this period)</h4>
           <img
-            class="report-signature-img"
+            class="report-signature-card__img report-signature-card__img--instructor"
             [src]="instructorSigSrc"
             alt="Instructor e-signature"
           />

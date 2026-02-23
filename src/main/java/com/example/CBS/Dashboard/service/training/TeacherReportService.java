@@ -63,6 +63,15 @@ public class TeacherReportService {
         return "—";
     }
 
+    /** All sessions in date range for CFO (organization-wide). */
+    @Transactional(readOnly = true)
+    public List<SessionAttendanceReportDto> getCfoAttendanceReport(LocalDate from, LocalDate to) {
+        LocalDateTime fromDateTime = from.atStartOfDay();
+        LocalDateTime toDateTime = to.plusDays(1).atStartOfDay();
+        List<TrainingSession> sessions = sessionRepository.findByStartDateTimeBetween(fromDateTime, toDateTime);
+        return buildSessionAttendanceReportRows(sessions);
+    }
+
     @Transactional(readOnly = true)
     public List<SessionAttendanceReportDto> getTeacherAttendanceReport(String username, LocalDate from, LocalDate to) {
         Long instructorId = userRepository.findByUsername(username)
@@ -74,14 +83,15 @@ public class TeacherReportService {
 
         List<TrainingSession> sessions = sessionRepository.findByInstructorIdAndDateRange(instructorId, fromDateTime, toDateTime);
 
+        return buildSessionAttendanceReportRows(sessions);
+    }
+
+    private List<SessionAttendanceReportDto> buildSessionAttendanceReportRows(List<TrainingSession> sessions) {
         List<SessionAttendanceReportDto> reportRows = new ArrayList<>();
         for (TrainingSession session : sessions) {
-            LocalDateTime sessionStart = session.getStartDateTime();
-            LocalDateTime startOfDay = sessionStart.toLocalDate().atStartOfDay();
-            LocalDateTime endOfDay = sessionStart.toLocalDate().plusDays(1).atStartOfDay();
-
-            List<Attendance> attendanceList = attendanceRepository.findBySessionIdAndAttendanceDateBetween(
-                    session.getId(), startOfDay, endOfDay);
+            // Use all attendance records for this session so report shows correct present/absent
+            // (findBySessionIdAndAttendanceDateBetween can miss records when attendanceDate is null or mismatched)
+            List<Attendance> attendanceList = attendanceRepository.findBySessionId(session.getId());
 
         List<Attendance> attendedList = attendanceList.stream()
                 .filter(a ->
@@ -172,36 +182,48 @@ public class TeacherReportService {
         return reportRows;
     }
 
+    /** Single-session report for CFO (no instructor check). */
+    @Transactional(readOnly = true)
+    public SingleSessionReportDto getSingleSessionReportForCfo(Long sessionId) {
+        return getSingleSessionReportInternal(sessionId, null);
+    }
+
     @Transactional(readOnly = true)
     public SingleSessionReportDto getSingleSessionReport(String username, Long sessionId) {
         Long instructorId = userRepository.findByUsername(username)
                 .orElseThrow(() -> new UsernameNotFoundException("User not found: " + username))
                 .getId();
 
+        return getSingleSessionReportInternal(sessionId, instructorId);
+    }
+
+    private SingleSessionReportDto getSingleSessionReportInternal(Long sessionId, Long instructorIdForCheck) {
         TrainingSession session = sessionRepository.findById(sessionId)
                 .orElseThrow(() -> new RuntimeException("Session not found"));
         Hibernate.initialize(session.getProgram());
         Hibernate.initialize(session.getInstructor());
 
-        boolean hasAccess = (session.getProgram() != null && session.getProgram().getInstructor() != null
-                && session.getProgram().getInstructor().getId().equals(instructorId))
-                || (session.getInstructor() != null && session.getInstructor().getId().equals(instructorId));
-        if (!hasAccess) {
-            throw new RuntimeException("Access denied: you are not the instructor for this session");
+        if (instructorIdForCheck != null) {
+            boolean hasAccess = (session.getProgram() != null && session.getProgram().getInstructor() != null
+                    && session.getProgram().getInstructor().getId().equals(instructorIdForCheck))
+                    || (session.getInstructor() != null && session.getInstructor().getId().equals(instructorIdForCheck));
+            if (!hasAccess) {
+                throw new RuntimeException("Access denied: you are not the instructor for this session");
+            }
         }
 
-        Long programId = session.getProgram().getId();
+        Long programId = session.getProgram() != null ? session.getProgram().getId() : null;
+        if (programId == null) {
+            throw new RuntimeException("Session has no program");
+        }
         List<Enrollment> enrollments = enrollmentRepository.findByProgramId(programId);
-        LocalDateTime startOfDay = session.getStartDateTime().toLocalDate().atStartOfDay();
-        LocalDateTime endOfDay = session.getStartDateTime().toLocalDate().plusDays(1).atStartOfDay();
-        List<Attendance> sessionAttendance = attendanceRepository.findBySessionIdAndAttendanceDateBetween(
-                sessionId, startOfDay, endOfDay);
+        // Use all attendance for this session so status is correct in PDF (avoids null/mismatched attendanceDate)
+        List<Attendance> sessionAttendance = attendanceRepository.findBySessionId(sessionId);
         Map<Long, Attendance> attendanceByParticipant = sessionAttendance.stream()
-                .collect(Collectors.toMap(a -> a.getParticipant().getId(), a -> a, (a1, a2) -> a1));
+                .collect(Collectors.toMap(a -> a.getParticipant().getId(), a -> a, (a1, a2) -> a2));
 
-        List<Attendance> allForSession = attendanceRepository.findBySessionId(sessionId);
         Map<Long, long[]> statsByParticipant = new HashMap<>();
-        for (Attendance a : allForSession) {
+        for (Attendance a : sessionAttendance) {
             Long pid = a.getParticipant().getId();
             statsByParticipant.putIfAbsent(pid, new long[]{0L, 0L});
             long[] p = statsByParticipant.get(pid);
@@ -323,10 +345,21 @@ public class TeacherReportService {
                 enrollments.size());
     }
 
+    /** Date-based grouped report for CFO (all sessions in range). */
+    @Transactional(readOnly = true)
+    public DateBasedGroupedReportDto getDateBasedGroupedReportForCfo(LocalDate from, LocalDate to) {
+        List<SessionAttendanceReportDto> sessions = getCfoAttendanceReport(from, to);
+        return buildDateBasedGroupedReport(from, to, sessions);
+    }
+
     @Transactional(readOnly = true)
     public DateBasedGroupedReportDto getDateBasedGroupedReport(String username, LocalDate from, LocalDate to) {
         List<SessionAttendanceReportDto> sessions = getTeacherAttendanceReport(username, from, to);
+        return buildDateBasedGroupedReport(from, to, sessions);
+    }
 
+    private DateBasedGroupedReportDto buildDateBasedGroupedReport(LocalDate from, LocalDate to,
+                                                                  List<SessionAttendanceReportDto> sessions) {
         Set<Long> allStudentIds = new HashSet<>();
         Map<Long, Set<Long>> studentToAttendedSessions = new HashMap<>();
         Map<Long, List<String>> studentToTopics = new HashMap<>();

@@ -210,7 +210,16 @@ public class TrainingSessionService {
             .orElseThrow(() -> new RuntimeException("Training session not found"));
         sessionRepository.delete(session);
     }
-    
+
+    /**
+     * Deletes all training sessions from the database.
+     * Intended for administrative cleanup/reset operations only.
+     */
+    @Transactional
+    public void deleteAllSessions() {
+        sessionRepository.deleteAll();
+    }
+
     private TrainingSessionDto mapToDto(TrainingSession session) {
         TrainingSessionDto dto = new TrainingSessionDto();
         dto.setId(session.getId());

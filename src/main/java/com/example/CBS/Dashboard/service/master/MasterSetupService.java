@@ -24,6 +24,11 @@ public class MasterSetupService {
     private final CoordinatorRepository coordinatorRepository;
     private final StudentTeacherRepository studentTeacherRepository;
     private final UserRepository userRepository;
+    private final EnrollmentRepository enrollmentRepository;
+    private final AttendanceRepository attendanceRepository;
+    private final AssessmentResultRepository assessmentResultRepository;
+    private final TrainingProgramRepository trainingProgramRepository;
+    private final TrainingSessionRepository trainingSessionRepository;
     
     // Training Topic methods
     @Transactional
@@ -466,7 +471,46 @@ public class MasterSetupService {
     
     @Transactional
     public void deleteStudentTeacher(Long id) {
-        studentTeacherRepository.deleteById(id);
+        StudentTeacher st = studentTeacherRepository.findById(id)
+            .orElseThrow(() -> new RuntimeException("Student/Teacher not found"));
+        User user = st.getUser();
+        if (user == null) {
+            studentTeacherRepository.deleteById(id);
+            return;
+        }
+        Long userId = user.getId();
+        StudentTeacher.Type type = st.getType();
+
+        // 1. Remove all enrollments (so they no longer appear in program/teacher student lists)
+        enrollmentRepository.findByParticipantId(userId).forEach(enrollmentRepository::delete);
+
+        if (type == StudentTeacher.Type.STUDENT) {
+            // 2a. Remove attendance records for this student
+            attendanceRepository.findByParticipantId(userId).forEach(attendanceRepository::delete);
+            // 2b. Remove assessment results for this student
+            assessmentResultRepository.findByParticipantId(userId).forEach(assessmentResultRepository::delete);
+        } else {
+            // 2. For teacher: clear instructor from programs and sessions so FK is not violated
+            trainingProgramRepository.findByInstructorId(userId).forEach(program -> {
+                program.setInstructor(null);
+                trainingProgramRepository.save(program);
+            });
+            trainingSessionRepository.findByInstructorId(userId).forEach(session -> {
+                session.setInstructor(null);
+                trainingSessionRepository.save(session);
+            });
+        }
+
+        // 3. Delete the student/teacher record
+        studentTeacherRepository.delete(st);
+
+        // 4. Remove the corresponding role so they cannot access student/teacher dashboard
+        String roleToRemove = type == StudentTeacher.Type.STUDENT ? "ROLE_STUDENT" : "ROLE_TEACHER";
+        user.getRoles().removeIf(r -> roleToRemove.equals(r.getName()));
+
+        // 5. Disable the user so they cannot log in
+        user.setEnabled(false);
+        userRepository.save(user);
     }
     
     // DTO conversion methods

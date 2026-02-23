@@ -36,10 +36,13 @@ public class DataLoader implements CommandLineRunner {
                 "ROLE_STUDENT",
                 "ROLE_DRILL_TESTING",
                 "ROLE_INDIVIDUAL_REPORT",
-                "ROLE_CFO" // CFO – Training Oversight & Financial Governance
+                "ROLE_QUALITY_CONTROL",
+                "ROLE_CFO"
         );
-        defaultRoles.forEach(roleName -> roleRepository.findByName(roleName)
-                .orElseGet(() -> roleRepository.save(new Role(roleName))));
+        for (String roleName : defaultRoles) {
+            roleRepository.findByName(roleName)
+                    .orElseGet(() -> roleRepository.save(new Role(roleName)));
+        }
         
         if (userRepository.count() == 0) {
             Set<Role> roles = new HashSet<>(roleRepository.findAll());

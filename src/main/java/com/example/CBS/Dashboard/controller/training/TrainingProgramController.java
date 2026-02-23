@@ -34,6 +34,7 @@ public class TrainingProgramController {
     }
     
     @GetMapping
+    @PreAuthorize("hasAnyAuthority('ROLE_TRAINING_ADMIN', 'ROLE_ADMIN', 'ROLE_TEACHER', 'ROLE_STUDENT', 'ROLE_CFO')")
     public ResponseEntity<List<TrainingProgramDto>> getAllPrograms(
             @RequestParam(required = false) String status,
             @RequestParam(required = false) String category) {
@@ -77,6 +78,7 @@ public class TrainingProgramController {
     }
     
     @GetMapping("/{id}")
+    @PreAuthorize("hasAnyAuthority('ROLE_TRAINING_ADMIN', 'ROLE_ADMIN', 'ROLE_TEACHER', 'ROLE_STUDENT', 'ROLE_CFO')")
     public ResponseEntity<TrainingProgramDto> getProgramById(@PathVariable Long id) {
         TrainingProgramDto program = trainingProgramService.getProgramById(id);
         return ResponseEntity.ok(program);

@@ -19,7 +19,9 @@ import {
   AttendanceStatus,
   MaterialType,
   SingleSessionReport,
-  DateBasedGroupedReport
+  DateBasedGroupedReport,
+  AttendeeSignature,
+  SessionAttendanceReport
 } from '../../../core/models/training';
 import { StudentTeacher } from '../../../core/models/master';
 import { User } from '../../../core/models';
@@ -39,10 +41,23 @@ export class TeacherDashboardComponent implements OnInit {
   private fb = inject(FormBuilder);
 
   currentUser: User | null = null;
-  activeTab: 'overview' | 'programs' | 'sessions' | 'materials' | 'students' | 'attendance' | 'reports' = 'overview';
-  tabs: ('overview' | 'programs' | 'sessions' | 'materials' | 'students' | 'attendance' | 'reports')[] = 
-    ['overview', 'programs', 'sessions', 'materials', 'students', 'attendance', 'reports'];
-  
+  activeTab: 'overview' | 'programs' | 'sessions' | 'materials' | 'attendance' | 'reports' = 'overview';
+  readonly allTabs: ('overview' | 'programs' | 'sessions' | 'materials' | 'attendance' | 'reports')[] = 
+    ['overview', 'programs', 'sessions', 'materials', 'attendance', 'reports'];
+
+  /** CFO view-only: only Reports tab; no create/edit/delete. */
+  get isCfoViewOnly(): boolean {
+    return this.authService.hasAnyRole(['ROLE_CFO']) &&
+      !this.authService.hasAnyRole(['ROLE_TEACHER', 'ROLE_TRAINING_ADMIN', 'ROLE_ADMIN']);
+  }
+
+  get tabs(): ('overview' | 'programs' | 'sessions' | 'materials' | 'attendance' | 'reports')[] {
+    return this.isCfoViewOnly ? ['reports'] : this.allTabs;
+  }
+
+  /** Sessions for report session dropdown when CFO (from date-range report). */
+  cfoReportSessions: SessionAttendanceReport[] = [];
+
   // Programs
   programs: TrainingProgram[] = [];
   selectedProgram: TrainingProgram | null = null;
@@ -92,6 +107,28 @@ export class TeacherDashboardComponent implements OnInit {
   attendanceForm: FormGroup;
   attendanceStudents: Enrollment[] = [];
   savingAttendance = false;
+
+  // Attendance Tab - Session-based flow
+  selectedAttendanceSession: TrainingSession | null = null;
+  attendanceSessionsFiltered: TrainingSession[] = [];
+  attendanceSessionsVisible: TrainingSession[] = [];
+  attendanceSessionPage = 1;
+  attendanceSessionPageSize = 10;
+  attendanceSessionPageSizeOptions: number[] = [5, 10, 20];
+  attendanceSessionTotalPages = 1;
+  attendanceSessionPageNumbers: number[] = [];
+  attendanceFiltersForm: FormGroup;
+
+  // Attendance Tab - Student list
+  attendanceStudentsFiltered: Enrollment[] = [];
+  attendanceStudentsVisible: Enrollment[] = [];
+  attendanceStudentPage = 1;
+  attendanceStudentPageSize = 10;
+  attendanceStudentPageSizeOptions: number[] = [5, 10, 20, 50];
+  attendanceStudentTotalPages = 1;
+  attendanceStudentPageNumbers: number[] = [];
+  attendanceStudentFiltersForm: FormGroup;
+  attendanceTabLoading = false;
   
   // Reports
   reportsMode: 'session' | 'dateRange' = 'session';
@@ -107,6 +144,7 @@ export class TeacherDashboardComponent implements OnInit {
   SessionStatus = SessionStatus;
   AttendanceStatus = AttendanceStatus;
   MaterialType = MaterialType;
+  Math = Math;
 
   constructor() {
     this.sessionForm = this.fb.group({
@@ -160,6 +198,18 @@ export class TeacherDashboardComponent implements OnInit {
       displayOrder: ['']
     });
 
+    this.attendanceFiltersForm = this.fb.group({
+      programId: [null],
+      status: [''],
+      search: [''],
+      fromDate: [''],
+      toDate: ['']
+    });
+
+    this.attendanceStudentFiltersForm = this.fb.group({
+      search: ['']
+    });
+
     this.sessionFiltersForm.valueChanges.subscribe(() => {
       this.sessionPage = 1;
       this.applySessionFilters();
@@ -169,15 +219,30 @@ export class TeacherDashboardComponent implements OnInit {
       this.materialPage = 1;
       this.applyMaterialFilters();
     });
+
+    this.attendanceFiltersForm.valueChanges.subscribe(() => {
+      this.attendanceSessionPage = 1;
+      this.applyAttendanceSessionFilters();
+    });
+
+    this.attendanceStudentFiltersForm.valueChanges.subscribe(() => {
+      this.attendanceStudentPage = 1;
+      this.applyAttendanceStudentFilters();
+    });
   }
 
   ngOnInit(): void {
     this.authService.currentUser$.subscribe(user => {
       this.currentUser = user;
       if (user?.id) {
-        this.loadPrograms();
-        this.loadStudents();
-        this.loadSessions();
+        if (this.isCfoViewOnly) {
+          this.activeTab = 'reports';
+          this.loadCfoReportSessions();
+        } else {
+          this.loadPrograms();
+          this.loadStudents();
+          this.loadSessions();
+        }
       }
     });
   }
@@ -219,6 +284,9 @@ export class TeacherDashboardComponent implements OnInit {
       next: (sessions) => {
         this.sessions = sessions || [];
         this.applySessionFilters();
+        if (this.activeTab === 'attendance') {
+          this.applyAttendanceSessionFilters();
+        }
         this.loading = false;
       },
       error: (err) => {
@@ -386,26 +454,20 @@ export class TeacherDashboardComponent implements OnInit {
       }
     }
 
-    // Map form values to request, handling session link vs location
-    // For Virtual/Hybrid, we treat "sessionLink" as the primary source and normalize it to a full URL.
-    let normalizedLocation = formValue.location || '';
-    if (formValue.sessionType === 'Virtual' || formValue.sessionType === 'Hybrid') {
-      let link = (formValue.sessionLink || formValue.location || '').trim();
-      if (link) {
-        // Auto-prefix protocol if the user omitted it so links remain clickable for students/teachers.
-        if (!link.toLowerCase().startsWith('http://') && !link.toLowerCase().startsWith('https://')) {
-          link = `https://${link}`;
-        }
-        normalizedLocation = link;
-      } else {
-        normalizedLocation = '';
+    // Map form values to request: persist session link when provided, otherwise location (venue).
+    // Backend has a single "location" field used for both venue and meeting URL.
+    let normalizedLocation: string = (formValue.sessionLink ?? '').toString().trim();
+    if (normalizedLocation) {
+      if (!/^https?:\/\//i.test(normalizedLocation)) {
+        normalizedLocation = 'https://' + normalizedLocation;
       }
+    } else {
+      normalizedLocation = (formValue.location ?? '').toString().trim();
     }
 
     const request: CreateTrainingSessionRequest = {
       programId: formValue.programId,
       startDateTime: formValue.startDateTime,
-      // Backend requires endDateTime – use same as start when only a single point is provided
       endDateTime: formValue.startDateTime,
       location: normalizedLocation,
       sessionType: formValue.sessionType,
@@ -438,13 +500,19 @@ export class TeacherDashboardComponent implements OnInit {
 
   editSession(session: TrainingSession): void {
     this.selectedSession = session;
-    
-    // Determine if session link should be populated from location
-    // For Virtual or Hybrid sessions, the link is stored in location field
-    const isVirtualOrHybrid = session.sessionType === 'Virtual' || session.sessionType === 'Hybrid';
-    const sessionLinkValue = isVirtualOrHybrid ? (session.location || '') : '';
-    const locationValue = isVirtualOrHybrid ? '' : (session.location || '');
-    
+
+    const rawLocation = session.location || '';
+    const typeLower = (session.sessionType || '').toLowerCase();
+    const isVirtualOrHybrid =
+      typeLower === 'virtual'.toLowerCase() ||
+      typeLower === 'hybrid'.toLowerCase();
+
+    // If the stored location already looks like a URL, prefer to treat it as the session link.
+    const looksLikeUrl = !!rawLocation && /^https?:\/\//i.test(rawLocation);
+
+    const sessionLinkValue = (isVirtualOrHybrid && rawLocation) ? rawLocation : (looksLikeUrl ? rawLocation : '');
+    const locationValue = (isVirtualOrHybrid && looksLikeUrl) ? '' : rawLocation;
+
     this.sessionForm.patchValue({
       programId: session.programId,
       startDateTime: new Date(session.startDateTime).toISOString().slice(0, 16),
@@ -684,6 +752,259 @@ export class TeacherDashboardComponent implements OnInit {
     }
   }
 
+  // Attendance Tab - Session-based flow
+  private applyAttendanceSessionFilters(): void {
+    if (!this.sessions) {
+      this.attendanceSessionsFiltered = [];
+      this.attendanceSessionsVisible = [];
+      return;
+    }
+
+    const { programId, status, search, fromDate, toDate } = this.attendanceFiltersForm?.value || {};
+    let data = [...this.sessions];
+
+    if (programId) {
+      data = data.filter(s => s.programId === programId);
+    }
+    if (status) {
+      data = data.filter(s => s.status === status);
+    }
+    if (search) {
+      const term = (search as string).toLowerCase();
+      data = data.filter(s =>
+        (s.programTitle || '').toLowerCase().includes(term) ||
+        (s.topicName || '').toLowerCase().includes(term) ||
+        (s.location || '').toLowerCase().includes(term)
+      );
+    }
+    if (fromDate) {
+      const from = new Date(fromDate);
+      data = data.filter(s => new Date(s.startDateTime) >= from);
+    }
+    if (toDate) {
+      const to = new Date(toDate);
+      to.setHours(23, 59, 59, 999);
+      data = data.filter(s => new Date(s.startDateTime) <= to);
+    }
+
+    data.sort((a, b) => {
+      const aTime = a.startDateTime ? new Date(a.startDateTime).getTime() : 0;
+      const bTime = b.startDateTime ? new Date(b.startDateTime).getTime() : 0;
+      return bTime - aTime;
+    });
+
+    this.attendanceSessionsFiltered = data;
+    this.updateAttendanceSessionPageData();
+  }
+
+  private updateAttendanceSessionPageData(): void {
+    const total = this.attendanceSessionsFiltered.length;
+    this.attendanceSessionTotalPages = Math.max(1, Math.ceil(total / this.attendanceSessionPageSize));
+    if (this.attendanceSessionPage > this.attendanceSessionTotalPages) {
+      this.attendanceSessionPage = this.attendanceSessionTotalPages;
+    }
+    const startIndex = (this.attendanceSessionPage - 1) * this.attendanceSessionPageSize;
+    this.attendanceSessionsVisible = this.attendanceSessionsFiltered.slice(startIndex, startIndex + this.attendanceSessionPageSize);
+    this.attendanceSessionPageNumbers = Array.from({ length: this.attendanceSessionTotalPages }, (_, i) => i + 1);
+  }
+
+  onAttendanceSessionPageSizeChange(value: string): void {
+    const size = parseInt(value, 10);
+    if (!isNaN(size) && size > 0) {
+      this.attendanceSessionPageSize = size;
+      this.attendanceSessionPage = 1;
+      this.updateAttendanceSessionPageData();
+    }
+  }
+
+  goToAttendanceSessionPage(page: number): void {
+    if (page < 1 || page > this.attendanceSessionTotalPages) return;
+    this.attendanceSessionPage = page;
+    this.updateAttendanceSessionPageData();
+  }
+
+  nextAttendanceSessionPage(): void {
+    if (this.attendanceSessionPage < this.attendanceSessionTotalPages) {
+      this.attendanceSessionPage++;
+      this.updateAttendanceSessionPageData();
+    }
+  }
+
+  prevAttendanceSessionPage(): void {
+    if (this.attendanceSessionPage > 1) {
+      this.attendanceSessionPage--;
+      this.updateAttendanceSessionPageData();
+    }
+  }
+
+  selectAttendanceSession(session: TrainingSession): void {
+    this.selectedAttendanceSession = session;
+    this.loadAttendanceForSession(session);
+  }
+
+  clearAttendanceSession(): void {
+    this.selectedAttendanceSession = null;
+    this.attendanceStudents = [];
+    this.attendanceRecords = [];
+    this.attendanceForm = this.fb.group({});
+    this.attendanceStudentsFiltered = [];
+    this.attendanceStudentsVisible = [];
+    this.attendanceStudentPage = 1;
+  }
+
+  loadAttendanceForSession(session: TrainingSession): void {
+    if (!session.programId) {
+      this.toastr.error('Program information is missing for this session.');
+      return;
+    }
+
+    this.attendanceTabLoading = true;
+
+    this.trainingService.getProgramStudents(session.programId).subscribe({
+      next: (enrollments) => {
+        this.attendanceStudents = enrollments || [];
+        this.trainingService.getAttendanceBySession(session.id).subscribe({
+          next: (attendance) => {
+            this.attendanceRecords = attendance || [];
+            const formControls: Record<string, any> = {};
+            this.attendanceStudents.forEach(enrollment => {
+              const existing = this.attendanceRecords.find(a => a.participantId === enrollment.participantId);
+              formControls[`student_${enrollment.participantId}`] = this.fb.group({
+                participantId: [enrollment.participantId],
+                status: [existing?.status || 'PRESENT'],
+                notes: [existing?.notes || '']
+              });
+            });
+            this.attendanceForm = this.fb.group(formControls);
+            this.applyAttendanceStudentFilters();
+            this.attendanceTabLoading = false;
+          },
+          error: () => {
+            this.attendanceRecords = [];
+            const formControls: Record<string, any> = {};
+            this.attendanceStudents.forEach(enrollment => {
+              formControls[`student_${enrollment.participantId}`] = this.fb.group({
+                participantId: [enrollment.participantId],
+                status: ['PRESENT'],
+                notes: ['']
+              });
+            });
+            this.attendanceForm = this.fb.group(formControls);
+            this.applyAttendanceStudentFilters();
+            this.attendanceTabLoading = false;
+          }
+        });
+      },
+      error: () => {
+        this.toastr.error('Failed to load students for this session.');
+        this.attendanceStudents = [];
+        this.attendanceTabLoading = false;
+      }
+    });
+  }
+
+  private applyAttendanceStudentFilters(): void {
+    if (!this.attendanceStudents) {
+      this.attendanceStudentsFiltered = [];
+      this.attendanceStudentsVisible = [];
+      return;
+    }
+
+    const search = (this.attendanceStudentFiltersForm?.value?.search || '').trim().toLowerCase();
+    let data = [...this.attendanceStudents];
+
+    if (search) {
+      data = data.filter(e =>
+        (e.participantFullName || '').toLowerCase().includes(search) ||
+        (e.participantUsername || '').toLowerCase().includes(search) ||
+        (e.participantEmail || '').toLowerCase().includes(search)
+      );
+    }
+
+    this.attendanceStudentsFiltered = data;
+    this.updateAttendanceStudentPageData();
+  }
+
+  private updateAttendanceStudentPageData(): void {
+    const total = this.attendanceStudentsFiltered.length;
+    this.attendanceStudentTotalPages = Math.max(1, Math.ceil(total / this.attendanceStudentPageSize));
+    if (this.attendanceStudentPage > this.attendanceStudentTotalPages) {
+      this.attendanceStudentPage = this.attendanceStudentTotalPages;
+    }
+    const startIndex = (this.attendanceStudentPage - 1) * this.attendanceStudentPageSize;
+    this.attendanceStudentsVisible = this.attendanceStudentsFiltered.slice(startIndex, startIndex + this.attendanceStudentPageSize);
+    this.attendanceStudentPageNumbers = Array.from({ length: this.attendanceStudentTotalPages }, (_, i) => i + 1);
+  }
+
+  onAttendanceStudentPageSizeChange(value: string): void {
+    const size = parseInt(value, 10);
+    if (!isNaN(size) && size > 0) {
+      this.attendanceStudentPageSize = size;
+      this.attendanceStudentPage = 1;
+      this.updateAttendanceStudentPageData();
+    }
+  }
+
+  goToAttendanceStudentPage(page: number): void {
+    if (page < 1 || page > this.attendanceStudentTotalPages) return;
+    this.attendanceStudentPage = page;
+    this.updateAttendanceStudentPageData();
+  }
+
+  nextAttendanceStudentPage(): void {
+    if (this.attendanceStudentPage < this.attendanceStudentTotalPages) {
+      this.attendanceStudentPage++;
+      this.updateAttendanceStudentPageData();
+    }
+  }
+
+  prevAttendanceStudentPage(): void {
+    if (this.attendanceStudentPage > 1) {
+      this.attendanceStudentPage--;
+      this.updateAttendanceStudentPageData();
+    }
+  }
+
+  getExistingAttendanceForStudent(participantId: number): Attendance | undefined {
+    return this.attendanceRecords?.find(a => a.participantId === participantId);
+  }
+
+  saveAttendanceInline(): void {
+    if (!this.selectedAttendanceSession) return;
+
+    const attendances: StudentAttendance[] = [];
+    Object.keys(this.attendanceForm.controls).forEach(key => {
+      const control = this.attendanceForm.get(key);
+      if (control) {
+        const value = control.value;
+        attendances.push({
+          participantId: value.participantId,
+          status: value.status,
+          notes: value.notes
+        });
+      }
+    });
+
+    const request: MarkAttendanceRequest = {
+      sessionId: this.selectedAttendanceSession.id,
+      attendances
+    };
+
+    this.savingAttendance = true;
+    this.trainingService.markAttendance(request).subscribe({
+      next: () => {
+        this.toastr.success('Attendance saved successfully');
+        this.loadAttendanceForSession(this.selectedAttendanceSession!);
+        this.savingAttendance = false;
+      },
+      error: (err) => {
+        const msg = err?.error?.message || err?.error?.error || err?.message || 'Failed to mark attendance';
+        this.toastr.error(msg);
+        this.savingAttendance = false;
+      }
+    });
+  }
+
   openDeleteMaterialModal(material: TrainingMaterial): void {
     this.materialPendingDelete = material;
     this.showDeleteMaterialModal = true;
@@ -732,7 +1053,7 @@ export class TeacherDashboardComponent implements OnInit {
     window.open(material.filePath, '_blank');
   }
 
-  private getSessionUrl(session: TrainingSession): string | null {
+  getSessionUrl(session: TrainingSession): string | null {
     const raw = (session.location || '').trim();
     if (!raw) {
       return null;
@@ -858,6 +1179,12 @@ export class TeacherDashboardComponent implements OnInit {
       return trimmed;
     }
     return `data:image/png;base64,${trimmed}`;
+  }
+
+  /** Returns only attendees who have provided an e-signature (with displayable image data). */
+  getSignaturesWithImage(signatures: AttendeeSignature[] | undefined): AttendeeSignature[] {
+    if (!signatures?.length) return [];
+    return signatures.filter(s => !!this.getSignatureImageSrc(s.signatureData));
   }
 
   /**
@@ -1203,6 +1530,22 @@ export class TeacherDashboardComponent implements OnInit {
     this.loadSessions(programId);
   }
 
+  /** Load session list for CFO report dropdown (from date-range report). */
+  loadCfoReportSessions(): void {
+    const to = new Date();
+    const from = new Date();
+    from.setDate(from.getDate() - 365);
+    const fromStr = from.toISOString().slice(0, 10);
+    const toStr = to.toISOString().slice(0, 10);
+    this.trainingService.getDateBasedGroupedReport(fromStr, toStr).subscribe({
+      next: (report) => {
+        this.groupedReport = report;
+        this.cfoReportSessions = report?.sessionsByDate ?? [];
+      },
+      error: () => { this.cfoReportSessions = []; }
+    });
+  }
+
   switchTab(tab: typeof this.activeTab): void {
     this.activeTab = tab;
     if (tab === 'overview') {
@@ -1218,10 +1561,9 @@ export class TeacherDashboardComponent implements OnInit {
         this.selectedProgram = this.programs[0];
         this.loadMaterials(this.selectedProgram.id);
       }
-    } else if (tab === 'students') {
-      this.loadStudents();
     } else if (tab === 'attendance') {
       this.loadSessions();
+      this.applyAttendanceSessionFilters();
     } else if (tab === 'reports') {
       // Ensure latest sessions are available for reports
       this.loadSessions();

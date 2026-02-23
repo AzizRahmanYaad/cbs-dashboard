@@ -5,6 +5,9 @@
     "ng": "ng",
     "start": "ng serve --host 0.0.0.0 --port 5000 --proxy-config proxy.conf.json",
     "build": "ng build",
+    "build:dev": "ng build --configuration development",
+    "serve:prod": "serve -s dist/frontend/browser -l 5000",
+    "serve:prod:flat": "serve -s dist/frontend -l 5000",
     "watch": "ng build --watch --configuration development",
     "test": "ng test"
   },
@@ -26,6 +29,7 @@
     "zone.js": "~0.14.10"
   },
   "devDependencies": {
+    "serve": "^14.2.4",
     "@angular-devkit/build-angular": "^18.2.21",
     "@angular/cli": "^18.2.21",
     "@angular/compiler-cli": "^18.2.0",

@@ -3,11 +3,12 @@ import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { AuthService } from '../../../core/services/auth.service';
 import { User } from '../../../core/models';
+import { UserProfileModalComponent } from './user-profile-modal/user-profile-modal.component';
 
 @Component({
   selector: 'app-header',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, UserProfileModalComponent],
   templateUrl: './header.component.html',
   styleUrls: ['./header.component.scss']
 })
@@ -19,6 +20,7 @@ export class HeaderComponent implements OnInit {
 
   currentUser: User | null = null;
   showUserMenu = false;
+  showProfileModal = false;
   
   get isTrainingAdmin(): boolean {
     return this.authService.hasAnyRole(['ROLE_TRAINING_ADMIN', 'ROLE_ADMIN']);
@@ -66,5 +68,23 @@ export class HeaderComponent implements OnInit {
   openTrainingMasterSettings(): void {
     this.router.navigate(['/dashboard/training/master-settings']);
     this.showUserMenu = false;
+  }
+
+  openProfile(): void {
+    this.showProfileModal = true;
+    this.showUserMenu = false;
+  }
+
+  closeProfileModal(): void {
+    this.showProfileModal = false;
+  }
+
+  onProfileSaved(updatedUser: User): void {
+    this.currentUser = updatedUser;
+    this.authService.getCurrentUser().subscribe({
+      next: (user) => {
+        this.currentUser = user;
+      }
+    });
   }
 }

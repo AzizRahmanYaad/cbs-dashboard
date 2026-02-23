@@ -103,30 +103,57 @@ export class UserManagementComponent implements OnInit, OnDestroy {
     });
   }
 
+  /** CFO module definition for the Role Matrix - always available to assign. */
+  private static readonly CFO_MODULE: ModuleRole = {
+    moduleName: 'CFO',
+    moduleDisplayName: 'CFO (View-Only Executive Access)',
+    roles: [{
+      name: 'ROLE_CFO',
+      description: 'CFO - View-only access to all modules, reports, dashboards, and analytics; filter, search, export (PDF/Excel); no create/edit/delete',
+      module: 'CFO'
+    }]
+  };
+
   loadModuleRoles(): void {
     this.adminUserService.getRolesByModule().subscribe({
       next: (moduleRoles) => {
-        console.log('=== FRONTEND DEBUG: Module roles received ===', moduleRoles);
-        this.moduleRoles = moduleRoles;
-        
-        // Check for DAILY module
-        const dailyModule = moduleRoles.find(mr => mr.moduleName === 'DAILY');
-        if (dailyModule) {
-          console.log('=== FRONTEND DEBUG: DAILY module found ===', dailyModule);
-          console.log('DAILY module roles:', dailyModule.roles);
-        } else {
-          console.warn('=== FRONTEND DEBUG: DAILY module NOT found ===');
-          console.log('Available modules:', moduleRoles.map(mr => mr.moduleName));
-        }
-        
-        // Expand all modules by default
-        moduleRoles.forEach(mr => this.expandedModules.add(mr.moduleName));
+        let list = Array.isArray(moduleRoles) ? [...moduleRoles] : [];
+        this.ensureCfoModuleInList(list);
+        this.moduleRoles = list;
+        list.forEach(mr => this.expandedModules.add(mr.moduleName));
       },
       error: (err) => {
-        console.error('=== FRONTEND DEBUG: Error loading roles ===', err);
+        console.error('Error loading roles', err);
         this.toastr.error('Failed to load roles', 'Error');
+        this.moduleRoles = this.getCfoModuleFallback();
+        this.expandedModules.add('CFO');
       }
     });
+  }
+
+  /** Ensures the CFO module with ROLE_CFO is present in the role matrix, placed after GENERAL. */
+  private ensureCfoModuleInList(list: ModuleRole[]): void {
+    const cfoIndex = list.findIndex(mr => mr?.moduleName === 'CFO');
+    const hasCfoRole = list.some(mr => mr?.moduleName === 'CFO' && mr?.roles?.some(r => r?.name === 'ROLE_CFO'));
+
+    if (cfoIndex >= 0 && !hasCfoRole) {
+      // CFO module exists but missing ROLE_CFO - add the role
+      const cfoModule = list[cfoIndex];
+      if (cfoModule.roles && !cfoModule.roles.some(r => r?.name === 'ROLE_CFO')) {
+        cfoModule.roles = [...cfoModule.roles, { name: 'ROLE_CFO', description: UserManagementComponent.CFO_MODULE.roles[0].description, module: 'CFO' }];
+      }
+      return;
+    }
+    if (cfoIndex >= 0) return; // CFO module with role already present
+
+    // Insert CFO module after GENERAL (index 2), or at start if list is short
+    const insertIndex = Math.min(2, list.length);
+    list.splice(insertIndex, 0, { ...UserManagementComponent.CFO_MODULE });
+  }
+
+  private getCfoModuleFallback(): ModuleRole[] {
+    const hasCfo = this.moduleRoles.some(mr => mr?.moduleName === 'CFO');
+    return hasCfo ? this.moduleRoles : [UserManagementComponent.CFO_MODULE, ...this.moduleRoles];
   }
 
   toggleModule(moduleName: string): void {

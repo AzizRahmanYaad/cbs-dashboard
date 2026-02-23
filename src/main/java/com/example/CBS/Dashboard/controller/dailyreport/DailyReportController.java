@@ -110,7 +110,7 @@ public class DailyReportController {
     }
     
     @GetMapping
-    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_QUALITY_CONTROL')")
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_QUALITY_CONTROL', 'ROLE_CFO')")
     public ResponseEntity<Page<DailyReportDto>> getAllReports(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
@@ -127,7 +127,7 @@ public class DailyReportController {
     }
     
     @GetMapping("/dashboard")
-    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_QUALITY_CONTROL')")
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_QUALITY_CONTROL', 'ROLE_CFO')")
     public ResponseEntity<DailyReportDashboardDto> getDashboard() {
         DailyReportDashboardDto dashboard = dailyReportService.getDashboard();
         return ResponseEntity.ok(dashboard);
@@ -143,7 +143,7 @@ public class DailyReportController {
     }
     
     @GetMapping("/download/employee/{employeeId}")
-    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN')")
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_CFO')")
     public ResponseEntity<Resource> downloadEmployeeReport(
             @PathVariable Long employeeId,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
@@ -180,10 +180,10 @@ public class DailyReportController {
             Long reportEmployeeId = report.getEmployee().getId();
             System.out.println("Download ownership check - Report Employee ID: " + reportEmployeeId + ", Current User ID: " + userId + ", Match: " + reportEmployeeId.equals(userId));
             
-            // Check if user has Quality Control or Admin role (can download any report)
+            // Check if user has Quality Control, Admin, or CFO role (can download any report)
             User user = userRepository.findById(userId).orElse(null);
             boolean hasQualityControlAccess = user != null && user.getRoles().stream()
-                .anyMatch(role -> role.getName().equals("ROLE_QUALITY_CONTROL") || role.getName().equals("ROLE_ADMIN"));
+                .anyMatch(role -> role.getName().equals("ROLE_QUALITY_CONTROL") || role.getName().equals("ROLE_ADMIN") || role.getName().equals("ROLE_CFO"));
             
             // Verify ownership - users can only download their own reports unless they have Quality Control/Admin access
             if (!reportEmployeeId.equals(userId) && !hasQualityControlAccess) {
@@ -231,7 +231,7 @@ public class DailyReportController {
     }
     
     @GetMapping("/download/combined")
-    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_QUALITY_CONTROL')")
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_QUALITY_CONTROL', 'ROLE_CFO')")
     public ResponseEntity<Resource> downloadCombinedReport(
             @RequestParam(required = true) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date,
             @RequestParam(required = false) String cbsEndTime,
@@ -266,7 +266,7 @@ public class DailyReportController {
     }
     
     @GetMapping("/by-date/{date}")
-    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_QUALITY_CONTROL')")
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_QUALITY_CONTROL', 'ROLE_CFO')")
     public ResponseEntity<List<DailyReportDto>> getReportsByDate(
             @PathVariable @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date) {
         List<DailyReportDto> reports = dailyReportService.getReportsByDate(date);

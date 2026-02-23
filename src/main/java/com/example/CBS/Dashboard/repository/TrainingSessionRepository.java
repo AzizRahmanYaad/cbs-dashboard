@@ -48,4 +48,20 @@ public interface TrainingSessionRepository extends JpaRepository<TrainingSession
     List<TrainingSession> findByInstructorIdAndDateRange(@Param("instructorId") Long instructorId,
                                                          @Param("from") LocalDateTime from,
                                                          @Param("to") LocalDateTime to);
+
+    /** All sessions in date range (for CFO / organization-wide reports). */
+    @Query("SELECT DISTINCT ts FROM TrainingSession ts " +
+           "LEFT JOIN FETCH ts.program " +
+           "LEFT JOIN FETCH ts.instructor " +
+           "WHERE ts.startDateTime >= :from AND ts.startDateTime < :to " +
+           "ORDER BY ts.startDateTime ASC")
+    List<TrainingSession> findByStartDateTimeBetween(@Param("from") LocalDateTime from,
+                                                     @Param("to") LocalDateTime to);
+
+    /** Sessions where this user is the session instructor (for clearing on teacher removal). */
+    @Query("SELECT DISTINCT ts FROM TrainingSession ts " +
+           "LEFT JOIN FETCH ts.program " +
+           "LEFT JOIN FETCH ts.instructor " +
+           "WHERE ts.instructor.id = :instructorId")
+    List<TrainingSession> findByInstructorId(@Param("instructorId") Long instructorId);
 }

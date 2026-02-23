@@ -30,7 +30,7 @@ public class TrainingReportController {
     private final TrainingReportPdfService trainingReportPdfService;
 
     @GetMapping("/teacher")
-    @PreAuthorize("hasAnyAuthority('ROLE_TEACHER', 'ROLE_TRAINING_ADMIN', 'ROLE_ADMIN')")
+    @PreAuthorize("hasAnyAuthority('ROLE_TEACHER', 'ROLE_TRAINING_ADMIN', 'ROLE_ADMIN', 'ROLE_CFO')")
     public ResponseEntity<List<SessionAttendanceReportDto>> getTeacherReport(
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to,
@@ -38,13 +38,16 @@ public class TrainingReportController {
         if (authentication == null || authentication.getName() == null) {
             throw new RuntimeException("Authentication required");
         }
-        String username = authentication.getName();
-        List<SessionAttendanceReportDto> report = teacherReportService.getTeacherAttendanceReport(username, from, to);
+        boolean isCfo = authentication.getAuthorities().stream()
+                .anyMatch(a -> "ROLE_CFO".equals(a.getAuthority()));
+        List<SessionAttendanceReportDto> report = isCfo
+                ? teacherReportService.getCfoAttendanceReport(from, to)
+                : teacherReportService.getTeacherAttendanceReport(authentication.getName(), from, to);
         return ResponseEntity.ok(report);
     }
 
     @GetMapping("/teacher/pdf")
-    @PreAuthorize("hasAnyAuthority('ROLE_TEACHER', 'ROLE_TRAINING_ADMIN', 'ROLE_ADMIN')")
+    @PreAuthorize("hasAnyAuthority('ROLE_TEACHER', 'ROLE_TRAINING_ADMIN', 'ROLE_ADMIN', 'ROLE_CFO')")
     public ResponseEntity<Resource> downloadTeacherReportPdf(
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to,
@@ -52,8 +55,11 @@ public class TrainingReportController {
         if (authentication == null || authentication.getName() == null) {
             throw new RuntimeException("Authentication required");
         }
-        String username = authentication.getName();
-        List<SessionAttendanceReportDto> reportRows = teacherReportService.getTeacherAttendanceReport(username, from, to);
+        boolean isCfo = authentication.getAuthorities().stream()
+                .anyMatch(a -> "ROLE_CFO".equals(a.getAuthority()));
+        List<SessionAttendanceReportDto> reportRows = isCfo
+                ? teacherReportService.getCfoAttendanceReport(from, to)
+                : teacherReportService.getTeacherAttendanceReport(authentication.getName(), from, to);
         byte[] pdfBytes = trainingReportPdfService.generateAttendanceReportPdf(reportRows, from, to);
 
         ByteArrayResource resource = new ByteArrayResource(pdfBytes);
@@ -69,26 +75,34 @@ public class TrainingReportController {
     }
 
     @GetMapping("/session/{sessionId}")
-    @PreAuthorize("hasAnyAuthority('ROLE_TEACHER', 'ROLE_TRAINING_ADMIN', 'ROLE_ADMIN')")
+    @PreAuthorize("hasAnyAuthority('ROLE_TEACHER', 'ROLE_TRAINING_ADMIN', 'ROLE_ADMIN', 'ROLE_CFO')")
     public ResponseEntity<SingleSessionReportDto> getSingleSessionReport(
             @PathVariable Long sessionId,
             Authentication authentication) {
         if (authentication == null || authentication.getName() == null) {
             throw new RuntimeException("Authentication required");
         }
-        SingleSessionReportDto report = teacherReportService.getSingleSessionReport(authentication.getName(), sessionId);
+        boolean isCfo = authentication.getAuthorities().stream()
+                .anyMatch(a -> "ROLE_CFO".equals(a.getAuthority()));
+        SingleSessionReportDto report = isCfo
+                ? teacherReportService.getSingleSessionReportForCfo(sessionId)
+                : teacherReportService.getSingleSessionReport(authentication.getName(), sessionId);
         return ResponseEntity.ok(report);
     }
 
     @GetMapping("/session/{sessionId}/pdf")
-    @PreAuthorize("hasAnyAuthority('ROLE_TEACHER', 'ROLE_TRAINING_ADMIN', 'ROLE_ADMIN')")
+    @PreAuthorize("hasAnyAuthority('ROLE_TEACHER', 'ROLE_TRAINING_ADMIN', 'ROLE_ADMIN', 'ROLE_CFO')")
     public ResponseEntity<Resource> downloadSingleSessionReportPdf(
             @PathVariable Long sessionId,
             Authentication authentication) throws IOException {
         if (authentication == null || authentication.getName() == null) {
             throw new RuntimeException("Authentication required");
         }
-        SingleSessionReportDto report = teacherReportService.getSingleSessionReport(authentication.getName(), sessionId);
+        boolean isCfo = authentication.getAuthorities().stream()
+                .anyMatch(a -> "ROLE_CFO".equals(a.getAuthority()));
+        SingleSessionReportDto report = isCfo
+                ? teacherReportService.getSingleSessionReportForCfo(sessionId)
+                : teacherReportService.getSingleSessionReport(authentication.getName(), sessionId);
         byte[] pdfBytes = trainingReportPdfService.generateSingleSessionReportPdf(report);
         ByteArrayResource resource = new ByteArrayResource(pdfBytes);
         HttpHeaders headers = new HttpHeaders();
@@ -99,7 +113,7 @@ public class TrainingReportController {
     }
 
     @GetMapping("/teacher/grouped")
-    @PreAuthorize("hasAnyAuthority('ROLE_TEACHER', 'ROLE_TRAINING_ADMIN', 'ROLE_ADMIN')")
+    @PreAuthorize("hasAnyAuthority('ROLE_TEACHER', 'ROLE_TRAINING_ADMIN', 'ROLE_ADMIN', 'ROLE_CFO')")
     public ResponseEntity<DateBasedGroupedReportDto> getDateBasedGroupedReport(
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to,
@@ -107,12 +121,16 @@ public class TrainingReportController {
         if (authentication == null || authentication.getName() == null) {
             throw new RuntimeException("Authentication required");
         }
-        DateBasedGroupedReportDto report = teacherReportService.getDateBasedGroupedReport(authentication.getName(), from, to);
+        boolean isCfo = authentication.getAuthorities().stream()
+                .anyMatch(a -> "ROLE_CFO".equals(a.getAuthority()));
+        DateBasedGroupedReportDto report = isCfo
+                ? teacherReportService.getDateBasedGroupedReportForCfo(from, to)
+                : teacherReportService.getDateBasedGroupedReport(authentication.getName(), from, to);
         return ResponseEntity.ok(report);
     }
 
     @GetMapping("/teacher/grouped/pdf")
-    @PreAuthorize("hasAnyAuthority('ROLE_TEACHER', 'ROLE_TRAINING_ADMIN', 'ROLE_ADMIN')")
+    @PreAuthorize("hasAnyAuthority('ROLE_TEACHER', 'ROLE_TRAINING_ADMIN', 'ROLE_ADMIN', 'ROLE_CFO')")
     public ResponseEntity<Resource> downloadDateBasedGroupedReportPdf(
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to,
@@ -120,7 +138,11 @@ public class TrainingReportController {
         if (authentication == null || authentication.getName() == null) {
             throw new RuntimeException("Authentication required");
         }
-        DateBasedGroupedReportDto report = teacherReportService.getDateBasedGroupedReport(authentication.getName(), from, to);
+        boolean isCfo = authentication.getAuthorities().stream()
+                .anyMatch(a -> "ROLE_CFO".equals(a.getAuthority()));
+        DateBasedGroupedReportDto report = isCfo
+                ? teacherReportService.getDateBasedGroupedReportForCfo(from, to)
+                : teacherReportService.getDateBasedGroupedReport(authentication.getName(), from, to);
         byte[] pdfBytes = trainingReportPdfService.generateDateBasedGroupedReportPdf(report);
         ByteArrayResource resource = new ByteArrayResource(pdfBytes);
         HttpHeaders headers = new HttpHeaders();

@@ -148,89 +148,208 @@
   </div>
 
   <!-- Programs Tab -->
-  <div *ngIf="activeTab === 'programs' && !loading" class="tab-content space-y-4">
+  <div *ngIf="activeTab === 'programs' && !loading" class="tab-content space-y-6">
+    <!-- Programs overview + cards (aligned with Teacher dashboard) -->
     <div class="card">
       <h2 class="card-header-title">My Enrolled Programs</h2>
+      <p class="text-sm text-gray-600 mb-4">
+        Browse all training programs you are enrolled in and quickly see key details like level, category, and session count.
+      </p>
+
       <div *ngIf="programs.length === 0" class="empty-state">
         <span class="empty-state-icon" aria-hidden="true">🎓</span>
         <p class="empty-state-title">No programs enrolled</p>
-        <p class="empty-state-text">Once you are enrolled into training programs, you will see them here.</p>
+        <p class="empty-state-text">
+          Once you are enrolled into training programs, they will appear here with full details.
+        </p>
       </div>
-      <div *ngIf="programs.length > 0" class="table-shell">
-        <table class="table">
-          <thead>
-            <tr>
-              <th>Program Name</th>
-              <th>Topic</th>
-              <th>Date</th>
-              <th>Level</th>
-              <th>Category</th>
-              <th>Status</th>
-              <th>Sessions</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr 
-              *ngFor="let program of programs"
-              (click)="selectProgram(program)"
-              [style.background]="selectedProgram?.id === program.id ? 'linear-gradient(to right,#eff6ff,#ffffff)' : ''"
+
+      <div *ngIf="programs.length > 0" class="programs-grid">
+        <article
+          *ngFor="let program of programs"
+          (click)="selectProgram(program)"
+          class="program-card"
+          [class.program-card--selected]="selectedProgram?.id === program.id"
+        >
+          <header class="program-card__header">
+            <div class="program-card__title-block">
+              <h3 class="program-card__title">
+                {{ program.trainingName || program.trainingNameName || program.title }}
+              </h3>
+              <p class="program-card__subtitle" *ngIf="program.trainingTopicName || program.trainingCategoryName">
+                {{ program.trainingTopicName || 'General Topic' }} · {{ program.trainingCategoryName || 'Uncategorized' }}
+              </p>
+            </div>
+            <div class="program-card__status">
+              <span
+                class="status-pill"
+                [ngClass]="program.status === 'ONGOING'
+                  ? 'status-pill--ongoing'
+                  : (program.status === 'COMPLETED' ? 'status-pill--completed' : 'status-pill--default')"
+              >
+                {{ program.status }}
+              </span>
+            </div>
+          </header>
+
+          <section class="program-card__metrics">
+            <div class="metric-tile">
+              <div class="metric-tile__icon metric-tile__icon--sessions">
+                📅
+              </div>
+              <div>
+                <div class="metric-tile__label">Sessions</div>
+                <div class="metric-tile__value">{{ program.sessionsCount || 0 }}</div>
+              </div>
+            </div>
+            <div class="metric-tile">
+              <div class="metric-tile__icon metric-tile__icon--date">
+                🕒
+              </div>
+              <div>
+                <div class="metric-tile__label">Start Date</div>
+                <div class="metric-tile__value">
+                  {{ program.trainingDate ? (program.trainingDate | date:'mediumDate') : 'Not set' }}
+                </div>
+              </div>
+            </div>
+            <div class="metric-tile">
+              <div class="metric-tile__icon metric-tile__icon--level">
+                🎯
+              </div>
+              <div>
+                <div class="metric-tile__label">Level</div>
+                <div class="metric-tile__value">{{ program.trainingLevel || 'N/A' }}</div>
+              </div>
+            </div>
+            <div class="metric-tile" *ngIf="program.trainingType">
+              <div class="metric-tile__icon metric-tile__icon--students">
+                💻
+              </div>
+              <div>
+                <div class="metric-tile__label">Type</div>
+                <div class="metric-tile__value">{{ program.trainingType }}</div>
+              </div>
+            </div>
+          </section>
+
+          <footer class="program-card__footer">
+            <div class="program-card__meta">
+              <span class="program-chip" *ngIf="program.trainingType">
+                {{ program.trainingType }}
+              </span>
+              <span class="program-chip program-chip--muted" *ngIf="program.departmentName">
+                {{ program.departmentName }}
+              </span>
+              <span class="program-chip program-chip--muted" *ngIf="program.trainingCategoryName && !program.departmentName">
+                {{ program.trainingCategoryName }}
+              </span>
+            </div>
+            <button
+              type="button"
+              class="btn-secondary btn-secondary--sm"
+              (click)="selectProgram(program); $event.stopPropagation()"
             >
-              <td>
-                <div class="text-sm font-medium text-gray-900">{{ program.trainingName || program.trainingNameName || program.title }}</div>
-                <div class="text-sm text-gray-500" *ngIf="program.description">{{ program.description }}</div>
-              </td>
-              <td>{{ program.trainingTopicName || '-' }}</td>
-              <td>{{ program.trainingDate | date:'short' }}</td>
-              <td>{{ program.trainingLevel || '-' }}</td>
-              <td>{{ program.trainingCategoryName || '-' }}</td>
-              <td>
-                <span
-                  class="status-pill"
-                  [ngClass]="program.status === 'ONGOING' ? 'status-pill--ongoing' :
-                             program.status === 'COMPLETED' ? 'status-pill--completed' :
-                             'status-pill--default'"
-                >
-                  {{ program.status }}
-                </span>
-              </td>
-              <td>{{ program.sessionsCount || 0 }}</td>
-              <td>
-                <button (click)="selectProgram(program); $event.stopPropagation()" class="btn-primary">
-                  View Details
-                </button>
-              </td>
-            </tr>
-          </tbody>
-        </table>
+              View details
+            </button>
+          </footer>
+        </article>
       </div>
     </div>
 
-    <!-- Program Details -->
-    <div *ngIf="selectedProgram" class="card">
-      <h2 class="card-header-title">Program Details: {{ selectedProgram.title }}</h2>
-      <div class="grid grid-cols-2 gap-4 mb-4">
-        <div>
-          <label class="text-sm font-medium text-gray-700">Status</label>
-          <p class="text-gray-900">{{ selectedProgram.status }}</p>
+    <!-- Program Details (modern layout, student-focused) -->
+    <div *ngIf="selectedProgram" class="program-details program-details--modern">
+      <div class="program-details__hero">
+        <div class="program-details__header-main">
+          <div class="program-details__hero-badge">
+            <span class="program-details__hero-badge-icon">🎓</span>
+            Enrolled program
+          </div>
+          <h2 class="program-details__title">
+            {{ selectedProgram.trainingName || selectedProgram.trainingNameName || selectedProgram.title }}
+          </h2>
+          <p class="program-details__subtitle" *ngIf="selectedProgram.description">
+            {{ selectedProgram.description }}
+          </p>
+          <div class="program-details__chips">
+            <span class="program-chip program-chip--topic" *ngIf="selectedProgram.trainingTopicName">
+              {{ selectedProgram.trainingTopicName }}
+            </span>
+            <span class="program-chip program-chip--muted" *ngIf="selectedProgram.trainingCategoryName">
+              {{ selectedProgram.trainingCategoryName }}
+            </span>
+          </div>
         </div>
-        <div>
-          <label class="text-sm font-medium text-gray-700">Sessions</label>
-          <p class="text-gray-900">{{ selectedProgram.sessionsCount || 0 }}</p>
-        </div>
-        <div>
-          <label class="text-sm font-medium text-gray-700">Training Level</label>
-          <p class="text-gray-900">{{ selectedProgram.trainingLevel || 'N/A' }}</p>
-        </div>
-        <div>
-          <label class="text-sm font-medium text-gray-700">Training Type</label>
-          <p class="text-gray-900">{{ selectedProgram.trainingType || 'N/A' }}</p>
+        <div class="program-details__header-meta">
+          <div class="program-details__meta-cards">
+            <div class="program-details__meta-card">
+              <span class="program-details__meta-card-icon">📅</span>
+              <div>
+                <span class="program-details__meta-card-label">Training Date</span>
+                <span class="program-details__meta-card-value">
+                  {{ selectedProgram.trainingDate ? (selectedProgram.trainingDate | date:'medium') : 'Not scheduled' }}
+                </span>
+              </div>
+            </div>
+            <div class="program-details__meta-card">
+              <span class="program-details__meta-card-icon">🎯</span>
+              <div>
+                <span class="program-details__meta-card-label">Level</span>
+                <span class="program-details__meta-card-value">
+                  {{ selectedProgram.trainingLevel || 'N/A' }}
+                </span>
+              </div>
+            </div>
+            <div class="program-details__meta-card" *ngIf="selectedProgram.trainingType">
+              <span class="program-details__meta-card-icon">💻</span>
+              <div>
+                <span class="program-details__meta-card-label">Type</span>
+                <span class="program-details__meta-card-value">
+                  {{ selectedProgram.trainingType }}
+                </span>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
-      <div *ngIf="selectedProgram.description" class="mt-4">
-        <label class="text-sm font-medium text-gray-700">Description</label>
-        <p class="text-gray-900">{{ selectedProgram.description }}</p>
-      </div>
+
+      <!-- KPIs row -->
+      <section class="program-details__kpis program-details__kpis--modern">
+        <div class="program-kpi program-kpi--sessions">
+          <div class="program-kpi__icon-wrap">
+            <span class="program-kpi__icon">📚</span>
+          </div>
+          <div class="program-kpi__body">
+            <div class="program-kpi__label">Sessions</div>
+            <div class="program-kpi__value">{{ selectedProgram.sessionsCount || 0 }}</div>
+            <p class="program-kpi__hint">Number of sessions scheduled for this program.</p>
+          </div>
+        </div>
+        <div class="program-kpi program-kpi--learners">
+          <div class="program-kpi__icon-wrap">
+            <span class="program-kpi__icon">👥</span>
+          </div>
+          <div class="program-kpi__body">
+            <div class="program-kpi__label">Enrollment Status</div>
+            <div class="program-kpi__value">
+              {{ getEnrollmentStatus(selectedProgram.id) }}
+            </div>
+            <p class="program-kpi__hint">Your enrollment state for this program.</p>
+          </div>
+        </div>
+        <div class="program-kpi program-kpi--materials">
+          <div class="program-kpi__icon-wrap">
+            <span class="program-kpi__icon">📂</span>
+          </div>
+          <div class="program-kpi__body">
+            <div class="program-kpi__label">Materials</div>
+            <div class="program-kpi__value">
+              {{ getProgramMaterials(selectedProgram.id).length }}
+            </div>
+            <p class="program-kpi__hint">Learning resources available for this program.</p>
+          </div>
+        </div>
+      </section>
     </div>
   </div>
 
@@ -608,8 +727,56 @@
         <p class="empty-state-title">No attendance records found</p>
         <p class="empty-state-text">Your attendance records will appear here once sessions are marked.</p>
       </div>
-      <div *ngIf="attendanceRecords.length > 0" class="table-shell">
-        <table class="table">
+      <ng-container *ngIf="attendanceRecords.length > 0">
+        <!-- Sheet-style filters -->
+        <div class="filter-bar">
+          <div class="filter-group filter-group--wide">
+            <label class="filter-label">Search</label>
+            <input
+              type="text"
+              class="filter-input"
+              placeholder="Search by session, program, notes, or location"
+              [(ngModel)]="attendanceFilter.search"
+              (ngModelChange)="onAttendanceFilterChange()"
+            />
+          </div>
+          <div class="filter-group">
+            <label class="filter-label">Status</label>
+            <select
+              class="filter-select"
+              [(ngModel)]="attendanceFilter.status"
+              (ngModelChange)="onAttendanceFilterChange()"
+            >
+              <option value="ALL">All statuses</option>
+              <option value="PRESENT">Present</option>
+              <option value="ABSENT">Absent</option>
+              <option value="LATE">Late</option>
+              <option value="EXCUSED">Excused</option>
+            </select>
+          </div>
+          <div class="filter-group">
+            <label class="filter-label">From date</label>
+            <input
+              type="date"
+              class="filter-input"
+              [(ngModel)]="attendanceFilter.fromDate"
+              (ngModelChange)="onAttendanceFilterChange()"
+            />
+          </div>
+          <div class="filter-group">
+            <label class="filter-label">To date</label>
+            <input
+              type="date"
+              class="filter-input"
+              [(ngModel)]="attendanceFilter.toDate"
+              (ngModelChange)="onAttendanceFilterChange()"
+            />
+          </div>
+        </div>
+
+        <!-- Sheet-style table with pagination -->
+        <div class="table-shell">
+          <table class="table">
           <thead>
             <tr>
               <th>Session</th>
@@ -621,7 +788,7 @@
             </tr>
           </thead>
           <tbody>
-            <tr *ngFor="let attendance of attendanceRecords">
+            <tr *ngFor="let attendance of pagedAttendanceRecords">
               <td>{{ attendance.sessionTitle || ('Session #' + attendance.sessionId) }}</td>
               <td>{{ attendance.attendanceDate | date:'short' }}</td>
               <td>
@@ -647,8 +814,58 @@
               </td>
             </tr>
           </tbody>
-        </table>
-      </div>
+          </table>
+        </div>
+
+        <!-- Pagination controls -->
+        <div *ngIf="filteredAttendanceRecords.length > attendancePageSize" class="pagination-bar">
+          <div class="pagination-info">
+            Showing
+            <strong>{{ attendancePageIndex * attendancePageSize + 1 }}</strong>
+            –
+            <strong>{{ Math.min((attendancePageIndex + 1) * attendancePageSize, filteredAttendanceRecords.length) }}</strong>
+            of
+            <strong>{{ filteredAttendanceRecords.length }}</strong>
+            records
+          </div>
+          <div class="pagination-controls">
+            <button
+              type="button"
+              class="pagination-button"
+              [disabled]="attendancePageIndex === 0"
+              (click)="changeAttendancePage(-1)"
+            >
+              ‹ Prev
+            </button>
+            <button
+              type="button"
+              class="pagination-button"
+              *ngFor="let _ of [].constructor(totalAttendancePages); let i = index"
+              [class.pagination-button--active]="i === attendancePageIndex"
+              (click)="goToAttendancePage(i)"
+            >
+              {{ i + 1 }}
+            </button>
+            <button
+              type="button"
+              class="pagination-button"
+              [disabled]="attendancePageIndex >= totalAttendancePages - 1"
+              (click)="changeAttendancePage(1)"
+            >
+              Next ›
+            </button>
+            <select
+              class="pagination-select"
+              [(ngModel)]="attendancePageSize"
+              (ngModelChange)="onAttendancePageSizeChange()"
+            >
+              <option *ngFor="let size of attendancePageSizeOptions" [ngValue]="size">
+                {{ size }} / page
+              </option>
+            </select>
+          </div>
+        </div>
+      </ng-container>
     </div>
   </div>
 

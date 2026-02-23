@@ -26,8 +26,15 @@ public class CustomUserDetailsService implements UserDetailsService {
         User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new UsernameNotFoundException("User not found with username: " + username));
         
+        // Ensure role names have ROLE_ prefix so hasRole() and hasAuthority('ROLE_*') work (e.g. admin with "ADMIN" in DB gets ROLE_ADMIN)
         Set<GrantedAuthority> authorities = user.getRoles().stream()
-                .map(role -> new SimpleGrantedAuthority(role.getName()))
+                .map(role -> {
+                    String name = role.getName();
+                    if (name != null && !name.startsWith("ROLE_")) {
+                        name = "ROLE_" + name;
+                    }
+                    return new SimpleGrantedAuthority(name);
+                })
                 .collect(Collectors.toSet());
         
         return org.springframework.security.core.userdetails.User

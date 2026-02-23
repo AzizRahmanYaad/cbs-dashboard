@@ -112,8 +112,8 @@ public class TrainingReportPdfService {
                 byte[] imgBytes = Base64.getDecoder().decode(base64);
                 if (imgBytes != null && imgBytes.length > 0) {
                     Image img = new Image(ImageDataFactory.create(imgBytes));
-                    img.setWidth(100);
-                    img.setHeight(40);
+                    img.setWidth(200);
+                    img.setHeight(80);
                     img.setHorizontalAlignment(HorizontalAlignment.LEFT);
                     document.add(img);
                 } else {
@@ -244,8 +244,8 @@ public class TrainingReportPdfService {
                         byte[] imgBytes = Base64.getDecoder().decode(base64);
                         if (imgBytes != null && imgBytes.length > 0) {
                             Image img = new Image(ImageDataFactory.create(imgBytes));
-                            img.setWidth(100);
-                            img.setHeight(40);
+                            img.setWidth(200);
+                            img.setHeight(80);
                             sigCell = new Cell().add(img).setBorder(Border.NO_BORDER);
                         }
                     } catch (Exception ignored) { }
@@ -331,8 +331,8 @@ public class TrainingReportPdfService {
                 byte[] imgBytes = Base64.getDecoder().decode(base64);
                 if (imgBytes != null && imgBytes.length > 0) {
                     Image img = new Image(ImageDataFactory.create(imgBytes));
-                    img.setWidth(100);
-                    img.setHeight(40);
+                    img.setWidth(200);
+                    img.setHeight(80);
                     img.setHorizontalAlignment(HorizontalAlignment.LEFT);
                     document.add(img);
                 } else {
@@ -425,8 +425,8 @@ public class TrainingReportPdfService {
                 byte[] imgBytes = Base64.getDecoder().decode(base64);
                 if (imgBytes != null && imgBytes.length > 0) {
                     Image img = new Image(ImageDataFactory.create(imgBytes));
-                    img.setWidth(100);
-                    img.setHeight(40);
+                    img.setWidth(200);
+                    img.setHeight(80);
                     img.setHorizontalAlignment(HorizontalAlignment.LEFT);
                     document.add(img);
                 } else {

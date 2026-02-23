@@ -7,8 +7,13 @@ VALUES
     ('ROLE_ADMIN'),
     ('ROLE_USER'),
     ('ROLE_TRAINING'),
+    ('ROLE_TRAINING_ADMIN'),
+    ('ROLE_TEACHER'),
+    ('ROLE_STUDENT'),
+    ('ROLE_CFO'),
     ('ROLE_DRILL_TESTING'),
     ('ROLE_INDIVIDUAL_REPORT'),
+    ('ROLE_QUALITY_CONTROL'),
     ('ROLE_QA_LEAD'),
     ('ROLE_TESTER'),
     ('ROLE_MANAGER')

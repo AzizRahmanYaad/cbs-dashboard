@@ -57,6 +57,17 @@ export class StudentDashboardComponent implements OnInit {
   // Attendance
   attendanceRecords: Attendance[] = [];
 
+  // Attendance filters & pagination (sheet-style)
+  attendanceFilter = {
+    search: '',
+    status: 'ALL' as 'ALL' | 'PRESENT' | 'ABSENT' | 'LATE' | 'EXCUSED',
+    fromDate: '' as string | '',
+    toDate: '' as string | ''
+  };
+  attendancePageIndex = 0;
+  attendancePageSize = 10;
+  attendancePageSizeOptions = [10, 20, 50];
+
   // E-Signature
   hasSignature = false;
   signatureLoading = false;
@@ -205,6 +216,85 @@ export class StudentDashboardComponent implements OnInit {
         this.loading = false;
       }
     });
+  }
+
+  private getSessionForAttendance(attendance: Attendance): TrainingSession | undefined {
+    return this.sessions.find(s => s.id === attendance.sessionId);
+  }
+
+  // ---------- Attendance: filtering & pagination (sheet view) ----------
+
+  get filteredAttendanceRecords(): Attendance[] {
+    let data = [...(this.attendanceRecords || [])];
+    const { search, status, fromDate, toDate } = this.attendanceFilter;
+
+    if (status && status !== 'ALL') {
+      data = data.filter(a => a.status === status);
+    }
+
+    if (fromDate) {
+      const from = new Date(fromDate);
+      data = data.filter(a => {
+        const date = a.attendanceDate ? new Date(a.attendanceDate) : null;
+        return date && date >= from;
+      });
+    }
+
+    if (toDate) {
+      const to = new Date(toDate);
+      to.setHours(23, 59, 59, 999);
+      data = data.filter(a => {
+        const date = a.attendanceDate ? new Date(a.attendanceDate) : null;
+        return date && date <= to;
+      });
+    }
+
+    if (search && search.trim()) {
+      const term = search.toLowerCase();
+      data = data.filter(a => {
+        const session = this.getSessionForAttendance(a);
+        const sessionTitle = a.sessionTitle || session?.programTitle || '';
+        return (
+          sessionTitle.toLowerCase().includes(term) ||
+          (a.notes || '').toLowerCase().includes(term) ||
+          (session?.location || '').toLowerCase().includes(term)
+        );
+      });
+    }
+
+    // Sort by most recent attendance date
+    return data.sort((a, b) => {
+      const aTime = a.attendanceDate ? new Date(a.attendanceDate).getTime() : 0;
+      const bTime = b.attendanceDate ? new Date(b.attendanceDate).getTime() : 0;
+      return bTime - aTime;
+    });
+  }
+
+  get pagedAttendanceRecords(): Attendance[] {
+    const start = this.attendancePageIndex * this.attendancePageSize;
+    return this.filteredAttendanceRecords.slice(start, start + this.attendancePageSize);
+  }
+
+  get totalAttendancePages(): number {
+    const total = this.filteredAttendanceRecords.length;
+    return total === 0 ? 1 : Math.ceil(total / this.attendancePageSize);
+  }
+
+  onAttendanceFilterChange(): void {
+    this.attendancePageIndex = 0;
+  }
+
+  onAttendancePageSizeChange(): void {
+    this.attendancePageIndex = 0;
+  }
+
+  goToAttendancePage(index: number): void {
+    if (index < 0 || index >= this.totalAttendancePages) return;
+    this.attendancePageIndex = index;
+  }
+
+  changeAttendancePage(delta: number): void {
+    this.goToAttendancePage(this.attendancePageIndex + delta);
   }
 
   getProgramSessions(programId: number): TrainingSession[] {

@@ -66,7 +66,18 @@ public class TrainingSessionController {
         TrainingSessionDto session = sessionService.updateSession(id, request);
         return ResponseEntity.ok(session);
     }
-    
+
+    /**
+     * Permanently deletes all training sessions.
+     * Restricted to training admins and system admins.
+     */
+    @DeleteMapping
+    @PreAuthorize("hasAnyAuthority('ROLE_TRAINING_ADMIN', 'ROLE_ADMIN')")
+    public ResponseEntity<Void> deleteAllSessions() {
+        sessionService.deleteAllSessions();
+        return ResponseEntity.noContent().build();
+    }
+
     @DeleteMapping("/{id}")
     @PreAuthorize("hasAnyAuthority('ROLE_TEACHER', 'ROLE_TRAINING_ADMIN', 'ROLE_ADMIN')")
     public ResponseEntity<Void> deleteSession(@PathVariable Long id) {

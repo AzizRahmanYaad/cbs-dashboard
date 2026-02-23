@@ -1,12 +1,12 @@
 import { HttpInterceptorFn } from '@angular/common/http';
-import { inject } from '@angular/core';
+import { inject, Injector } from '@angular/core';
 import { TokenService } from '../services/token.service';
 import { AuthService } from '../services/auth.service';
 import { catchError, switchMap, throwError } from 'rxjs';
 
 export const authInterceptor: HttpInterceptorFn = (req, next) => {
   const tokenService = inject(TokenService);
-  const authService = inject(AuthService);
+  const injector = inject(Injector);
 
   if (req.url.includes('/api/auth/login') || req.url.includes('/api/auth/refresh')) {
     return next(req);
@@ -16,6 +16,7 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
 
   if (token) {
     if (tokenService.isTokenExpired()) {
+      const authService = injector.get(AuthService);
       return authService.refreshToken().pipe(
         switchMap(() => {
           const newToken = tokenService.getAccessToken();

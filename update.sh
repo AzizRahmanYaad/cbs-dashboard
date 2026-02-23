@@ -217,9 +217,10 @@ rebuild_backend() {
     if [ -f "build.gradle" ] || [ -f "gradlew" ]; then
         if [ -x "./gradlew" ]; then
             print_info "Detected Gradle project. Cleaning and rebuilding backend with ./gradlew..."
-            ./gradlew clean build -x test 2>/dev/null || {
-                print_warning "Backend Gradle build had warnings or failed, but continuing..."
-            }
+            if ! ./gradlew clean build -x test; then
+                print_error "Backend Gradle build failed. Fix the compilation errors above and run ./update.sh again."
+                return 1
+            fi
             print_success "Backend rebuild completed (Gradle)"
             return 0
         else
@@ -390,10 +391,11 @@ start_backend() {
         # Build the jar if it doesn't exist yet
         if [ ! -f "$JAR_PATH" ]; then
             print_info "Backend jar not found. Building jar with Gradle (bootJar)..."
-            ./gradlew clean bootJar -x test >> /tmp/backend.log 2>&1 || {
-                print_error "Gradle bootJar build failed. See /tmp/backend.log for details."
+            ./gradlew clean bootJar -x test 2>&1 | tee /tmp/backend.log
+            if [ "${PIPESTATUS[0]}" -ne 0 ]; then
+                print_error "Gradle bootJar build failed. Fix the compilation errors above (or see /tmp/backend.log) and run ./update.sh again."
                 return 1
-            }
+            fi
         fi
 
         if [ ! -f "$JAR_PATH" ]; then
@@ -476,48 +478,69 @@ start_frontend() {
     
     cd frontend
     
-    # Frontend is configured in package.json to use --host 0.0.0.0 --port 5000
-    print_info "Starting Angular frontend on port 5000 (accessible on all interfaces)..."
+    # Prefer serving production build for fast load; fall back to ng serve if no build
+    if [ -d "dist/frontend/browser" ]; then
+        print_info "Serving production build (fast load) on port 5000..."
+        npm run serve:prod > /tmp/frontend.log 2>&1 &
+    elif [ -d "dist/frontend" ] && [ -f "dist/frontend/index.html" ]; then
+        print_info "Serving production build (flat) on port 5000..."
+        npm run serve:prod:flat > /tmp/frontend.log 2>&1 &
+    else
+        print_info "No production build found. Starting dev server (ng serve) on port 5000..."
+        npm start > /tmp/frontend.log 2>&1 &
+    fi
     
-    # Start frontend in background (package.json has the correct host/port config)
-    npm start > /tmp/frontend.log 2>&1 &
     FRONTEND_PID=$!
     echo $FRONTEND_PID > /tmp/frontend.pid
-    
     print_info "Frontend PID: $FRONTEND_PID"
     print_info "Frontend logs: /tmp/frontend.log"
     
     cd ..
     
-    # Wait a bit for frontend to start
-    sleep 8
+    # When serving static build, server is ready in seconds; dev server needs longer
+    if [ -d "frontend/dist/frontend" ]; then
+        print_info "Waiting for static server to listen on port 5000 (up to 15s)..."
+        max_wait=15
+        step=2
+    else
+        print_info "Waiting for frontend to compile and listen on port 5000 (up to 60s)..."
+        max_wait=60
+        step=5
+    fi
     
-    # Check if frontend is still running
+    elapsed=0
+    while [ $elapsed -lt $max_wait ]; do
+        sleep $step
+        elapsed=$((elapsed + step))
+        if kill -0 $FRONTEND_PID 2>/dev/null; then
+            if netstat -tuln 2>/dev/null | grep -q ":5000" || ss -tuln 2>/dev/null | grep -q ":5000"; then
+                print_success "Frontend started successfully on port 5000"
+                return 0
+            fi
+        else
+            break
+        fi
+    done
+
     if kill -0 $FRONTEND_PID 2>/dev/null; then
-        # Check if port 5000 is listening
         if netstat -tuln 2>/dev/null | grep -q ":5000" || ss -tuln 2>/dev/null | grep -q ":5000"; then
             print_success "Frontend started successfully on port 5000"
             return 0
-        else
-            # Check for compilation errors
-            if grep -q "ERROR\|Error\|✘" /tmp/frontend.log 2>/dev/null; then
-                print_error "Frontend compilation failed!"
-                print_info "Last 20 lines of frontend log:"
-                tail -20 /tmp/frontend.log | grep -A 5 -B 5 "ERROR\|Error\|✘" || tail -20 /tmp/frontend.log
-                print_info "Full log available at: /tmp/frontend.log"
-                return 1
-            else
-                print_warning "Frontend process running but port 5000 not listening yet. Still compiling..."
-                print_info "Check progress: tail -f /tmp/frontend.log"
-                return 0
-            fi
         fi
-    else
-        print_error "Frontend process died!"
-        print_info "Last 30 lines of frontend log:"
-        tail -30 /tmp/frontend.log 2>/dev/null || echo "No log file found"
-        return 1
+        print_warning "Frontend process running but port 5000 not listening yet."
+        print_info "Check progress: tail -f /tmp/frontend.log"
+        return 0
     fi
+
+    print_error "Frontend process exited. Site will not be reachable until this is fixed."
+    if grep -q "ERROR\|Error\|✘\|NG0\|NG5" /tmp/frontend.log 2>/dev/null; then
+        print_error "Compilation or build error detected:"
+        tail -40 /tmp/frontend.log 2>/dev/null | grep -E "ERROR|Error|✘|NG0|NG5" | tail -15
+    fi
+    print_info "Last 25 lines of frontend log:"
+    tail -25 /tmp/frontend.log 2>/dev/null || echo "No log file found"
+    print_info "Full log: /tmp/frontend.log — fix any errors and run ./update.sh again"
+    return 1
 }
 
 # Function to show status

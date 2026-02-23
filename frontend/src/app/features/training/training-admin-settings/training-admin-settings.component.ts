@@ -31,7 +31,7 @@ export class TrainingAdminSettingsComponent implements OnInit {
   private toastr = inject(ToastrService);
   private fb = inject(FormBuilder);
 
-  activeTab: 'programs' | 'students' | 'teachers' | 'assign-teachers' | 'assign-students' = 'programs';
+  activeTab: 'overview' | 'programs' | 'students' | 'teachers' | 'assign-teachers' | 'assign-students' = 'overview';
 
   // Programs
   programs: TrainingProgram[] = [];
@@ -63,6 +63,9 @@ export class TrainingAdminSettingsComponent implements OnInit {
   // Assign Students
   assignStudentForm: FormGroup;
   selectedStudents: number[] = [];
+  /** Student IDs already enrolled in the currently selected program (for Assign Students) */
+  assignedStudentIdsForProgram: number[] = [];
+  loadingAssignedStudents = false;
 
   loading = false;
   skeletonLoading = false;
@@ -128,6 +131,74 @@ export class TrainingAdminSettingsComponent implements OnInit {
 
   get activeDepartments(): Department[] {
     return this.departments.filter(d => d.isActive);
+  }
+
+  // Overview dashboard: summary stats
+  get overviewProgramsCount(): number {
+    return this.programs.length;
+  }
+
+  get overviewStudentsCount(): number {
+    return this.students.length;
+  }
+
+  get overviewTeachersCount(): number {
+    return this.teachers.length;
+  }
+
+  get overviewProgramsWithTeacher(): number {
+    return this.programs.filter(p => p.instructorId != null).length;
+  }
+
+  get overviewProgramsWithStudents(): number {
+    const programIdsWithStudents = new Set<number>();
+    this.studentPrograms.forEach((progs) => {
+      progs.forEach(p => programIdsWithStudents.add(p.id));
+    });
+    return programIdsWithStudents.size;
+  }
+
+  get overviewActiveStudents(): number {
+    return this.students.filter(s => s.isActive).length;
+  }
+
+  get overviewActiveTeachers(): number {
+    return this.teachers.filter(t => t.isActive).length;
+  }
+
+  /** For bar chart: programs count by department */
+  get overviewProgramsByDepartment(): { label: string; value: number }[] {
+    const map = new Map<string, number>();
+    this.programs.forEach(p => {
+      const name = p.departmentName || 'Unassigned';
+      map.set(name, (map.get(name) || 0) + 1);
+    });
+    return Array.from(map.entries())
+      .map(([label, value]) => ({ label, value }))
+      .sort((a, b) => b.value - a.value)
+      .slice(0, 8);
+  }
+
+  /** For bar chart: programs count by training type */
+  get overviewProgramsByType(): { label: string; value: number }[] {
+    const map = new Map<string, number>();
+    this.programs.forEach(p => {
+      const raw = p.trainingType || 'OTHER';
+      const label = raw === 'ONLINE' ? 'Online' : raw === 'ON_JOB' ? 'On Job' : raw === 'ON_SITE' ? 'Both' : raw;
+      map.set(label, (map.get(label) || 0) + 1);
+    });
+    return Array.from(map.entries())
+      .map(([label, value]) => ({ label, value }))
+      .sort((a, b) => b.value - a.value);
+  }
+
+  /** Max value for normalizing overview bar charts */
+  get overviewChartMax(): number {
+    const byDept = this.overviewProgramsByDepartment;
+    const byType = this.overviewProgramsByType;
+    const maxDept = byDept.length ? Math.max(...byDept.map(d => d.value)) : 1;
+    const maxType = byType.length ? Math.max(...byType.map(d => d.value)) : 1;
+    return Math.max(maxDept, maxType, 1);
   }
 
   // Add topic inline (in program modal)
@@ -206,6 +277,49 @@ export class TrainingAdminSettingsComponent implements OnInit {
     this.filteredPrograms = [];
     this.filteredStudents = [];
     this.filteredTeachers = [];
+    this.setupAssignmentFormSubscriptions();
+  }
+
+  /** When program changes in Assign Teacher/Student, update available lists and clear invalid selections. */
+  private setupAssignmentFormSubscriptions(): void {
+    this.assignTeacherForm.get('programId')?.valueChanges.subscribe(() => {
+      this.assignTeacherForm.patchValue({ teacherId: null }, { emitEvent: false });
+    });
+
+    this.assignStudentForm.get('programId')?.valueChanges.subscribe(programId => {
+      this.selectedStudents = [];
+      if (programId) {
+        this.loadingAssignedStudents = true;
+        this.trainingService.getProgramStudents(Number(programId)).subscribe({
+          next: (enrollments) => {
+            this.assignedStudentIdsForProgram = enrollments.map(e => Number(e.participantId));
+            this.loadingAssignedStudents = false;
+          },
+          error: () => {
+            this.assignedStudentIdsForProgram = [];
+            this.loadingAssignedStudents = false;
+          }
+        });
+      } else {
+        this.assignedStudentIdsForProgram = [];
+      }
+    });
+  }
+
+  /** Teachers available for assignment: only those not already assigned to any program. */
+  get teachersForAssignDropdown(): StudentTeacherDto[] {
+    const assignedTeacherIds = new Set(
+      this.programs
+        .filter(p => p.instructorId != null)
+        .map(p => Number(p.instructorId))
+    );
+    return this.teachers.filter(t => !assignedTeacherIds.has(Number(t.userId)));
+  }
+
+  /** Students available for assignment: exclude those already enrolled in the selected program. */
+  get studentsForAssignList(): StudentTeacherDto[] {
+    const assignedIds = this.assignedStudentIdsForProgram;
+    return this.students.filter(s => !assignedIds.includes(Number(s.userId)));
   }
 
   loadData(): void {
@@ -875,7 +989,7 @@ export class TrainingAdminSettingsComponent implements OnInit {
     });
   }
 
-  setActiveTab(tab: 'programs' | 'students' | 'teachers' | 'assign-teachers' | 'assign-students'): void {
+  setActiveTab(tab: 'overview' | 'programs' | 'students' | 'teachers' | 'assign-teachers' | 'assign-students'): void {
     this.activeTab = tab;
     this.currentPage = { programs: 1, students: 1, teachers: 1 };
     this.searchTerm = '';
@@ -883,7 +997,11 @@ export class TrainingAdminSettingsComponent implements OnInit {
 
     // Always refresh lists when switching tabs so newly created users, students,
     // and teachers appear without a full page reload.
-    if (tab === 'programs') {
+    if (tab === 'overview') {
+      this.loadPrograms();
+      this.loadStudents();
+      this.loadTeachers();
+    } else if (tab === 'programs') {
       this.loadPrograms();
     } else if (tab === 'students') {
       this.loadStudents();

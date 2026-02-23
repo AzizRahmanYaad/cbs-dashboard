@@ -86,50 +86,29 @@ public class AdminUserService {
                 .collect(Collectors.toList());
     }
 
-    @Transactional(readOnly = true)
+    @Transactional
     public List<ModuleRoleDto> getRolesByModule() {
+        try {
+            ensureCfoRoleExists();
+        } catch (Exception e) {
+            System.err.println("ensureCfoRoleExists failed (CFO role will still appear in list): " + e.getMessage());
+        }
         Map<String, List<RoleDto>> moduleMap = new LinkedHashMap<>();
         
         // Define module display order
-        List<String> moduleOrder = Arrays.asList("ADMIN", "GENERAL", "DRILL", "TRAINING", "DAILY", "TEST_MANAGEMENT", "MANAGER", "OTHER");
+        List<String> moduleOrder = Arrays.asList("ADMIN", "GENERAL", "CFO", "DRILL", "TRAINING", "DAILY", "TEST_MANAGEMENT", "MANAGER", "OTHER");
         
         // Get all roles from database
         List<Role> allRoles = roleRepository.findAllByOrderByNameAsc();
         
-        // Debug: Log all roles found
-        System.out.println("=== DEBUG: All roles from database ===");
-        allRoles.forEach(role -> System.out.println("Role: " + role.getName() + " (ID: " + role.getId() + ")"));
-        
-        // Check specifically for ROLE_INDIVIDUAL_REPORT
-        boolean foundIndividualReport = allRoles.stream()
-            .anyMatch(role -> role.getName().equalsIgnoreCase("ROLE_INDIVIDUAL_REPORT"));
-        System.out.println("=== DEBUG: ROLE_INDIVIDUAL_REPORT found: " + foundIndividualReport);
-        
         allRoles.forEach(role -> {
             String module = extractModuleFromRole(role.getName());
-            String moduleDisplayName = getModuleDisplayName(module);
-            
-            // Debug: Log role mapping
-            System.out.println("Role: " + role.getName() + " -> Module: " + module + " (" + moduleDisplayName + ")");
-            
-            // Ensure module exists in map
             moduleMap.computeIfAbsent(module, k -> new ArrayList<>())
                     .add(new RoleDto(role.getName(), buildRoleDescription(role.getName()), module));
         });
         
-        // Debug: Log module map contents
-        System.out.println("=== DEBUG: Module map contents ===");
-        moduleMap.forEach((module, roles) -> {
-            System.out.println("Module: " + module + " has " + roles.size() + " roles:");
-            roles.forEach(r -> System.out.println("  - " + r.getName()));
-        });
-        
-        // Check if DAILY module exists
-        boolean dailyModuleExists = moduleMap.containsKey("DAILY");
-        System.out.println("=== DEBUG: DAILY module exists in map: " + dailyModuleExists);
-        if (dailyModuleExists) {
-            System.out.println("=== DEBUG: DAILY module roles: " + moduleMap.get("DAILY").size());
-        }
+        // Ensure CFO module always has ROLE_CFO (in case it was missing from DB or mis-mapped)
+        ensureCfoModuleInMap(moduleMap);
         
         // Sort modules according to predefined order
         List<ModuleRoleDto> result = moduleOrder.stream()
@@ -141,17 +120,33 @@ public class AdminUserService {
                 ))
                 .collect(Collectors.toList());
         
-        // Debug: Log final result
-        System.out.println("=== DEBUG: Final result ===");
-        result.forEach(mr -> {
-            System.out.println("Module: " + mr.getModuleName() + " (" + mr.getModuleDisplayName() + ") - " + mr.getRoles().size() + " roles");
-            if ("DAILY".equals(mr.getModuleName())) {
-                System.out.println("  DAILY module roles:");
-                mr.getRoles().forEach(r -> System.out.println("    - " + r.getName()));
-            }
-        });
+        // Guarantee CFO module is in the response (insert at correct position if missing)
+        boolean hasCfoModule = result.stream().anyMatch(mr -> "CFO".equals(mr.getModuleName()));
+        if (!hasCfoModule) {
+            List<RoleDto> cfoRoleList = new ArrayList<>();
+            cfoRoleList.add(new RoleDto("ROLE_CFO", buildRoleDescription("ROLE_CFO"), "CFO"));
+            ModuleRoleDto cfoModule = new ModuleRoleDto("CFO", getModuleDisplayName("CFO"), cfoRoleList);
+            int insertIndex = Math.min(2, result.size());
+            result.add(insertIndex, cfoModule);
+        }
         
         return result;
+    }
+
+    /** Ensures ROLE_CFO exists in the database so it can be assigned in User Management. */
+    private void ensureCfoRoleExists() {
+        roleRepository.findByName("ROLE_CFO")
+                .orElseGet(() -> roleRepository.save(new Role("ROLE_CFO")));
+    }
+
+    /** Ensures the CFO module is present in the map with ROLE_CFO, so it always appears in User Management. */
+    private void ensureCfoModuleInMap(Map<String, List<RoleDto>> moduleMap) {
+        moduleMap.putIfAbsent("CFO", new ArrayList<>());
+        List<RoleDto> cfoRoles = moduleMap.get("CFO");
+        boolean hasCfo = cfoRoles.stream().anyMatch(r -> "ROLE_CFO".equals(r.getName()));
+        if (!hasCfo) {
+            cfoRoles.add(new RoleDto("ROLE_CFO", buildRoleDescription("ROLE_CFO"), "CFO"));
+        }
     }
 
     @Transactional(readOnly = true)
@@ -265,6 +260,9 @@ public class AdminUserService {
         if (roleName.equalsIgnoreCase("ROLE_QUALITY_CONTROL")) {
             return "Quality Control - View, review, and manage all submitted individual reports";
         }
+        if (roleName.equalsIgnoreCase("ROLE_CFO")) {
+            return "CFO - View-only access to all modules, reports, dashboards, and analytics; filter, search, export (PDF/Excel); no create/edit/delete";
+        }
         
         if (roleName.startsWith("ROLE_")) {
             String module = roleName.replace("ROLE_", "").replace("_", " ").toLowerCase();
@@ -302,11 +300,9 @@ public class AdminUserService {
                 return "TRAINING";
             }
             if (rolePart.equals("INDIVIDUAL_REPORT")) {
-                System.out.println("DEBUG: Matched INDIVIDUAL_REPORT -> DAILY");
                 return "DAILY";
             }
             if (rolePart.equals("QUALITY_CONTROL")) {
-                System.out.println("DEBUG: Matched QUALITY_CONTROL -> DAILY");
                 return "DAILY";
             }
             if (rolePart.equals("DRILL_TESTING") || rolePart.startsWith("DRILL")) {
@@ -323,6 +319,9 @@ public class AdminUserService {
             }
             if (rolePart.equals("MANAGER")) {
                 return "MANAGER";
+            }
+            if (rolePart.equals("CFO")) {
+                return "CFO";
             }
             
             // Handle compound roles - check if it contains REPORT or QUALITY for Daily Report module
@@ -356,6 +355,7 @@ public class AdminUserService {
         moduleNames.put("QA", "Test Management Module");
         moduleNames.put("TESTER", "Test Management Module");
         moduleNames.put("MANAGER", "Management Module");
+        moduleNames.put("CFO", "CFO (View-Only Executive Access)");
         moduleNames.put("OTHER", "Other Modules");
         
         return moduleNames.getOrDefault(module, module.replace("_", " "));

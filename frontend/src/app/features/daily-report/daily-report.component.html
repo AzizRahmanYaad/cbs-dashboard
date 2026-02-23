@@ -645,7 +645,7 @@
                   <span>View Details</span>
                 </button>
                 <button 
-                  *ngIf="report.status !== 'APPROVED'"
+                  *ngIf="report.status !== 'APPROVED' && !isViewOnly"
                   class="btn-action-modern btn-confirm-modern" 
                   (click)="confirmReport(report)"
                   [disabled]="loading"

@@ -1,6 +1,6 @@
 import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterModule } from '@angular/router';
+import { Router, RouterModule } from '@angular/router';
 import { AuthService } from '../../../core/services/auth.service';
 
 interface ModuleCard {
@@ -22,8 +22,18 @@ interface ModuleCard {
 })
 export class HomeComponent implements OnInit {
   private authService = inject(AuthService);
+  private router = inject(Router);
 
   modules: ModuleCard[] = [
+    {
+      title: 'CFO Dashboard',
+      description: 'View-only access to all modules, reports, dashboards, and analytics',
+      icon: 'chart-bar',
+      route: '/dashboard/cfo',
+      color: 'blue',
+      stats: { label: 'View Only', value: 'All modules' },
+      requiredRoles: ['ROLE_CFO']
+    },
     {
       title: 'Training Module',
       description: 'Manage training programs, schedules, and employee development',
@@ -59,6 +69,16 @@ export class HomeComponent implements OnInit {
     this.authService.currentUser$.subscribe(user => {
       if (!user) {
         this.visibleModules = [];
+        return;
+      }
+      // Student and Teacher users should only use Training; redirect them from home to their training page
+      const isAdminOrTrainingAdmin = this.authService.hasAnyRole(['ROLE_ADMIN', 'ROLE_TRAINING_ADMIN']);
+      if (this.authService.hasAnyRole(['ROLE_STUDENT']) && !isAdminOrTrainingAdmin) {
+        this.router.navigate(['/dashboard/training/student-dashboard']);
+        return;
+      }
+      if (this.authService.hasAnyRole(['ROLE_TEACHER']) && !isAdminOrTrainingAdmin) {
+        this.router.navigate(['/dashboard/training/teacher-dashboard']);
         return;
       }
       this.visibleModules = this.modules.filter(module =>

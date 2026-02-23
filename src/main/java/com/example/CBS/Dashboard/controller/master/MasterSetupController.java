@@ -186,7 +186,7 @@ public class MasterSetupController {
     }
     
     @GetMapping("/coordinators")
-    @PreAuthorize("hasAnyAuthority('ROLE_TRAINING_ADMIN', 'ROLE_ADMIN', 'ROLE_TRAINING')")
+    @PreAuthorize("hasAnyAuthority('ROLE_TRAINING_ADMIN', 'ROLE_ADMIN', 'ROLE_TRAINING', 'ROLE_CFO')")
     public ResponseEntity<List<CoordinatorDto>> getAllCoordinators(
             @RequestParam(defaultValue = "true") boolean activeOnly) {
         List<CoordinatorDto> coordinators = masterSetupService.getAllCoordinators(activeOnly);
@@ -221,7 +221,7 @@ public class MasterSetupController {
     }
     
     @GetMapping("/student-teachers")
-    @PreAuthorize("hasAnyAuthority('ROLE_TRAINING_ADMIN', 'ROLE_ADMIN', 'ROLE_TRAINING')")
+    @PreAuthorize("hasAnyAuthority('ROLE_TRAINING_ADMIN', 'ROLE_ADMIN', 'ROLE_TRAINING', 'ROLE_TEACHER', 'ROLE_CFO')")
     public ResponseEntity<List<StudentTeacherDto>> getAllStudentTeachers(
             @RequestParam(defaultValue = "true") boolean activeOnly,
             @RequestParam(required = false) String type) {

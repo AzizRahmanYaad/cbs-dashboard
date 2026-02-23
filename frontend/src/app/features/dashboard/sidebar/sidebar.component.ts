@@ -26,6 +26,8 @@ export class SidebarComponent {
   @Input() isMobileOpen = false;
 
   isCollapsed = false;
+  /** Route of the parent item that is expanded (e.g. Training Module) */
+  expandedParentRoute: string | null = '/dashboard/training';
   private authService = inject(AuthService);
   currentUser$ = this.authService.currentUser$;
   readonly logoPath = 'assets/DAB.png';
@@ -34,39 +36,43 @@ export class SidebarComponent {
   readonly motto = 'Integrity • Stability • Transparency';
   
   menuItems: MenuItem[] = [
+    // Student: only "Training" (links to student training content)
+    {
+      label: 'Training',
+      icon: 'academic-cap',
+      route: '/dashboard/training/student-dashboard',
+      requiredRoles: ['ROLE_STUDENT']
+    },
+    // Teacher: only "Training" (links to teacher training content)
+    {
+      label: 'Training',
+      icon: 'academic-cap',
+      route: '/dashboard/training/teacher-dashboard',
+      requiredRoles: ['ROLE_TEACHER']
+    },
     {
       label: 'Dashboard',
       icon: 'home',
       route: '/dashboard/home',
       excludeRoles: ['ROLE_TEACHER', 'ROLE_STUDENT']
     },
+    // Admin / Training admin: single "Training Module" link (no Student/Teacher Dashboard sub-items)
     {
       label: 'Training Module',
       icon: 'academic-cap',
       route: '/dashboard/training',
-      requiredRoles: ['ROLE_TRAINING']
+      requiredRoles: ['ROLE_TRAINING', 'ROLE_TRAINING_ADMIN', 'ROLE_ADMIN']
     },
     {
-      label: 'Training Admin',
-      icon: 'cog-6-tooth',
-      route: '/dashboard/training/admin',
-      requiredRoles: ['ROLE_TRAINING_ADMIN', 'ROLE_ADMIN']
-    },
-    {
-      label: 'Teacher Dashboard',
-      icon: 'user-circle',
-      route: '/dashboard/training/teacher-dashboard',
-      requiredRoles: ['ROLE_TEACHER', 'ROLE_TRAINING_ADMIN', 'ROLE_ADMIN']
-    },
-    {
-      label: 'Student Dashboard',
-      icon: 'academic-cap',
-      route: '/dashboard/training/student-dashboard',
-      requiredRoles: ['ROLE_STUDENT', 'ROLE_TRAINING_ADMIN', 'ROLE_ADMIN']
-    },
-    {
-      label: 'CFO Training Analytics',
+      label: 'CFO Dashboard',
       icon: 'chart-bar',
+      route: '/dashboard/cfo',
+      requiredRoles: ['ROLE_CFO']
+    },
+    // CFO view-only access to training analytics
+    {
+      label: 'Training',
+      icon: 'academic-cap',
       route: '/dashboard/training/cfo-dashboard',
       requiredRoles: ['ROLE_CFO']
     },
@@ -74,13 +80,13 @@ export class SidebarComponent {
       label: 'Drill Test',
       icon: 'clipboard-document-check',
       route: '/dashboard/drill-testing',
-      requiredRoles: ['ROLE_DRILL_TESTING', 'ROLE_QA_LEAD', 'ROLE_TESTER', 'ROLE_MANAGER']
+      requiredRoles: ['ROLE_DRILL_TESTING', 'ROLE_QA_LEAD', 'ROLE_TESTER', 'ROLE_MANAGER', 'ROLE_CFO']
     },
     {
       label: 'Daily Report',
       icon: 'document-text',
       route: '/dashboard/daily-report',
-      requiredRoles: ['ROLE_INDIVIDUAL_REPORT', 'ROLE_ADMIN', 'ROLE_QUALITY_CONTROL']
+      requiredRoles: ['ROLE_INDIVIDUAL_REPORT', 'ROLE_ADMIN', 'ROLE_QUALITY_CONTROL', 'ROLE_CFO']
     },
     {
       label: 'User Management',
@@ -108,5 +114,22 @@ export class SidebarComponent {
     }
     if (!item.requiredRoles?.length) return true;
     return this.authService.hasAnyRole(item.requiredRoles);
+  }
+
+  /** True if user has access to the parent item or any of its children (so we show the parent row). */
+  hasAccessToItemOrChildren(item: MenuItem): boolean {
+    if (this.hasAccess(item)) return true;
+    if (item.children?.length) {
+      return item.children.some(child => this.hasAccess(child));
+    }
+    return false;
+  }
+
+  isExpanded(item: MenuItem): boolean {
+    return this.expandedParentRoute === item.route;
+  }
+
+  toggleExpand(route: string): void {
+    this.expandedParentRoute = this.expandedParentRoute === route ? null : route;
   }
 }

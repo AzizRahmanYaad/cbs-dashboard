@@ -73,6 +73,8 @@ export class DailyReportComponent implements OnInit {
   isController = false;
   isCFO = false;
   isQualityControl = false;
+  /** True when user has CFO view-only role (no create/edit/delete/approve) */
+  isViewOnly = false;
   
   // Download state
   downloading = false;
@@ -121,6 +123,7 @@ export class DailyReportComponent implements OnInit {
     this.isController = this.permissionService.isController();
     this.isCFO = this.permissionService.isCFO();
     this.isQualityControl = this.permissionService.isQualityControl();
+    this.isViewOnly = this.permissionService.isViewOnly();
   }
 
   initializeForm() {

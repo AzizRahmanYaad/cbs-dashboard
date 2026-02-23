@@ -110,6 +110,14 @@ export class TrainingService {
     return this.http.delete<void>(`${this.baseUrl}/sessions/${id}`);
   }
 
+  /**
+   * Deletes all training sessions from the system.
+   * Backend endpoint is restricted to training admins / admins.
+   */
+  deleteAllSessions(): Observable<void> {
+    return this.http.delete<void>(`${this.baseUrl}/sessions`);
+  }
+
   // Training Material APIs
   createMaterial(request: CreateTrainingMaterialRequest): Observable<TrainingMaterial> {
     return this.http.post<TrainingMaterial>(`${this.baseUrl}/materials`, request);

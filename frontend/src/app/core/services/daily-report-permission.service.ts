@@ -18,7 +18,8 @@ export class DailyReportPermissionService {
   readonly ROLES = {
     INDIVIDUAL_REPORT: 'ROLE_INDIVIDUAL_REPORT', // Individual report access - full access to own reports
     ADMIN: 'ROLE_ADMIN',
-    QUALITY_CONTROL: 'ROLE_QUALITY_CONTROL' // Quality Control - can view, review, and manage all submitted reports
+    QUALITY_CONTROL: 'ROLE_QUALITY_CONTROL', // Quality Control - can view, review, and manage all submitted reports
+    CFO: 'ROLE_CFO' // CFO - view-only access to all reports, dashboards, and exports
   };
 
   /**
@@ -30,11 +31,12 @@ export class DailyReportPermissionService {
       return false;
     }
 
-    // Primary role for daily report module
+    // Primary role for daily report module (CFO has view-only access)
     return this.hasAnyRole([
       this.ROLES.INDIVIDUAL_REPORT,
       this.ROLES.ADMIN,
-      this.ROLES.QUALITY_CONTROL
+      this.ROLES.QUALITY_CONTROL,
+      this.ROLES.CFO
     ]);
   }
 
@@ -94,10 +96,10 @@ export class DailyReportPermissionService {
   }
 
   /**
-   * Check if user can view all reports (not just their own) - admin and quality control
+   * Check if user can view all reports (not just their own) - admin, quality control, and CFO (view-only)
    */
   canViewAllReports(): boolean {
-    return this.hasAnyRole([this.ROLES.ADMIN, this.ROLES.QUALITY_CONTROL]);
+    return this.hasAnyRole([this.ROLES.ADMIN, this.ROLES.QUALITY_CONTROL, this.ROLES.CFO]);
   }
 
   /**
@@ -108,17 +110,31 @@ export class DailyReportPermissionService {
   }
 
   /**
-   * Check if user is a CFO (can view and confirm reports) - admin only
+   * Check if user can download the combined team report (admin and CFO view-only)
    */
-  isCFO(): boolean {
-    return this.hasAnyRole([this.ROLES.ADMIN]);
+  canDownloadCombinedReport(): boolean {
+    return this.hasAnyRole([this.ROLES.ADMIN, this.ROLES.CFO]);
   }
 
   /**
-   * Check if user can view dashboard/analytics - admin and quality control
+   * Check if user is a CFO (can view and confirm reports) - admin or CFO role
+   */
+  isCFO(): boolean {
+    return this.hasAnyRole([this.ROLES.ADMIN, this.ROLES.CFO]);
+  }
+
+  /**
+   * Check if user has the CFO view-only role (no create/edit/delete/approve)
+   */
+  isCFOViewOnly(): boolean {
+    return this.hasAnyRole([this.ROLES.CFO]) && !this.hasAnyRole([this.ROLES.ADMIN, this.ROLES.QUALITY_CONTROL]);
+  }
+
+  /**
+   * Check if user can view dashboard/analytics - admin, quality control, and CFO (view-only)
    */
   canViewDashboard(): boolean {
-    return this.hasAnyRole([this.ROLES.ADMIN, this.ROLES.QUALITY_CONTROL]);
+    return this.hasAnyRole([this.ROLES.ADMIN, this.ROLES.QUALITY_CONTROL, this.ROLES.CFO]);
   }
 
   /**
@@ -136,10 +152,10 @@ export class DailyReportPermissionService {
   }
 
   /**
-   * Check if user has view-only access - not applicable with new role structure
+   * Check if user has view-only access (e.g. CFO role - no create/edit/delete/approve)
    */
   isViewOnly(): boolean {
-    return false;
+    return this.isCFOViewOnly();
   }
 
   /**
@@ -185,7 +201,7 @@ export class DailyReportPermissionService {
 
   /**
    * Get user's role level for Daily Report module
-   * Returns: 'individual_report' | 'admin' | 'quality_control' | null
+   * Returns: 'individual_report' | 'admin' | 'quality_control' | 'cfo' | null
    */
   getUserRoleLevel(): string | null {
     const user = this.authService.currentUserValue;
@@ -198,6 +214,9 @@ export class DailyReportPermissionService {
     }
     if (user.roles.includes(this.ROLES.QUALITY_CONTROL)) {
       return 'quality_control';
+    }
+    if (user.roles.includes(this.ROLES.CFO)) {
+      return 'cfo';
     }
     if (user.roles.includes(this.ROLES.INDIVIDUAL_REPORT)) {
       return 'individual_report';
